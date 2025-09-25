@@ -148,19 +148,45 @@ export default function Dashboard() {
   // Create new invoice
   const createInvoice = async (e) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || !profile) {
+      setMessage('❌ Unable to create invoice: User profile not loaded');
+      setIsError(true);
+      return;
+    }
     
     setInvoiceLoading(true);
     setMessage('');
     setIsError(false);
 
     try {
+      // Ensure profile exists in the database
+      const { data: profileCheck, error: profileCheckError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      if (profileCheckError || !profileCheck) {
+        console.log('Profile not found, creating profile...');
+        const { error: createProfileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            name: user.email?.split('@')[0] || 'User',
+            business_name: profile.business_name || 'My Business'
+          });
+
+        if (createProfileError) {
+          throw new Error(`Failed to create user profile: ${createProfileError.message}`);
+        }
+      }
+
       // Get tomorrow's date as default due date if not provided
       const defaultDueDate = new Date();
       defaultDueDate.setDate(defaultDueDate.getDate() + 30);
       
       const invoiceData = {
-        user_id: user.id,
+        user_id: user.id, // This now references profiles(id) which should exist
         customer_name: invoiceForm.customer_name,
         customer_email: invoiceForm.customer_email || null,
         amount: parseFloat(invoiceForm.amount),
@@ -169,12 +195,21 @@ export default function Dashboard() {
         due_date: invoiceForm.due_date || defaultDueDate.toISOString().split('T')[0]
       };
 
+      console.log('Creating invoice with data:', invoiceData);
+
       const { data, error } = await supabase
         .from('invoices')
         .insert(invoiceData)
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Invoice creation error:', error);
+        throw new Error(`Database error: ${error.message || 'Unknown error occurred'}`);
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error('Invoice was not created properly');
+      }
 
       setMessage('✅ Invoice created successfully!');
       setIsError(false);
@@ -191,7 +226,18 @@ export default function Dashboard() {
       // Refresh invoices
       await fetchInvoices(user.id);
     } catch (error) {
-      setMessage(`❌ Failed to create invoice: ${error.message}`);
+      console.error('Complete invoice creation error:', error);
+      let errorMessage = 'Failed to create invoice';
+      
+      if (error.message.includes('foreign key')) {
+        errorMessage = '❌ Account setup issue. Please try signing out and signing in again.';
+      } else if (error.message.includes('profiles')) {
+        errorMessage = '❌ Profile setup issue. Please refresh the page and try again.';
+      } else {
+        errorMessage = `❌ ${error.message}`;
+      }
+      
+      setMessage(errorMessage);
       setIsError(true);
     } finally {
       setInvoiceLoading(false);

@@ -12,19 +12,31 @@ How to use: Edit this file as work progresses. Mark tasks as - [x] when done.
 - [x] Create project documentation structure
 - [x] Set up shadcn/ui component library with TailwindCSS integration
 
-## Milestone 1 — Auth & Skeleton (NEARLY COMPLETE ✅)
+## Milestone 1 — Auth & Skeleton (COMPLETED ✅)
 
 - [x] Set up Supabase project and database
 - [x] Configure Supabase authentication  
 - [x] Create database schema (users, clients, invoices, transactions)
 - [x] Set up Row Level Security (RLS) policies
 - [x] Build authentication UI components (login/signup) using shadcn/ui
-- [x] Create protected dashboard layout (test version)
+- [x] Create protected dashboard layout 
 - [x] Set up environment variables configuration
 - [x] Test authentication flow
   - [x] Test Supabase Auth - Create test auth form to verify Supabase integration
   - [x] Full Auth + DB Integration Test - Comprehensive test with signup, signin, profile creation, invoice CRUD
   - [x] RLS Policy Handling - Robust error handling and fallback profile creation
+- [x] **MAJOR MILESTONE:** Replace test authentication form with complete onboarding flow
+  - [x] Create dedicated signup page (/signup) with name, email, password, business_name fields
+  - [x] Create dedicated login page (/login) with proper authentication flow
+  - [x] Build comprehensive protected dashboard (/dashboard) with:
+    - [x] Authentication guard and session management
+    - [x] Welcome banner with user's business name
+    - [x] Navigation tabs (Invoices, Payments, Profile Settings)
+    - [x] Invoice listing with proper data display
+    - [x] Invoice creation form (customer_name, customer_email, amount, due_date)
+    - [x] Real-time invoice management with database integration
+  - [x] Update landing page to redirect authenticated users to dashboard
+  - [x] Implement proper navigation between all authentication states
 
 ## Milestone 2 — Clients & Invoices (TODO 📋)
 

@@ -7,7 +7,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+### Added - MAJOR MILESTONE: Complete User Onboarding & Dashboard System
+- **Comprehensive onboarding flow** replacing temporary test authentication form
+- **Dedicated signup page** (/signup) with full user registration:
+  - Name, email, password, and business_name fields
+  - Form validation and error handling
+  - Automatic profile creation in database
+  - Email verification workflow
+  - Automatic redirect to login after successful signup
+- **Dedicated login page** (/login) with streamlined authentication:
+  - Email and password fields
+  - Session persistence and redirect to dashboard
+  - Demo credentials for testing
+  - Forgot password placeholder functionality
+- **Protected dashboard** (/dashboard) with complete business management interface:
+  - **Authentication guard**: Automatic redirect to login if unauthenticated
+  - **Welcome banner**: Personalized greeting with user's name and business
+  - **Tabbed navigation**: Invoices, Payments, Profile Settings
+  - **Invoice management system**: 
+    - Create new invoices with customer_name, customer_email, amount, due_date
+    - Real-time invoice listing with status badges and formatting
+    - Invoice refresh functionality
+    - Empty state with call-to-action
+    - Currency formatting and date display
+  - **Profile settings**: Display current user information (read-only for now)
+  - **Payments section**: Placeholder for future payment tracking features
+- **Enhanced landing page** with proper user flow:
+  - Automatic redirect to dashboard for authenticated users
+  - Call-to-action buttons linking to signup/login pages
+  - Dynamic navigation showing Dashboard button for authenticated users
+  - Professional "Ready to Get Started?" section with feature highlights
+  - 30-day free trial, 0% setup fees, 24/7 support callouts
+
+### Technical Improvements
+- **Robust authentication state management**: useEffect hooks for session handling
+- **Database integration**: Profile creation with graceful error handling
+- **RLS policy compliance**: Automatic profile creation fallbacks
+- **Responsive design**: Mobile-first approach across all new pages
+- **Form management**: Controlled components with proper state updates
+- **Navigation improvements**: Seamless routing between authentication states
+- **Loading states**: Comprehensive loading indicators throughout user flows
+- **Error handling**: User-friendly error messages and recovery paths
+
+### Changed
+- **Complete authentication system overhaul**: Removed test form, implemented production-ready flows
+- **Navigation structure**: Landing page now serves as marketing page with proper CTAs
+- **User experience flow**: Streamlined path from landing → signup → login → dashboard
+- **UI consistency**: All pages use consistent PayRush branding and shadcn/ui components
+
+### Deprecated
+- Removed temporary test authentication form from landing page
+- Removed inline dashboard interface from homepage
+- Removed auth mode toggle functionality (replaced with separate pages)
+
+### Fixed
+- JSX structure issues in landing page component
+- Authentication state management across page refreshes
+- Profile creation timing during user registration
+
+---
+
+### Added (Previous Features)
 - **Full Supabase Auth + Database integration test page** with comprehensive functionality
 - **Dual authentication modes**: Sign Up and Sign In with mode toggle interface  
 - **Robust profile creation system**: Automatic profile creation with RLS policy handling

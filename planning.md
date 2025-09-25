@@ -42,6 +42,50 @@ transactions: id, invoice_id, gateway, reference, amount, currency, status, raw_
 
 payment_webhooks: id, raw_payload, received_at, processed_at, status
 
+## Official PayRush Database Schema
+
+### Core Tables
+
+**profiles** (extends auth.users)
+- `id` uuid PRIMARY KEY → references auth.users(id) 
+- `business_name` text NOT NULL
+- `created_at` timestamptz DEFAULT now()
+
+**invoices**
+- `id` uuid PRIMARY KEY DEFAULT gen_random_uuid()
+- `user_id` uuid → references profiles(id) 
+- `customer_name` text NOT NULL
+- `customer_email` text
+- `amount` numeric(12,2) NOT NULL
+- `currency` text NOT NULL
+- `status` text CHECK (draft|sent|paid|overdue) DEFAULT 'draft'
+- `due_date` date
+- `created_at` timestamptz DEFAULT now()
+
+**payments**
+- `id` uuid PRIMARY KEY DEFAULT gen_random_uuid()
+- `invoice_id` uuid → references invoices(id)
+- `amount` numeric(12,2) NOT NULL
+- `currency` text NOT NULL
+- `provider` text NOT NULL (Flutterwave, etc.)
+- `status` text CHECK (pending|completed|failed) DEFAULT 'pending'
+- `reference` text (payment gateway reference)
+- `created_at` timestamptz DEFAULT now()
+
+### Security & Relationships
+
+- **Row Level Security (RLS)** enabled on all tables
+- **Cascade deletions**: User deletion removes all associated data
+- **Foreign key constraints**: Maintain data integrity
+- **Check constraints**: Validate status values
+- **Indexes**: Optimized for common queries (user_id, status, invoice_id)
+
+### RLS Policies
+
+- Users can only access their own profiles, invoices, and payments
+- Payments are accessible only through owned invoices
+- Full CRUD permissions for own data
+
 API endpoints (minimal)
 
 POST /api/create-payment — create payment link via gateway

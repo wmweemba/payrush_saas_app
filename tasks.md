@@ -10,6 +10,7 @@ How to use: Edit this file as work progresses. Mark tasks as - [x] when done.
 - [x] Set up development environment
 - [x] Install core dependencies (Supabase, React Hook Form, etc.)
 - [x] Create project documentation structure
+- [x] Set up shadcn/ui component library with TailwindCSS integration
 
 ## Milestone 1 — Auth & Skeleton (IN PROGRESS 🚧)
 
@@ -17,7 +18,7 @@ How to use: Edit this file as work progresses. Mark tasks as - [x] when done.
 - [ ] Configure Supabase authentication
 - [ ] Create database schema (users, clients, invoices, transactions)
 - [ ] Set up Row Level Security (RLS) policies
-- [ ] Build authentication UI components (login/signup)
+- [ ] Build authentication UI components (login/signup) using shadcn/ui
 - [ ] Create protected dashboard layout
 - [ ] Set up environment variables configuration
 - [ ] Test authentication flow

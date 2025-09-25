@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   return (
@@ -20,9 +21,9 @@ export default function Home() {
               Contact
             </a>
           </div>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
+          <Button className="bg-blue-600 hover:bg-blue-700 text-white">
             Get Started
-          </button>
+          </Button>
         </div>
       </nav>
 
@@ -42,12 +43,12 @@ export default function Home() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <button className="payrush-gradient text-white px-8 py-4 rounded-xl font-semibold text-lg hover:scale-105 transition-transform payrush-shadow">
+            <Button size="lg" className="payrush-gradient text-white hover:scale-105 transition-transform payrush-shadow">
               Start Free Trial
-            </button>
-            <button className="border-2 border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors">
+            </Button>
+            <Button variant="outline" size="lg" className="border-2 border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-slate-800">
               View Demo
-            </button>
+            </Button>
           </div>
         </div>
 

@@ -21,9 +21,10 @@ export default function SignUp() {
   const [isError, setIsError] = useState(false);
 
   const handleInputChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value.trim() // Remove leading/trailing whitespace
     });
   };
 
@@ -34,13 +35,42 @@ export default function SignUp() {
     setIsError(false);
 
     try {
+      // Clean and validate email
+      const cleanEmail = formData.email.trim().toLowerCase();
+      const cleanPassword = formData.password.trim();
+      
+      // Basic client-side validation
+      if (!cleanEmail || !cleanPassword) {
+        throw new Error('Email and password are required');
+      }
+      
+      if (cleanPassword.length < 6) {
+        throw new Error('Password must be at least 6 characters long');
+      }
+      
+      // Email format validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(cleanEmail)) {
+        throw new Error('Please enter a valid email address');
+      }
+      
+      console.log('Attempting signup with email:', cleanEmail);
+      console.log('Original email:', formData.email);
+      console.log('Email length:', formData.email.length);
+      console.log('Password length:', formData.password.length);
+      
       // Create user account
       const { data, error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
+        email: cleanEmail,
+        password: cleanPassword,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase signup error details:', error);
+        console.error('Error code:', error.status);
+        console.error('Error message:', error.message);
+        throw error;
+      }
 
       if (data.user) {
         // Wait a moment for the session to be established

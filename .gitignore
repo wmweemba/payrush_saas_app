@@ -1,0 +1,86 @@
+# Root level gitignore for PayRush SaaS Application
+
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Build outputs
+build/
+dist/
+.next/
+out/
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Temporary files
+.tmp/
+.temp/
+
+# Package managers
+.npm
+.yarn-integrity
+
+# Optional REPL history
+.node_repl_history
+
+# Miscellaneous
+*.tgz
+*.tar.gz
+
+# Backup files
+*.bak
+*.backup
+
+# Database files (if using local databases)
+*.db
+*.sqlite
+*.sqlite3
+
+# Secrets and keys
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Cache directories
+.cache/
+.parcel-cache/

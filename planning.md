@@ -48,7 +48,11 @@ payment_webhooks: id, raw_payload, received_at, processed_at, status
 
 **profiles** (extends auth.users)
 - `id` uuid PRIMARY KEY → references auth.users(id) 
+- `name` text NOT NULL
 - `business_name` text NOT NULL
+- `phone` text
+- `address` text  
+- `website` text
 - `created_at` timestamptz DEFAULT now()
 
 **invoices**
@@ -58,7 +62,7 @@ payment_webhooks: id, raw_payload, received_at, processed_at, status
 - `customer_email` text
 - `amount` numeric(12,2) NOT NULL
 - `currency` text NOT NULL
-- `status` text CHECK (draft|sent|paid|overdue) DEFAULT 'draft'
+- `status` text CHECK (Pending|Sent|Paid|Overdue|Cancelled) DEFAULT 'Pending'
 - `due_date` date
 - `created_at` timestamptz DEFAULT now()
 

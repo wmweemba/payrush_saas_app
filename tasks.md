@@ -38,24 +38,81 @@ How to use: Edit this file as work progresses. Mark tasks as - [x] when done.
   - [x] Update landing page to redirect authenticated users to dashboard
   - [x] Implement proper navigation between all authentication states
 
-## Milestone 2 — Clients & Invoices (TODO 📋)
+## Milestone 2 — Invoice Lifecycle & Profile Management (COMPLETED ✅)
 
-- [ ] Build client management CRUD interface
-- [ ] Create invoice creation form
-- [ ] Implement invoice line items functionality
+- [x] **Invoice Lifecycle Management**
+  - [x] Extend invoices database schema with enhanced status field (Pending, Sent, Paid, Overdue, Cancelled)
+  - [x] Update invoice creation to use 'Pending' as default status
+  - [x] Implement status-specific action buttons in dashboard:
+    - [x] Mark as Sent (Pending → Sent)
+    - [x] Mark as Paid (any status → Paid)  
+    - [x] Mark as Overdue (Sent → Overdue)
+    - [x] Cancel Invoice (any status → Cancelled)
+  - [x] Add visual status indicators with color coding
+  - [x] Create database migration scripts for status updates
+
+- [x] **Profile Settings System**
+  - [x] Build dedicated Profile Settings page (/dashboard/profile-settings)
+  - [x] Extend profiles table schema with additional fields:
+    - [x] name (text, required)
+    - [x] business_name (text, required)
+    - [x] phone (text, optional)
+    - [x] address (text, optional)
+    - [x] website (text, optional)
+  - [x] Create comprehensive profile editing interface
+  - [x] Implement profile update functionality with Supabase integration
+  - [x] Add profile overview in dashboard settings tab
+  - [x] Create database migration for new profile fields
+
+- [x] **Payments Integration Preparation**
+  - [x] Design comprehensive Flutterwave integration interface
+  - [x] Create payment infrastructure code structure (/lib/payments/flutterwave.js)
+  - [x] Build payment configuration and link generation functions
+  - [x] Set up webhook endpoint for payment processing (/api/webhooks/flutterwave)
+  - [x] Add payment verification and status update logic
+  - [x] Create detailed integration documentation and preview
+  - [x] Design payment features roadmap (cards, mobile money, bank transfers)
+
+## Milestone 3 — Advanced Client & Invoice Features (TODO 📋)
+
+## Milestone 3 — Advanced Client & Invoice Features (TODO 📋)
+
+- [ ] Build dedicated client management system
+- [ ] Create advanced invoice creation with line items
+- [ ] Implement invoice templates and customization
 - [ ] Build invoice preview and PDF generation
-- [ ] Create public invoice view page
-- [ ] Add invoice status management
-- [ ] Implement invoice search and filtering
-- [ ] Add validation and error handling
+- [ ] Create public invoice view page for customers
+- [ ] Add invoice search, filtering, and sorting
+- [ ] Implement bulk invoice operations
+- [ ] Add invoice recurring/subscription functionality
+- [ ] Create invoice analytics and reporting
 
-## Milestone 3 — Payments (TODO 💳)
+## Milestone 4 — Live Payment Processing (IN PREPARATION �)
 
-- [ ] Integrate Flutterwave payment gateway
-- [ ] Create payment link generation
-- [ ] Build payment selection UI (mobile money/cards)
-- [ ] Implement webhook endpoint for payment confirmation
-- [ ] Add payment status reconciliation
-- [ ] Test mobile money payments (MTN/Airtel/Zamtel)
-- [ ] Add payment notifications
-- [ ] Handle payment failures and retries
+- [ ] **Flutterwave Integration Implementation**
+  - [ ] Set up Flutterwave merchant account and API keys
+  - [ ] Implement payment link generation for invoices
+  - [ ] Build payment processing UI components
+  - [ ] Add multiple payment methods (cards, mobile money, bank transfers)
+  - [ ] Implement secure webhook processing
+  - [ ] Add payment status synchronization
+  - [ ] Create payment receipts and confirmations
+
+- [ ] **Payment Management System**
+  - [ ] Build payment tracking dashboard
+  - [ ] Implement payment history and analytics
+  - [ ] Add refund and dispute handling
+  - [ ] Create payment notifications (email/SMS)
+  - [ ] Add payment method management
+  - [ ] Implement payment failures and retry logic
+
+## Milestone 5 — Business Intelligence & Scaling (TODO 🚀)
+
+- [ ] Build comprehensive analytics dashboard
+- [ ] Add revenue and payment reporting
+- [ ] Implement data export functionality  
+- [ ] Create business insights and trends
+- [ ] Add user management and team features
+- [ ] Implement multi-business support
+- [ ] Add API rate limiting and monitoring
+- [ ] Performance optimization and caching

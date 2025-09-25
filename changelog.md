@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - MAJOR UPDATE: Invoice Lifecycle Management & Profile Settings (v0.4.0)
+
+- **🔄 Invoice Lifecycle Management System**
+  - Enhanced invoice status system with 5 states: Pending, Sent, Paid, Overdue, Cancelled
+  - Smart status-specific action buttons in dashboard:
+    - "Mark as Sent" for Pending invoices
+    - "Mark as Paid" available for all unpaid invoices
+    - "Mark as Overdue" for Sent invoices past due date
+    - "Cancel Invoice" option for active invoices
+  - Visual status indicators with color-coded badges
+  - Automatic database schema migration for status updates
+  - Real-time invoice list updates after status changes
+
+- **👤 Comprehensive Profile Settings System**
+  - Dedicated Profile Settings page (/dashboard/profile-settings) with:
+    - Business information management (business_name, phone, website, address)
+    - Professional form interface with validation
+    - Real-time profile updates with Supabase integration
+    - User-friendly success/error messaging
+  - Enhanced dashboard profile tab with:
+    - Current profile overview display
+    - Quick access to detailed settings page
+    - Future settings categories (notifications, security)
+  - Extended database schema with additional profile fields
+
+- **💳 Flutterwave Payment Integration Preparation**
+  - Comprehensive payment infrastructure setup:
+    - Complete integration code structure (/lib/payments/flutterwave.js)
+    - Payment configuration and link generation functions
+    - Transaction verification and webhook processing
+    - Support for cards, mobile money, bank transfers
+  - Professional payments tab in dashboard with:
+    - Integration status and roadmap
+    - Developer preview with code examples  
+    - Flutterwave API documentation links
+    - Planned features overview (payment collection, tracking)
+  - Webhook endpoint setup (/api/webhooks/flutterwave) for:
+    - Secure payment confirmation handling
+    - Automatic invoice status updates
+    - Payment record creation
+    - Transaction verification
+
 ### Added - MAJOR MILESTONE: Complete User Onboarding & Dashboard System
 - **Comprehensive onboarding flow** replacing temporary test authentication form
 - **Dedicated signup page** (/signup) with full user registration:
@@ -153,6 +195,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Class Variance Authority (CVA) for component variants
 - Radix UI primitives for accessible component foundations
 - clsx and tailwind-merge for optimal class handling
+
+### Technical Improvements (Latest Update)
+- **Database Schema Enhancements**:
+  - Extended invoices table with comprehensive status constraints (Pending, Sent, Paid, Overdue, Cancelled)
+  - Added profile fields: phone, address, website with proper indexing
+  - Created database migration scripts for seamless updates
+  - Optimized foreign key relationships and RLS policies
+
+- **Code Architecture Improvements**:
+  - Modular payment infrastructure with clean separation of concerns
+  - Enhanced error handling and user feedback systems
+  - Real-time UI updates with Supabase integration
+  - Comprehensive form validation and data sanitization
+
+- **Developer Experience**:
+  - Detailed code documentation and usage examples
+  - Structured file organization for payments integration
+  - Ready-to-use webhook handlers and API routes
+  - Integration guides and best practices
+
+### Bug Fixes (Latest Update)
+- Fixed invoice creation foreign key constraint errors
+- Enhanced signup form email validation and data handling
+- Resolved RLS policy violations during profile creation
+- Improved session management and authentication state handling
+
+---
+
+## [0.3.0] - 2025-09-25
+
+### Added
+- Complete user onboarding and dashboard system replacing test authentication form
+- Dedicated signup page (/signup) with name, email, password, business_name fields
+- Dedicated login page (/login) with streamlined authentication flow
+- Protected dashboard (/dashboard) with comprehensive business management interface
+- Invoice management system with create, list, refresh functionality
+- Profile integration with business name display and session management
+- Professional landing page directing users to proper authentication flow
+
+### Changed
+- Replaced temporary test form with production-ready authentication system
+- Enhanced user experience with loading states and session persistence
+- Improved error handling for authentication and database operations
+- Updated landing page to support authenticated and unauthenticated states
 
 ---
 

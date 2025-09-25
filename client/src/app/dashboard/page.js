@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -191,7 +192,7 @@ export default function Dashboard() {
         customer_email: invoiceForm.customer_email || null,
         amount: parseFloat(invoiceForm.amount),
         currency: 'USD',
-        status: 'draft',
+        status: 'Pending',
         due_date: invoiceForm.due_date || defaultDueDate.toISOString().split('T')[0]
       };
 
@@ -238,6 +239,35 @@ export default function Dashboard() {
       }
       
       setMessage(errorMessage);
+      setIsError(true);
+    } finally {
+      setInvoiceLoading(false);
+    }
+  };
+
+  // Update invoice status
+  const updateInvoiceStatus = async (invoiceId, newStatus) => {
+    setInvoiceLoading(true);
+    setMessage('');
+    setIsError(false);
+
+    try {
+      const { error } = await supabase
+        .from('invoices')
+        .update({ status: newStatus })
+        .eq('id', invoiceId)
+        .eq('user_id', user.id); // Ensure user can only update their own invoices
+
+      if (error) throw error;
+
+      setMessage(`✅ Invoice marked as ${newStatus}!`);
+      setIsError(false);
+      
+      // Refresh invoices
+      await fetchInvoices(user.id);
+    } catch (error) {
+      console.error('Invoice status update error:', error);
+      setMessage(`❌ Failed to update invoice status: ${error.message}`);
       setIsError(true);
     } finally {
       setInvoiceLoading(false);
@@ -515,13 +545,15 @@ export default function Dashboard() {
                                 {invoice.customer_name}
                               </h4>
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                invoice.status === 'paid' 
+                                invoice.status === 'Paid' 
                                   ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-                                  : invoice.status === 'sent'
+                                  : invoice.status === 'Sent'
                                   ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
-                                  : invoice.status === 'overdue'
+                                  : invoice.status === 'Overdue'
                                   ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
-                                  : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                                  : invoice.status === 'Cancelled'
+                                  ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400' // Pending
                               }`}>
                                 {invoice.status}
                               </span>
@@ -536,10 +568,80 @@ export default function Dashboard() {
                               <span>ID: {invoice.id.slice(0, 8)}...</span>
                             </div>
                           </div>
-                          <div className="text-right">
+                          <div className="text-right flex flex-col items-end space-y-2">
                             <p className="text-2xl font-bold text-gray-900 dark:text-white">
                               {formatCurrency(invoice.amount, invoice.currency)}
                             </p>
+                            
+                            {/* Invoice Action Buttons */}
+                            <div className="flex space-x-2">
+                              {invoice.status === 'Pending' && (
+                                <>
+                                  <Button 
+                                    onClick={() => updateInvoiceStatus(invoice.id, 'Sent')}
+                                    disabled={invoiceLoading}
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-blue-600 border-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-400"
+                                  >
+                                    Mark as Sent
+                                  </Button>
+                                  <Button 
+                                    onClick={() => updateInvoiceStatus(invoice.id, 'Paid')}
+                                    disabled={invoiceLoading}
+                                    size="sm"
+                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                  >
+                                    Mark as Paid
+                                  </Button>
+                                </>
+                              )}
+                              
+                              {invoice.status === 'Sent' && (
+                                <>
+                                  <Button 
+                                    onClick={() => updateInvoiceStatus(invoice.id, 'Paid')}
+                                    disabled={invoiceLoading}
+                                    size="sm"
+                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                  >
+                                    Mark as Paid
+                                  </Button>
+                                  <Button 
+                                    onClick={() => updateInvoiceStatus(invoice.id, 'Overdue')}
+                                    disabled={invoiceLoading}
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-red-600 border-red-600 hover:bg-red-50 dark:text-red-400 dark:border-red-400"
+                                  >
+                                    Mark Overdue
+                                  </Button>
+                                </>
+                              )}
+                              
+                              {(invoice.status === 'Overdue') && (
+                                <Button 
+                                  onClick={() => updateInvoiceStatus(invoice.id, 'Paid')}
+                                  disabled={invoiceLoading}
+                                  size="sm"
+                                  className="bg-green-600 hover:bg-green-700 text-white"
+                                >
+                                  Mark as Paid
+                                </Button>
+                              )}
+                              
+                              {invoice.status !== 'Paid' && invoice.status !== 'Cancelled' && (
+                                <Button 
+                                  onClick={() => updateInvoiceStatus(invoice.id, 'Cancelled')}
+                                  disabled={invoiceLoading}
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-gray-600 border-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:border-gray-400"
+                                >
+                                  Cancel
+                                </Button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -551,18 +653,168 @@ export default function Dashboard() {
 
             {/* Payments Tab */}
             {activeTab === 'payments' && (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-slate-700 rounded-full flex items-center justify-center">
-                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                  </svg>
+              <div className="space-y-8">
+                {/* Flutterwave Integration Status */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-start space-x-4">
+                    <div className="bg-blue-100 dark:bg-blue-900/30 rounded-full p-3">
+                      <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                        Flutterwave Payment Integration
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-300 mb-4">
+                        Accept payments from customers across Africa and globally using cards, mobile money, bank transfers, and more.
+                      </p>
+                      <div className="flex items-center space-x-3">
+                        <span className="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 text-sm font-medium rounded-full">
+                          🚧 In Development
+                        </span>
+                        <a 
+                          href="https://developer.flutterwave.com" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium"
+                        >
+                          View Flutterwave API Docs →
+                        </a>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  Payments Coming Soon
-                </h3>
-                <p className="text-gray-600 dark:text-gray-300">
-                  Payment tracking and processing features will be available soon
-                </p>
+
+                {/* Planned Features */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-white dark:bg-slate-700 rounded-xl p-6 border border-gray-200 dark:border-gray-600">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="bg-green-100 dark:bg-green-900/30 rounded-full p-2">
+                        <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                        </svg>
+                      </div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white">Payment Collection</h4>
+                    </div>
+                    <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                      <li className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                        <span>Generate payment links for invoices</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                        <span>Accept card payments globally</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                        <span>Mobile money integration (MTN, Airtel)</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                        <span>Bank transfer options</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-700 rounded-xl p-6 border border-gray-200 dark:border-gray-600">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="bg-purple-100 dark:bg-purple-900/30 rounded-full p-2">
+                        <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                      </div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white">Payment Tracking</h4>
+                    </div>
+                    <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                      <li className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 bg-purple-500 rounded-full"></div>
+                        <span>Real-time payment status updates</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 bg-purple-500 rounded-full"></div>
+                        <span>Automatic invoice status updates</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 bg-purple-500 rounded-full"></div>
+                        <span>Payment history and receipts</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 bg-purple-500 rounded-full"></div>
+                        <span>Webhook integration</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Integration Preview */}
+                <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-6 border border-gray-200 dark:border-gray-600">
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-4">
+                    🔧 Developer Preview
+                  </h4>
+                  <div className="bg-gray-800 rounded-lg p-4 font-mono text-sm overflow-x-auto">
+                    <div className="text-green-400">// /lib/payments/flutterwave.js</div>
+                    <div className="text-gray-300 mt-2">
+                      <span className="text-blue-400">import</span> {'{'} FlutterwaveCheckout {'}'} <span className="text-blue-400">from</span> <span className="text-yellow-300">'flutterwave-react-v3'</span>;<br/>
+                      <br/>
+                      <span className="text-purple-400">export</span> <span className="text-blue-400">const</span> <span className="text-white">createPaymentLink</span> = <span className="text-yellow-300">async</span> (invoiceData) => {'{'}<br/>
+                      &nbsp;&nbsp;<span className="text-gray-500">// Generate secure payment link</span><br/>
+                      &nbsp;&nbsp;<span className="text-blue-400">const</span> config = {'{'}<br/>
+                      &nbsp;&nbsp;&nbsp;&nbsp;public_key: <span className="text-yellow-300">'FLW_PUBLIC_KEY'</span>,<br/>
+                      &nbsp;&nbsp;&nbsp;&nbsp;tx_ref: invoiceData.id,<br/>
+                      &nbsp;&nbsp;&nbsp;&nbsp;amount: invoiceData.amount,<br/>
+                      &nbsp;&nbsp;&nbsp;&nbsp;currency: invoiceData.currency,<br/>
+                      &nbsp;&nbsp;&nbsp;&nbsp;customer: {'{'}<br/>
+                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;email: invoiceData.customer_email,<br/>
+                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name: invoiceData.customer_name<br/>
+                      &nbsp;&nbsp;&nbsp;&nbsp;{'}'}<br/>
+                      &nbsp;&nbsp;{'}'};<br/>
+                      {'}'};
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+                    Payment infrastructure is being prepared. Integration will include secure webhooks, automatic status updates, and comprehensive transaction tracking.
+                  </p>
+                </div>
+
+                {/* Quick Start Guide */}
+                <div className="bg-white dark:bg-slate-700 rounded-xl p-6 border border-gray-200 dark:border-gray-600">
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                    <svg className="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Getting Started with Payments
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="flex items-start space-x-3">
+                      <div className="bg-blue-100 dark:bg-blue-900/30 rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
+                        <span className="text-blue-600 dark:text-blue-400 font-bold text-sm">1</span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white text-sm">Setup Flutterwave Account</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Create merchant account and get API keys</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <div className="bg-blue-100 dark:bg-blue-900/30 rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
+                        <span className="text-blue-600 dark:text-blue-400 font-bold text-sm">2</span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white text-sm">Configure Webhooks</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Set up payment status notifications</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <div className="bg-blue-100 dark:bg-blue-900/30 rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
+                        <span className="text-blue-600 dark:text-blue-400 font-bold text-sm">3</span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white text-sm">Start Accepting Payments</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Generate links and track transactions</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -573,48 +825,72 @@ export default function Dashboard() {
                   Profile Settings
                 </h2>
                 <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Full Name
-                      </label>
-                      <input
-                        type="text"
-                        value={profile?.name || ''}
-                        disabled
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                                 bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white"
-                      />
+                  {/* Current Profile Overview */}
+                  <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-6 border border-gray-200 dark:border-gray-600">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                      Current Profile
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Full Name</p>
+                        <p className="font-medium text-gray-900 dark:text-white">{profile?.name || 'Not set'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Business Name</p>
+                        <p className="font-medium text-gray-900 dark:text-white">{profile?.business_name || 'Not set'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Email Address</p>
+                        <p className="font-medium text-gray-900 dark:text-white">{user?.email || 'Not set'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Phone</p>
+                        <p className="font-medium text-gray-900 dark:text-white">{profile?.phone || 'Not set'}</p>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Business Name
-                      </label>
-                      <input
-                        type="text"
-                        value={profile?.business_name || ''}
-                        disabled
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                                 bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white"
-                      />
+                    
+                    <Link 
+                      href="/dashboard/profile-settings"
+                      className="inline-block"
+                    >
+                      <Button className="payrush-gradient text-white hover:scale-105 transition-transform">
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Edit Profile Settings
+                      </Button>
+                    </Link>
+                  </div>
+
+                  {/* Additional Settings */}
+                  <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-6 border border-gray-200 dark:border-gray-600">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                      Account Settings
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between py-2">
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">Email Notifications</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Coming soon</p>
+                        </div>
+                        <div className="text-gray-400">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between py-2">
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">Security Settings</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Password, 2FA - Coming soon</p>
+                        </div>
+                        <div className="text-gray-400">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      value={user?.email || ''}
-                      disabled
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                               bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white"
-                    />
-                  </div>
-                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Profile editing features will be available in a future update.
-                    </p>
                   </div>
                 </div>
               </div>

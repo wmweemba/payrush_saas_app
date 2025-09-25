@@ -753,23 +753,23 @@ export default function Dashboard() {
                     🔧 Developer Preview
                   </h4>
                   <div className="bg-gray-800 rounded-lg p-4 font-mono text-sm overflow-x-auto">
-                    <div className="text-green-400">// /lib/payments/flutterwave.js</div>
+                    <div className="text-green-400">{`// /lib/payments/flutterwave.js`}</div>
                     <div className="text-gray-300 mt-2">
-                      <span className="text-blue-400">import</span> {'{'} FlutterwaveCheckout {'}'} <span className="text-blue-400">from</span> <span className="text-yellow-300">'flutterwave-react-v3'</span>;<br/>
+                      <span className="text-blue-400">import</span> {`{ FlutterwaveCheckout }`} <span className="text-blue-400">from</span> <span className="text-yellow-300">&apos;flutterwave-react-v3&apos;</span>;<br/>
                       <br/>
-                      <span className="text-purple-400">export</span> <span className="text-blue-400">const</span> <span className="text-white">createPaymentLink</span> = <span className="text-yellow-300">async</span> (invoiceData) => {'{'}<br/>
-                      &nbsp;&nbsp;<span className="text-gray-500">// Generate secure payment link</span><br/>
-                      &nbsp;&nbsp;<span className="text-blue-400">const</span> config = {'{'}<br/>
-                      &nbsp;&nbsp;&nbsp;&nbsp;public_key: <span className="text-yellow-300">'FLW_PUBLIC_KEY'</span>,<br/>
+                      <span className="text-purple-400">export</span> <span className="text-blue-400">const</span> <span className="text-white">createPaymentLink</span> = <span className="text-yellow-300">async</span> (invoiceData) {`=> {`}<br/>
+                      &nbsp;&nbsp;<span className="text-gray-500">{`// Generate secure payment link`}</span><br/>
+                      &nbsp;&nbsp;<span className="text-blue-400">const</span> config = {`= {`}<br/>
+                      &nbsp;&nbsp;&nbsp;&nbsp;public_key: <span className="text-yellow-300">&apos;FLW_PUBLIC_KEY&apos;</span>,<br/>
                       &nbsp;&nbsp;&nbsp;&nbsp;tx_ref: invoiceData.id,<br/>
                       &nbsp;&nbsp;&nbsp;&nbsp;amount: invoiceData.amount,<br/>
                       &nbsp;&nbsp;&nbsp;&nbsp;currency: invoiceData.currency,<br/>
-                      &nbsp;&nbsp;&nbsp;&nbsp;customer: {'{'}<br/>
+                      &nbsp;&nbsp;&nbsp;&nbsp;customer: {`{`}<br/>
                       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;email: invoiceData.customer_email,<br/>
                       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name: invoiceData.customer_name<br/>
-                      &nbsp;&nbsp;&nbsp;&nbsp;{'}'}<br/>
-                      &nbsp;&nbsp;{'}'};<br/>
-                      {'}'};
+                      &nbsp;&nbsp;&nbsp;&nbsp;{`}`}<br/>
+                      &nbsp;&nbsp;{`};`}<br/>
+                      {`};`}
                     </div>
                   </div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">

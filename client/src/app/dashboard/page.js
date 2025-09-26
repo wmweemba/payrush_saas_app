@@ -9,6 +9,10 @@ import { processPayment } from "@/lib/payments/flutterwave";
 import { CurrencySelect, CurrencyInput, CurrencyDisplay } from "@/components/ui/CurrencySelect";
 import { getDefaultCurrency, formatCurrency } from "@/lib/currency/currencies";
 import { downloadInvoicePDF, previewInvoicePDF } from "@/lib/pdf/invoicePDF";
+import ClientList from "@/components/clients/ClientList";
+import ClientForm from "@/components/clients/ClientForm";
+import ClientProfile from "@/components/clients/ClientProfile";
+import { clientService } from "@/lib/clientService";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -20,6 +24,12 @@ export default function Dashboard() {
   
   // Navigation state
   const [activeTab, setActiveTab] = useState('invoices');
+  
+  // Client management state
+  const [clientView, setClientView] = useState('list'); // 'list', 'form', 'profile'
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [clientRefreshTrigger, setClientRefreshTrigger] = useState(0);
+  const [clientFormLoading, setClientFormLoading] = useState(false);
   
   // Invoice state
   const [invoices, setInvoices] = useState([]);
@@ -564,6 +574,72 @@ export default function Dashboard() {
     }
   };
 
+  // Client Management Functions
+  const handleCreateClient = () => {
+    setSelectedClient(null);
+    setClientView('form');
+  };
+
+  const handleEditClient = (client) => {
+    setSelectedClient(client);
+    setClientView('form');
+  };
+
+  const handleSelectClient = (client) => {
+    setSelectedClient(client);
+    setClientView('profile');
+  };
+
+  const handleClientFormSubmit = async (formData) => {
+    if (!user) return;
+
+    setClientFormLoading(true);
+    try {
+      const clientData = {
+        userId: user.id,
+        ...formData
+      };
+
+      if (selectedClient) {
+        // Update existing client
+        await clientService.updateClient(selectedClient.id, clientData);
+        setMessage('✅ Client updated successfully!');
+      } else {
+        // Create new client
+        await clientService.createClient(clientData);
+        setMessage('✅ Client created successfully!');
+      }
+
+      setIsError(false);
+      // Refresh the list and return to list view
+      setClientRefreshTrigger(prev => prev + 1);
+      setClientView('list');
+      setSelectedClient(null);
+    } catch (error) {
+      setMessage(`❌ Error ${selectedClient ? 'updating' : 'creating'} client: ${error.message}`);
+      setIsError(true);
+    } finally {
+      setClientFormLoading(false);
+    }
+  };
+
+  const handleClientFormCancel = () => {
+    setClientView('list');
+    setSelectedClient(null);
+  };
+
+  const handleClientProfileClose = () => {
+    setClientView('list');
+    setSelectedClient(null);
+  };
+
+  const handleDeleteClient = () => {
+    // Refresh the list after deletion
+    setClientRefreshTrigger(prev => prev + 1);
+    setMessage('✅ Client deleted successfully!');
+    setIsError(false);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
@@ -627,7 +703,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Navigation Tabs */}
+            {/* Navigation Tabs */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg mb-8">
           <div className="border-b border-gray-200 dark:border-gray-700">
             <nav className="flex space-x-8 px-6">
@@ -640,6 +716,16 @@ export default function Dashboard() {
                 }`}
               >
                 📄 Invoices ({invoices.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('clients')}
+                className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'clients'
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                }`}
+              >
+                👥 Clients
               </button>
               <button
                 onClick={() => setActiveTab('payments')}
@@ -662,9 +748,7 @@ export default function Dashboard() {
                 ⚙️ Profile Settings
               </button>
             </nav>
-          </div>
-
-          <div className="p-6">
+          </div>          <div className="p-6">
             {/* Invoices Tab */}
             {activeTab === 'invoices' && (
               <div className="space-y-6">
@@ -972,6 +1056,79 @@ export default function Dashboard() {
                       </div>
                     ))}
                   </div>
+                )}
+              </div>
+            )}
+
+            {/* Clients Tab */}
+            {activeTab === 'clients' && (
+              <div className="space-y-6">
+                {clientView === 'list' && (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                          Client Management
+                        </h2>
+                        <p className="text-gray-600 dark:text-gray-300 text-sm">
+                          Manage your client relationships and information
+                        </p>
+                      </div>
+                      <Button 
+                        onClick={handleCreateClient}
+                        className="payrush-gradient text-white hover:scale-105 transition-transform"
+                      >
+                        ➕ Add New Client
+                      </Button>
+                    </div>
+
+                    <ClientList
+                      userId={user?.id}
+                      onSelectClient={handleSelectClient}
+                      onEditClient={handleEditClient}
+                      onDeleteClient={handleDeleteClient}
+                      refreshTrigger={clientRefreshTrigger}
+                    />
+                  </>
+                )}
+
+                {clientView === 'form' && (
+                  <div>
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                          {selectedClient ? 'Edit Client' : 'Create New Client'}
+                        </h2>
+                        <p className="text-gray-600 dark:text-gray-300 text-sm">
+                          {selectedClient 
+                            ? 'Update client information and settings'
+                            : 'Add a new client to your system'
+                          }
+                        </p>
+                      </div>
+                      <Button 
+                        onClick={() => setClientView('list')}
+                        variant="outline"
+                      >
+                        ← Back to List
+                      </Button>
+                    </div>
+                    
+                    <ClientForm
+                      client={selectedClient}
+                      onSubmit={handleClientFormSubmit}
+                      onCancel={handleClientFormCancel}
+                      isLoading={clientFormLoading}
+                    />
+                  </div>
+                )}
+
+                {clientView === 'profile' && selectedClient && (
+                  <ClientProfile
+                    client={selectedClient}
+                    onEdit={handleEditClient}
+                    onClose={handleClientProfileClose}
+                  />
                 )}
               </div>
             )}

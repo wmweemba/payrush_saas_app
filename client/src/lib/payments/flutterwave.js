@@ -4,6 +4,7 @@
  */
 
 import { getCurrency } from '@/lib/currency/currencies';
+import { apiClient, API_ENDPOINTS } from '@/lib/apiConfig';
 
 /**
  * Get country code from currency
@@ -137,23 +138,15 @@ export const processPayment = async (invoice, onSuccess, onError) => {
  */
 export const verifyPayment = async (transactionId, invoiceId) => {
   try {
-    const response = await fetch('/api/payments/verify', {
+    const response = await apiClient(API_ENDPOINTS.paymentVerify, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({
         transaction_id: transactionId,
         invoice_id: invoiceId
       })
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-    return result;
+    return response;
   } catch (error) {
     console.error('Payment verification API error:', error);
     throw error;

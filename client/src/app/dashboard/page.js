@@ -54,15 +54,21 @@ export default function Dashboard() {
         setUser(session.user);
 
         // Fetch user profile
+        console.log('Fetching profile for user:', session.user.id);
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', session.user.id)
           .single();
 
+        console.log('Profile query result:', { profileData, profileError });
+
         if (profileError && profileError.code === 'PGRST116') {
           // Profile doesn't exist, create one
-          const { data: newProfile, error: createError } = await supabase
+          console.log('Creating new profile for user:', session.user.id);
+          
+          // Try insert first
+          let { data: newProfile, error: createError } = await supabase
             .from('profiles')
             .insert({
               id: session.user.id,
@@ -72,15 +78,53 @@ export default function Dashboard() {
             .select()
             .single();
 
+          // If insert fails, try upsert as fallback
           if (createError) {
-            console.error('Failed to create profile:', createError);
-            setProfile({ name: 'User', business_name: 'My Business' });
+            console.log('Insert failed, trying upsert:', createError);
+            
+            const { data: upsertProfile, error: upsertError } = await supabase
+              .from('profiles')
+              .upsert({
+                id: session.user.id,
+                name: session.user.email?.split('@')[0] || 'User',
+                business_name: 'My Business'
+              })
+              .select()
+              .single();
+              
+            if (upsertError) {
+              console.error('Both insert and upsert failed:', {
+                insertError: createError,
+                upsertError: upsertError
+              });
+              // Set a default profile to allow the app to continue working
+              setProfile({ 
+                id: session.user.id,
+                name: session.user.email?.split('@')[0] || 'User', 
+                business_name: 'My Business' 
+              });
+            } else {
+              console.log('Profile created via upsert:', upsertProfile);
+              setProfile(upsertProfile);
+            }
           } else {
+            console.log('Profile created successfully:', newProfile);
             setProfile(newProfile);
           }
         } else if (profileError) {
-          console.error('Error fetching profile:', profileError);
-          setProfile({ name: 'User', business_name: 'My Business' });
+          console.error('Error fetching profile:', {
+            error: profileError,
+            message: profileError.message,
+            details: profileError.details,
+            hint: profileError.hint,
+            code: profileError.code
+          });
+          // Set a default profile to allow the app to continue working
+          setProfile({ 
+            id: session.user.id,
+            name: session.user.email?.split('@')[0] || 'User', 
+            business_name: 'My Business' 
+          });
         } else {
           setProfile(profileData);
         }

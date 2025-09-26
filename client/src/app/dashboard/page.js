@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabaseClient";
-import { processPayment, formatCurrency } from "@/lib/payments/flutterwave";
+import { processPayment } from "@/lib/payments/flutterwave";
+import { CurrencySelect, CurrencyInput, CurrencyDisplay } from "@/components/ui/CurrencySelect";
+import { getDefaultCurrency, formatCurrency } from "@/lib/currency/currencies";
+import { downloadInvoicePDF, previewInvoicePDF } from "@/lib/pdf/invoicePDF";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -28,6 +31,7 @@ export default function Dashboard() {
     customer_name: '',
     customer_email: '',
     amount: '',
+    currency: getDefaultCurrency(), // Add currency support
     due_date: ''
   });
   
@@ -38,6 +42,10 @@ export default function Dashboard() {
   // Payment processing state
   const [processingPayment, setProcessingPayment] = useState(false);
   const [paymentInvoiceId, setPaymentInvoiceId] = useState(null);
+  
+  // PDF processing state
+  const [processingPDF, setProcessingPDF] = useState(false);
+  const [pdfInvoiceId, setPdfInvoiceId] = useState(null);
 
   // Authentication guard and data loading
   useEffect(() => {
@@ -366,7 +374,7 @@ export default function Dashboard() {
         customer_name: invoiceForm.customer_name,
         customer_email: invoiceForm.customer_email || null,
         amount: parseFloat(invoiceForm.amount),
-        currency: 'USD',
+        currency: invoiceForm.currency, // Use selected currency
         status: 'draft', // Try original common status
         due_date: invoiceForm.due_date || defaultDueDate.toISOString().split('T')[0]
       };
@@ -397,6 +405,7 @@ export default function Dashboard() {
         customer_name: '',
         customer_email: '',
         amount: '',
+        currency: getDefaultCurrency(),
         due_date: ''
       });
       setShowInvoiceForm(false);
@@ -486,6 +495,54 @@ export default function Dashboard() {
     } finally {
       setProcessingPayment(false);
       setPaymentInvoiceId(null);
+    }
+  };
+
+  // Download invoice as PDF
+  const handleDownloadPDF = async (invoice) => {
+    setProcessingPDF(true);
+    setPdfInvoiceId(invoice.id);
+    setMessage('');
+    
+    try {
+      const result = await downloadInvoicePDF(invoice, profile);
+      if (result.success) {
+        setMessage(`✅ Invoice PDF downloaded successfully: ${result.filename}`);
+        setIsError(false);
+      } else {
+        throw new Error(result.error || 'Failed to generate PDF');
+      }
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      setMessage(`❌ Failed to generate PDF: ${error.message}`);
+      setIsError(true);
+    } finally {
+      setProcessingPDF(false);
+      setPdfInvoiceId(null);
+    }
+  };
+
+  // Preview invoice as PDF
+  const handlePreviewPDF = async (invoice) => {
+    setProcessingPDF(true);
+    setPdfInvoiceId(invoice.id);
+    setMessage('');
+    
+    try {
+      const result = await previewInvoicePDF(invoice, profile);
+      if (result.success) {
+        setMessage('✅ Invoice PDF preview opened in new tab');
+        setIsError(false);
+      } else {
+        throw new Error(result.error || 'Failed to preview PDF');
+      }
+    } catch (error) {
+      console.error('PDF preview error:', error);
+      setMessage(`❌ Failed to preview PDF: ${error.message}`);
+      setIsError(true);
+    } finally {
+      setProcessingPDF(false);
+      setPdfInvoiceId(null);
     }
   };
 
@@ -679,20 +736,24 @@ export default function Dashboard() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Amount (USD) *
+                          Currency
                         </label>
-                        <input
-                          type="number"
-                          name="amount"
+                        <CurrencySelect
+                          value={invoiceForm.currency}
+                          onChange={(currency) => setInvoiceForm({...invoiceForm, currency})}
+                          className="mb-2"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Amount ({invoiceForm.currency}) *
+                        </label>
+                        <CurrencyInput
                           value={invoiceForm.amount}
-                          onChange={handleInvoiceInputChange}
-                          required
-                          step="0.01"
-                          min="0"
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                                   bg-white dark:bg-slate-800 text-gray-900 dark:text-white 
-                                   focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          currency={invoiceForm.currency}
+                          onChange={(amount) => setInvoiceForm({...invoiceForm, amount})}
                           placeholder="0.00"
+                          className="w-full"
                         />
                       </div>
                       <div>
@@ -883,6 +944,28 @@ export default function Dashboard() {
                                   Cancel
                                 </Button>
                               )}
+                              
+                              {/* PDF Action Buttons */}
+                              <div className="border-l border-gray-300 pl-2 ml-2">
+                                <Button 
+                                  onClick={() => handlePreviewPDF(invoice)}
+                                  disabled={processingPDF && pdfInvoiceId === invoice.id}
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-purple-600 border-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:border-purple-400"
+                                >
+                                  {processingPDF && pdfInvoiceId === invoice.id ? 'Generating...' : '👁️ Preview PDF'}
+                                </Button>
+                                <Button 
+                                  onClick={() => handleDownloadPDF(invoice)}
+                                  disabled={processingPDF && pdfInvoiceId === invoice.id}
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-indigo-600 border-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:border-indigo-400 ml-1"
+                                >
+                                  {processingPDF && pdfInvoiceId === invoice.id ? 'Generating...' : '📄 Download PDF'}
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         </div>

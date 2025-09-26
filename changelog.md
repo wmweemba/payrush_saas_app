@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - MAJOR UPDATE: Multi-Currency Support & Advanced Invoice Features (v0.6.0)
+
+- **🌍 Complete Multi-Currency System**
+  - **ZMW (Zambian Kwacha) Support**: Full integration for Zambian market with K currency symbol
+  - **8 Major Currencies Supported**: USD, ZMW, EUR, GBP, NGN, KES, GHS, ZAR with proper formatting
+  - **Currency Selection Interface**: Dropdown with flags and currency symbols in invoice creation
+  - **Smart Currency Formatting**: Locale-aware number formatting with proper decimal places and separators
+  - **Exchange Rate System**: Database table for tracking exchange rates with automatic conversions
+  - **Flutterwave Multi-Currency**: Payment processing supports all currencies with appropriate payment methods
+  - **Profile Currency Preferences**: Users can set default currency in their business profile
+
+- **📄 Professional PDF Invoice Generation**
+  - **Multi-Template System**: 4 professional templates (Professional, Minimal, Modern, Classic)
+  - **Template Customization**: Different color schemes, fonts, and layouts for each template
+  - **Multi-Currency PDF Support**: Invoices generate with proper currency formatting and symbols
+  - **Company Branding**: Business information, logos, and contact details in PDF invoices
+  - **Download & Preview**: Both download and browser preview options for generated PDFs
+  - **Professional Layouts**: Clean, modern designs suitable for business use
+  - **Responsive PDF Generation**: Works across different browsers and devices
+
+- **💳 Enhanced Payment Integration**
+  - **Currency-Aware Payments**: Flutterwave integration processes payments in selected currency
+  - **Regional Payment Methods**: Different payment options based on currency (mobile money for African currencies)
+  - **Payment Method Optimization**: Card, bank transfer, USSD, and mobile money based on currency
+  - **Currency Validation**: Proper validation of payment amounts and currency consistency
+
+### Technical Implementation
+- **Database Schema Updates**: Comprehensive migration for multi-currency support with constraints
+- **Currency Configuration System**: Centralized currency management with exchange rates and formatting rules
+- **PDF Generation Engine**: jsPDF integration with template system and professional layouts
+- **Error Handling**: Robust error handling for currency conversion and PDF generation failures
+- **Performance Optimization**: Efficient currency formatting and PDF generation with caching
+- **Build Verification**: All features tested and building successfully in production
+
 ### Fixed - Invoice Creation Database Constraint Resolution (v0.5.1)
 
 - **🐛 Database Schema Alignment**

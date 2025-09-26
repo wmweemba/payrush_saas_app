@@ -3,6 +3,33 @@
  * Handles payment processing, verification, and invoice updates
  */
 
+import { getCurrency } from '@/lib/currency/currencies';
+
+/**
+ * Get country code from currency
+ */
+export const getCountryFromCurrency = (currencyCode) => {
+  const countryMap = {
+    USD: 'US',
+    ZMW: 'ZM', // Zambia
+    EUR: 'DE', // Default to Germany for EUR
+    GBP: 'GB', // United Kingdom
+    NGN: 'NG', // Nigeria
+    KES: 'KE', // Kenya
+    GHS: 'GH', // Ghana
+    ZAR: 'ZA'  // South Africa
+  };
+  return countryMap[currencyCode] || 'US';
+};
+
+/**
+ * Get payment options based on currency
+ */
+export const getPaymentOptionsForCurrency = (currencyCode) => {
+  const currency = getCurrency(currencyCode);
+  return currency.supported_payment_methods.join(',');
+};
+
 // Load Flutterwave inline script dynamically
 export const loadFlutterwaveScript = () => {
   return new Promise((resolve, reject) => {
@@ -57,9 +84,9 @@ export const processPayment = async (invoice, onSuccess, onError) => {
       public_key: process.env.NEXT_PUBLIC_FLW_PUBLIC_KEY,
       tx_ref: txRef,
       amount: parseFloat(invoice.amount),
-      currency: 'USD', // Can be made configurable
-      country: 'US',
-      payment_options: 'card,banktransfer,ussd,mobilemoney',
+      currency: invoice.currency || 'USD', // Use invoice currency
+      country: getCountryFromCurrency(invoice.currency || 'USD'),
+      payment_options: getPaymentOptionsForCurrency(invoice.currency || 'USD'),
       customer: {
         email: invoice.customer_email,
         name: invoice.customer_name,
@@ -131,16 +158,6 @@ export const verifyPayment = async (transactionId, invoiceId) => {
     console.error('Payment verification API error:', error);
     throw error;
   }
-};
-
-/**
- * Format currency for display
- */
-export const formatCurrency = (amount, currency = 'USD') => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency,
-  }).format(amount);
 };
 
 /**

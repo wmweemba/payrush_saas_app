@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabaseClient";
+import { processPayment, formatCurrency } from "@/lib/payments/flutterwave";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -33,6 +34,10 @@ export default function Dashboard() {
   // Message state
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
+  
+  // Payment processing state
+  const [processingPayment, setProcessingPayment] = useState(false);
+  const [paymentInvoiceId, setPaymentInvoiceId] = useState(null);
 
   // Authentication guard and data loading
   useEffect(() => {
@@ -274,12 +279,42 @@ export default function Dashboard() {
     }
   };
 
-  // Format currency
-  const formatCurrency = (amount, currency = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency
-    }).format(amount);
+  // Process payment for an invoice
+  const handlePayNow = async (invoice) => {
+    setProcessingPayment(true);
+    setPaymentInvoiceId(invoice.id);
+    setMessage('');
+    
+    try {
+      await processPayment(
+        invoice,
+        // onSuccess callback
+        async (response, verificationResult) => {
+          setMessage(`✅ Payment successful! Invoice #${invoice.id} has been paid.`);
+          setIsError(false);
+          
+          // Refresh invoices to show updated status
+          if (user) {
+            await fetchInvoices(user.id);
+          }
+          
+          console.log('Payment successful:', { response, verificationResult });
+        },
+        // onError callback
+        (error, details) => {
+          console.error('Payment error:', error, details);
+          setMessage(`❌ Payment failed: ${typeof error === 'string' ? error : error.message}`);
+          setIsError(true);
+        }
+      );
+    } catch (error) {
+      console.error('Payment processing error:', error);
+      setMessage(`❌ Failed to process payment: ${error.message}`);
+      setIsError(true);
+    } finally {
+      setProcessingPayment(false);
+      setPaymentInvoiceId(null);
+    }
   };
 
   // Format date
@@ -578,6 +613,14 @@ export default function Dashboard() {
                               {invoice.status === 'Pending' && (
                                 <>
                                   <Button 
+                                    onClick={() => handlePayNow(invoice)}
+                                    disabled={processingPayment && paymentInvoiceId === invoice.id}
+                                    size="sm"
+                                    className="bg-orange-600 hover:bg-orange-700 text-white"
+                                  >
+                                    {processingPayment && paymentInvoiceId === invoice.id ? 'Processing...' : '💳 Pay Now'}
+                                  </Button>
+                                  <Button 
                                     onClick={() => updateInvoiceStatus(invoice.id, 'Sent')}
                                     disabled={invoiceLoading}
                                     variant="outline"
@@ -600,6 +643,14 @@ export default function Dashboard() {
                               {invoice.status === 'Sent' && (
                                 <>
                                   <Button 
+                                    onClick={() => handlePayNow(invoice)}
+                                    disabled={processingPayment && paymentInvoiceId === invoice.id}
+                                    size="sm"
+                                    className="bg-orange-600 hover:bg-orange-700 text-white"
+                                  >
+                                    {processingPayment && paymentInvoiceId === invoice.id ? 'Processing...' : '💳 Pay Now'}
+                                  </Button>
+                                  <Button 
                                     onClick={() => updateInvoiceStatus(invoice.id, 'Paid')}
                                     disabled={invoiceLoading}
                                     size="sm"
@@ -620,14 +671,24 @@ export default function Dashboard() {
                               )}
                               
                               {(invoice.status === 'Overdue') && (
-                                <Button 
-                                  onClick={() => updateInvoiceStatus(invoice.id, 'Paid')}
-                                  disabled={invoiceLoading}
-                                  size="sm"
-                                  className="bg-green-600 hover:bg-green-700 text-white"
-                                >
-                                  Mark as Paid
-                                </Button>
+                                <>
+                                  <Button 
+                                    onClick={() => handlePayNow(invoice)}
+                                    disabled={processingPayment && paymentInvoiceId === invoice.id}
+                                    size="sm"
+                                    className="bg-orange-600 hover:bg-orange-700 text-white"
+                                  >
+                                    {processingPayment && paymentInvoiceId === invoice.id ? 'Processing...' : '💳 Pay Now'}
+                                  </Button>
+                                  <Button 
+                                    onClick={() => updateInvoiceStatus(invoice.id, 'Paid')}
+                                    disabled={invoiceLoading}
+                                    size="sm"
+                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                  >
+                                    Mark as Paid
+                                  </Button>
+                                </>
                               )}
                               
                               {invoice.status !== 'Paid' && invoice.status !== 'Cancelled' && (

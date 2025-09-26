@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - MAJOR UPDATE: Complete Flutterwave Payment Integration (v0.5.0)
+
+- **💳 Live Payment Processing System**
+  - **Flutterwave Integration**: Complete payment processing with secure checkout modal
+  - **Pay Now Buttons**: Added to Pending, Sent, and Overdue invoices for immediate payment
+  - **Payment Verification API**: Automatic transaction verification and invoice status updates
+  - **Payment Records**: Comprehensive payment tracking in dedicated database table
+  - **Webhook Processing**: Secure webhook handler for real-time payment notifications
+  - **Multi-Payment Methods**: Support for cards, mobile money, bank transfers, USSD
+  - **Currency Support**: USD with configurable currency options
+  - **Reference Generation**: Unique payment references with invoice linking
+
+- **🛠️ Payment Infrastructure**
+  - **Environment Configuration**: NEXT_PUBLIC_FLW_PUBLIC_KEY and FLW_SECRET_KEY setup
+  - **Payments Database Table**: Complete schema with transaction tracking:
+    - Payment amount, currency, status, reference
+    - Flutterwave transaction ID and payment method
+    - Customer information and timestamps
+    - RLS policies for secure data access
+  - **Payment Utilities**: lib/payments/flutterwave.js with:
+    - Dynamic Flutterwave script loading
+    - Payment processing and verification
+    - Error handling and status management
+    - Currency formatting and display utilities
+  - **API Endpoints**: 
+    - /api/payments/verify for transaction verification
+    - /api/webhooks/flutterwave for payment notifications
+
+- **🎯 User Experience Features**  
+  - **Real-time Processing**: Payment status updates during transaction
+  - **Visual Feedback**: Processing indicators and success/error messages
+  - **Automatic Updates**: Invoice status changes to "Paid" upon successful payment
+  - **Error Handling**: Comprehensive error messages and recovery flows
+  - **Payment Flow**: Seamless checkout → verification → invoice update sequence
+
+### Technical Implementation
+- **Payment Verification**: Amount matching, customer validation, duplicate prevention
+- **Database Transactions**: Atomic payment record creation and invoice status updates
+- **Security**: Webhook signature verification and secure API key handling
+- **Integration Testing**: Complete build verification and development server testing
+- **Error Recovery**: Robust error handling for network failures and API errors
+
 ### Added - MAJOR UPDATE: Invoice Lifecycle Management & Profile Settings (v0.4.0)
 
 - **🔄 Invoice Lifecycle Management System**

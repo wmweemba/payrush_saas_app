@@ -1,174 +1,197 @@
 /**
  * Flutterwave Payment Integration for PayRush
- * 
- * This module handles payment processing through Flutterwave's API
- * Supports cards, mobile money, bank transfers across Africa and globally
- * 
- * Documentation: https://developer.flutterwave.com
- * React SDK: https://github.com/Flutterwave/Flutterwave-React-v3
+ * Handles payment processing, verification, and invoice updates
  */
 
-// Import Flutterwave React SDK (install with: npm install flutterwave-react-v3)
-// import { FlutterwaveCheckout, closePaymentModal } from 'flutterwave-react-v3';
+// Load Flutterwave inline script dynamically
+export const loadFlutterwaveScript = () => {
+  return new Promise((resolve, reject) => {
+    // Check if already loaded
+    if (window.FlutterwaveCheckout) {
+      resolve(window.FlutterwaveCheckout);
+      return;
+    }
 
-/**
- * Configuration for Flutterwave integration
- * Environment variables should be set in .env.local:
- * - NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY
- * - FLUTTERWAVE_SECRET_KEY (server-side only)
- */
-const FLUTTERWAVE_CONFIG = {
-  public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY,
-  secret_key: process.env.FLUTTERWAVE_SECRET_KEY, // Server-side only
-  endpoint: 'https://api.flutterwave.com/v3',
-};
-
-/**
- * Create a payment configuration for an invoice
- * @param {Object} invoice - Invoice data from database
- * @param {Object} options - Additional payment options
- * @returns {Object} Flutterwave payment configuration
- */
-export const createPaymentConfig = (invoice, options = {}) => {
-  const config = {
-    public_key: FLUTTERWAVE_CONFIG.public_key,
-    tx_ref: `payrush_${invoice.id}_${Date.now()}`,
-    amount: invoice.amount,
-    currency: invoice.currency || 'NGN',
-    payment_options: 'card,mobilemoney,ussd,banktransfer',
-    customer: {
-      email: invoice.customer_email,
-      phone_number: invoice.customer_phone || '',
-      name: invoice.customer_name,
-    },
-    customizations: {
-      title: `Invoice from ${options.business_name || 'PayRush'}`,
-      description: `Payment for Invoice #${invoice.id.slice(0, 8)}`,
-      logo: options.logo_url || '',
-    },
-    meta: {
-      invoice_id: invoice.id,
-      user_id: invoice.user_id,
-      source: 'payrush',
-    },
-    callback: options.callback_url || `${process.env.NEXT_PUBLIC_APP_URL}/payments/callback`,
-    redirect_url: options.redirect_url || `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
-    onclose: options.onclose || (() => console.log('Payment modal closed')),
-  };
-
-  return config;
-};
-
-/**
- * Generate a payment link for an invoice
- * This can be sent to customers via email or SMS
- * @param {Object} invoice - Invoice data
- * @param {Object} options - Payment options
- * @returns {Promise<string>} Payment link URL
- */
-export const generatePaymentLink = async (invoice, options = {}) => {
-  try {
-    const config = createPaymentConfig(invoice, options);
+    // Create script element
+    const script = document.createElement('script');
+    script.src = 'https://checkout.flutterwave.com/v3.js';
+    script.async = true;
     
-    // Call Flutterwave API to generate payment link
-    const response = await fetch(`${FLUTTERWAVE_CONFIG.endpoint}/payments`, {
+    script.onload = () => {
+      if (window.FlutterwaveCheckout) {
+        resolve(window.FlutterwaveCheckout);
+      } else {
+        reject(new Error('Failed to load Flutterwave script'));
+      }
+    };
+    
+    script.onerror = () => {
+      reject(new Error('Failed to load Flutterwave script'));
+    };
+    
+    document.head.appendChild(script);
+  });
+};
+
+/**
+ * Generate unique payment reference
+ */
+export const generatePaymentReference = (invoiceId) => {
+  const timestamp = Date.now();
+  return `PAYRUSH_${invoiceId}_${timestamp}`;
+};
+
+/**
+ * Launch Flutterwave payment modal for an invoice
+ */
+export const processPayment = async (invoice, onSuccess, onError) => {
+  try {
+    // Load Flutterwave script
+    const FlutterwaveCheckout = await loadFlutterwaveScript();
+    
+    // Generate payment reference
+    const txRef = generatePaymentReference(invoice.id);
+    
+    // Payment configuration
+    const paymentConfig = {
+      public_key: process.env.NEXT_PUBLIC_FLW_PUBLIC_KEY,
+      tx_ref: txRef,
+      amount: parseFloat(invoice.amount),
+      currency: 'USD', // Can be made configurable
+      country: 'US',
+      payment_options: 'card,banktransfer,ussd,mobilemoney',
+      customer: {
+        email: invoice.customer_email,
+        name: invoice.customer_name,
+      },
+      customizations: {
+        title: 'PayRush Invoice Payment',
+        description: `Payment for Invoice #${invoice.id}`,
+        logo: '/favicon.ico', // PayRush logo
+      },
+      callback: async (response) => {
+        console.log('Payment response:', response);
+        
+        if (response.status === 'successful') {
+          try {
+            // Verify payment on backend
+            const verificationResult = await verifyPayment(response.transaction_id, invoice.id);
+            
+            if (verificationResult.success) {
+              onSuccess(response, verificationResult);
+            } else {
+              onError('Payment verification failed', verificationResult);
+            }
+          } catch (error) {
+            console.error('Payment verification error:', error);
+            onError('Payment verification failed', error);
+          }
+        } else {
+          onError('Payment was not successful', response);
+        }
+      },
+      onclose: () => {
+        console.log('Payment modal closed');
+        // Handle modal close if needed
+      }
+    };
+
+    // Launch payment modal
+    FlutterwaveCheckout(paymentConfig);
+    
+  } catch (error) {
+    console.error('Payment processing error:', error);
+    onError('Failed to process payment', error);
+  }
+};
+
+/**
+ * Verify payment with backend API
+ */
+export const verifyPayment = async (transactionId, invoiceId) => {
+  try {
+    const response = await fetch('/api/payments/verify', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${FLUTTERWAVE_CONFIG.secret_key}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        ...config,
-        type: 'payment_link',
-      }),
+        transaction_id: transactionId,
+        invoice_id: invoiceId
+      })
     });
 
-    const data = await response.json();
-    
-    if (data.status === 'success') {
-      return data.data.link;
-    } else {
-      throw new Error(data.message || 'Failed to generate payment link');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    const result = await response.json();
+    return result;
   } catch (error) {
-    console.error('Payment link generation error:', error);
+    console.error('Payment verification API error:', error);
     throw error;
   }
 };
 
 /**
- * Verify a payment transaction
- * Called by webhook or after payment completion
- * @param {string} transactionId - Flutterwave transaction ID
- * @returns {Promise<Object>} Transaction verification result
+ * Format currency for display
  */
-export const verifyPayment = async (transactionId) => {
-  try {
-    const response = await fetch(
-      `${FLUTTERWAVE_CONFIG.endpoint}/transactions/${transactionId}/verify`,
-      {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${FLUTTERWAVE_CONFIG.secret_key}`,
-        },
-      }
-    );
+export const formatCurrency = (amount, currency = 'USD') => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency,
+  }).format(amount);
+};
 
-    const data = await response.json();
-    
-    if (data.status === 'success') {
-      return {
-        success: true,
-        transaction: data.data,
-        amount: data.data.amount,
-        currency: data.data.currency,
-        status: data.data.status,
-        reference: data.data.tx_ref,
-        flw_ref: data.data.flw_ref,
-      };
-    } else {
-      throw new Error(data.message || 'Payment verification failed');
-    }
-  } catch (error) {
-    console.error('Payment verification error:', error);
-    return {
-      success: false,
-      error: error.message,
-    };
-  }
+/**
+ * Get payment method display name
+ */
+export const getPaymentMethodDisplay = (method) => {
+  const methods = {
+    'card': 'Credit/Debit Card',
+    'banktransfer': 'Bank Transfer', 
+    'ussd': 'USSD',
+    'mobilemoney': 'Mobile Money',
+    'mpesa': 'M-Pesa',
+    'airtel': 'Airtel Money',
+    'mtn': 'MTN Mobile Money'
+  };
+  
+  return methods[method] || method;
 };
 
 /**
  * Process webhook notification from Flutterwave
  * Updates invoice status based on payment status
- * @param {Object} webhookData - Webhook payload from Flutterwave
- * @returns {Promise<Object>} Processing result
  */
 export const processWebhook = async (webhookData) => {
   try {
-    // Verify webhook signature for security
-    // Implementation depends on Flutterwave webhook signature verification
+    console.log('Processing Flutterwave webhook:', webhookData);
     
     const { event, data } = webhookData;
     
     if (event === 'charge.completed' && data.status === 'successful') {
       const { tx_ref, amount, currency } = data;
       
-      // Extract invoice ID from transaction reference
-      const invoiceId = data.meta?.invoice_id || tx_ref.split('_')[1];
+      // Extract invoice ID from transaction reference (format: PAYRUSH_invoiceId_timestamp)
+      const invoiceId = tx_ref.split('_')[1];
       
       return {
         success: true,
         action: 'payment_completed',
         invoice_id: invoiceId,
-        amount,
-        currency,
-        transaction_id: data.id,
+        amount: parseFloat(amount),
+        currency: currency,
+        transaction_id: data.id.toString(),
         flw_ref: data.flw_ref,
       };
     }
     
-    return { success: true, action: 'no_action' };
+    return { 
+      success: true, 
+      action: 'no_action',
+      message: `Webhook event ${event} processed but no action taken`
+    };
   } catch (error) {
     console.error('Webhook processing error:', error);
     return {
@@ -177,57 +200,3 @@ export const processWebhook = async (webhookData) => {
     };
   }
 };
-
-/**
- * Update invoice status after successful payment
- * Called after webhook processing or manual verification
- * @param {string} invoiceId - Invoice ID to update
- * @param {Object} paymentData - Payment transaction data
- * @returns {Promise<Object>} Update result
- */
-export const updateInvoicePaymentStatus = async (invoiceId, paymentData) => {
-  try {
-    // This would integrate with your Supabase update logic
-    // Implementation will depend on your specific invoice update function
-    
-    return {
-      success: true,
-      message: 'Invoice marked as paid successfully',
-    };
-  } catch (error) {
-    console.error('Invoice update error:', error);
-    return {
-      success: false,
-      error: error.message,
-    };
-  }
-};
-
-// Export configuration for testing and debugging
-export { FLUTTERWAVE_CONFIG };
-
-// Usage Examples:
-/*
-
-// 1. Generate payment link for an invoice
-const paymentLink = await generatePaymentLink(invoice, {
-  business_name: 'My Business',
-  callback_url: 'https://myapp.com/payments/callback',
-});
-
-// 2. Verify a payment
-const verification = await verifyPayment(transactionId);
-if (verification.success) {
-  await updateInvoicePaymentStatus(invoiceId, verification.transaction);
-}
-
-// 3. Process webhook
-app.post('/api/webhooks/flutterwave', async (req, res) => {
-  const result = await processWebhook(req.body);
-  if (result.success && result.action === 'payment_completed') {
-    await updateInvoicePaymentStatus(result.invoice_id, result);
-  }
-  res.status(200).json({ status: 'ok' });
-});
-
-*/

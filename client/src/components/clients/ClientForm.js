@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { clientValidation } from '@/lib/clientService';
-import { currencies } from '@/lib/currency/currencies';
+import { SUPPORTED_CURRENCIES } from '@/lib/currency/currencies';
 
 export default function ClientForm({ client = null, onSubmit, onCancel, isLoading = false }) {
   const [formData, setFormData] = useState({
@@ -287,7 +287,7 @@ export default function ClientForm({ client = null, onSubmit, onCancel, isLoadin
               onChange={(e) => handleInputChange('defaultCurrency', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              {Object.entries(currencies).map(([code, currency]) => (
+              {Object.entries(SUPPORTED_CURRENCIES).map(([code, currency]) => (
                 <option key={code} value={code}>
                   {currency.name} ({code}) - {currency.symbol}
                 </option>

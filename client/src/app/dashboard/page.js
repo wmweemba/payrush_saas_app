@@ -317,13 +317,22 @@ export default function Dashboard() {
     }
   };
 
-  // Format date
+  // Format date - using consistent formatting to prevent hydration mismatches
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    try {
+      const date = new Date(dateString);
+      // Use a more consistent format that won't vary by locale
+      const options = {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        timeZone: 'UTC' // Use UTC to ensure consistency between server and client
+      };
+      return date.toLocaleDateString('en-US', options);
+    } catch (error) {
+      console.error('Date formatting error:', error);
+      return dateString; // Fallback to original string
+    }
   };
 
   if (loading) {

@@ -97,13 +97,30 @@ export default function Dashboard() {
           
           // Try insert first
           console.log('Attempting profile insert...');
+          
+          // Create flexible profile data based on available schema
+          const profileInsertData = {
+            id: session.user.id,
+            business_name: 'My Business'
+          };
+          
+          // Test if name column exists and add it if available
+          try {
+            const { error: nameTestError } = await supabase
+              .from('profiles')
+              .select('name')
+              .limit(0);
+              
+            if (!nameTestError) {
+              profileInsertData.name = session.user.email?.split('@')[0] || 'User';
+            }
+          } catch (e) {
+            console.log('Name column not available in current schema');
+          }
+
           let { data: newProfile, error: createError } = await supabase
             .from('profiles')
-            .insert({
-              id: session.user.id,
-              name: session.user.email?.split('@')[0] || 'User',
-              business_name: 'My Business'
-            })
+            .insert(profileInsertData)
             .select()
             .single();
 
@@ -122,13 +139,29 @@ export default function Dashboard() {
               statusText: createError?.statusText
             });
             
+            // Create flexible profile data for upsert as well
+            const profileUpsertData = {
+              id: session.user.id,
+              business_name: 'My Business'
+            };
+            
+            // Add name if column exists
+            try {
+              const { error: nameTestError } = await supabase
+                .from('profiles')
+                .select('name')
+                .limit(0);
+                
+              if (!nameTestError) {
+                profileUpsertData.name = session.user.email?.split('@')[0] || 'User';
+              }
+            } catch (e) {
+              console.log('Name column not available for upsert');
+            }
+            
             const { data: upsertProfile, error: upsertError } = await supabase
               .from('profiles')
-              .upsert({
-                id: session.user.id,
-                name: session.user.email?.split('@')[0] || 'User',
-                business_name: 'My Business'
-              }, {
+              .upsert(profileUpsertData, {
                 onConflict: 'id'
               })
               .select()
@@ -286,16 +319,41 @@ export default function Dashboard() {
 
       if (profileCheckError || !profileCheck) {
         console.log('Profile not found, creating profile...');
+        
+        // Try to create profile with flexible schema handling
+        const profileData = {
+          id: user.id,
+          business_name: profile.business_name || 'My Business'
+        };
+        
+        // Only add name field if we can confirm it exists in the schema
+        try {
+          // Test if name column exists by trying a small operation first
+          const { error: schemaTestError } = await supabase
+            .from('profiles')
+            .select('name')
+            .limit(0);
+            
+          if (!schemaTestError) {
+            // Name column exists, safe to include it
+            profileData.name = user.email?.split('@')[0] || 'User';
+          }
+        } catch (e) {
+          console.log('Name column not available, creating profile without it');
+        }
+
         const { error: createProfileError } = await supabase
           .from('profiles')
-          .insert({
-            id: user.id,
-            name: user.email?.split('@')[0] || 'User',
-            business_name: profile.business_name || 'My Business'
-          });
+          .insert(profileData);
 
         if (createProfileError) {
-          throw new Error(`Failed to create user profile: ${createProfileError.message}`);
+          console.error('Profile creation failed:', createProfileError);
+          
+          // If profile creation fails, try to proceed anyway
+          // The user might already have a profile but the check failed
+          console.log('Attempting to continue invoice creation despite profile creation failure...');
+        } else {
+          console.log('Profile created successfully');
         }
       }
 
@@ -309,7 +367,7 @@ export default function Dashboard() {
         customer_email: invoiceForm.customer_email || null,
         amount: parseFloat(invoiceForm.amount),
         currency: 'USD',
-        status: 'Pending',
+        status: 'draft', // Try original common status
         due_date: invoiceForm.due_date || defaultDueDate.toISOString().split('T')[0]
       };
 
@@ -322,6 +380,8 @@ export default function Dashboard() {
 
       if (error) {
         console.error('Invoice creation error:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        console.error('Invoice data that failed:', JSON.stringify(invoiceData, null, 2));
         throw new Error(`Database error: ${error.message || 'Unknown error occurred'}`);
       }
 

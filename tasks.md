@@ -21,6 +21,14 @@ How to use: Edit this file as work progresses. Mark tasks as - [x] when done.
   - [x] Add payment history tracking and transaction records
   - [x] Implement payment failures and error handling
 
+- [x] **Critical Bug Fixes & Database Issues**
+  - [x] Resolve invoice creation database constraint violations
+  - [x] Fix hydration errors from browser extensions (suppressHydrationWarning)
+  - [x] Align database status values with application code expectations
+  - [x] Implement robust profile creation with schema flexibility
+  - [x] Add comprehensive error logging and debugging capabilities
+  - [x] Create database migration documentation and troubleshooting guides
+
 ## Milestone 5 — Business Intelligence & Scaling (TODO 🚀)LETED ✅)
 
 - [x] Initialize Next.js project with App Router

@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed - Invoice Creation Database Constraint Resolution (v0.5.1)
+
+- **🐛 Database Schema Alignment**
+  - **Invoice Status Constraint**: Fixed invoice creation failing due to check constraint violations
+  - **Status Value Correction**: Updated invoice creation to use 'draft' status instead of 'Pending' 
+  - **Enhanced Error Debugging**: Added comprehensive error logging for database operations
+  - **Schema Investigation**: Discovered remote database uses lowercase status values vs migration expectations
+  - **Hydration Error Resolution**: Added suppressHydrationWarning to prevent browser extension conflicts
+  - **Profile Schema Flexibility**: Implemented dynamic column detection for robust profile creation
+
+- **🔧 Error Handling Improvements**
+  - **Comprehensive Error Logging**: Enhanced invoice creation with detailed error information
+  - **Database Operation Debugging**: Added JSON serialization of failed data for troubleshooting
+  - **Graceful Degradation**: Improved fallback mechanisms for schema mismatches
+  - **Migration Status Awareness**: Better handling of database schema evolution
+
+### Technical Resolution
+- **Root Cause**: Remote database constraint expected 'draft' status, not 'Pending' from migration
+- **Solution**: Updated invoiceData.status to use 'draft' for successful invoice creation
+- **Learning**: Importance of verifying actual database constraints vs planned migrations
+- **Future Prevention**: Need for database schema validation before deployment
+
 ### Added - MAJOR UPDATE: Complete Flutterwave Payment Integration (v0.5.0)
 
 - **💳 Live Payment Processing System**

@@ -43,14 +43,27 @@ export default function Dashboard() {
   useEffect(() => {
     const initializeDashboard = async () => {
       try {
+        // Debug Supabase connectivity
+        console.log('Dashboard initializing - checking Supabase connectivity...');
+        console.log('Supabase client URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+        console.log('Supabase anon key exists:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
         // Get current session
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        console.log('Session retrieval result:', { session: !!session, sessionError });
+        
+        if (sessionError) {
+          console.error('Session retrieval error:', sessionError);
+        }
         
         if (!session?.user) {
+          console.log('No valid session found, redirecting to login...');
           router.push('/login');
           return;
         }
 
+        console.log('Valid session found for user:', session.user.id);
         setUser(session.user);
 
         // Fetch user profile
@@ -66,8 +79,24 @@ export default function Dashboard() {
         if (profileError && profileError.code === 'PGRST116') {
           // Profile doesn't exist, create one
           console.log('Creating new profile for user:', session.user.id);
+          console.log('User session details:', {
+            id: session.user.id,
+            email: session.user.email,
+            aud: session.user.aud,
+            role: session.user.role
+          });
+
+          // Test if user can access profiles table at all
+          console.log('Testing profiles table access...');
+          const { data: testAccess, error: testError } = await supabase
+            .from('profiles')
+            .select('id')
+            .limit(1);
+          
+          console.log('Profiles table access test:', { testAccess, testError });
           
           // Try insert first
+          console.log('Attempting profile insert...');
           let { data: newProfile, error: createError } = await supabase
             .from('profiles')
             .insert({
@@ -78,9 +107,20 @@ export default function Dashboard() {
             .select()
             .single();
 
+          console.log('Insert result:', { newProfile, createError });
+
           // If insert fails, try upsert as fallback
           if (createError) {
-            console.log('Insert failed, trying upsert:', createError);
+            console.log('Insert failed, trying upsert...');
+            console.log('Insert error details:', {
+              error: createError,
+              message: createError?.message,
+              details: createError?.details,
+              hint: createError?.hint,
+              code: createError?.code,
+              status: createError?.status,
+              statusText: createError?.statusText
+            });
             
             const { data: upsertProfile, error: upsertError } = await supabase
               .from('profiles')
@@ -88,27 +128,55 @@ export default function Dashboard() {
                 id: session.user.id,
                 name: session.user.email?.split('@')[0] || 'User',
                 business_name: 'My Business'
+              }, {
+                onConflict: 'id'
               })
               .select()
               .single();
+
+            console.log('Upsert result:', { upsertProfile, upsertError });
               
             if (upsertError) {
-              console.error('Both insert and upsert failed:', {
-                insertError: createError,
-                upsertError: upsertError
+              console.error('Both insert and upsert failed');
+              console.error('Insert error:', {
+                error: createError,
+                message: createError?.message,
+                details: createError?.details,
+                hint: createError?.hint,
+                code: createError?.code,
+                status: createError?.status
               });
+              console.error('Upsert error:', {
+                error: upsertError,
+                message: upsertError?.message,
+                details: upsertError?.details,
+                hint: upsertError?.hint,
+                code: upsertError?.code,
+                status: upsertError?.status
+              });
+
+              // Check if this is an RLS policy issue
+              console.log('Checking if this might be an RLS policy issue...');
+              console.log('Current user authentication state:', {
+                isAuthenticated: !!session?.user,
+                userId: session?.user?.id,
+                userAud: session?.user?.aud,
+                accessToken: !!session?.access_token
+              });
+
               // Set a default profile to allow the app to continue working
+              console.log('Setting default profile as fallback...');
               setProfile({ 
                 id: session.user.id,
                 name: session.user.email?.split('@')[0] || 'User', 
                 business_name: 'My Business' 
               });
             } else {
-              console.log('Profile created via upsert:', upsertProfile);
+              console.log('Profile created via upsert successfully:', upsertProfile);
               setProfile(upsertProfile);
             }
           } else {
-            console.log('Profile created successfully:', newProfile);
+            console.log('Profile created via insert successfully:', newProfile);
             setProfile(newProfile);
           }
         } else if (profileError) {

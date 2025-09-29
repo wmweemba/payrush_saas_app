@@ -2,8 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { clientFormatters } from '@/lib/clientService';
+import { User, MapPin, CreditCard, FileText, Edit2, TrendingUp } from 'lucide-react';
+import ClientContactsManager from './ClientContactsManager';
+import ClientAddressManager from './ClientAddressManager';
+import ClientFinancialDashboard from './ClientFinancialDashboard';
 
 export default function ClientProfile({ client, onEdit, onClose }) {
+  const [activeTab, setActiveTab] = useState('overview');
   const [invoices, setInvoices] = useState([]);
   const [loadingInvoices, setLoadingInvoices] = useState(false);
 
@@ -45,280 +50,358 @@ export default function ClientProfile({ client, onEdit, onClose }) {
 
   const status = clientFormatters.getClientStatus(client);
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">
-              {client.company_name}
-            </h2>
-            {client.contact_person && (
-              <p className="text-sm text-gray-600">Contact: {client.contact_person}</p>
-            )}
-          </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl"
-          >
-            ×
-          </button>
-        </div>
+  const tabs = [
+    { 
+      id: 'overview', 
+      label: 'Overview', 
+      icon: User,
+      count: null
+    },
+    { 
+      id: 'contacts', 
+      label: 'Contacts', 
+      icon: User,
+      count: null // Will be populated by the component
+    },
+    { 
+      id: 'addresses', 
+      label: 'Addresses', 
+      icon: MapPin,
+      count: null // Will be populated by the component
+    },
+    { 
+      id: 'financial', 
+      label: 'Financial', 
+      icon: TrendingUp,
+      count: null
+    },
+    { 
+      id: 'invoices', 
+      label: 'Invoices', 
+      icon: FileText,
+      count: invoices.length
+    }
+  ];
 
-        <div className="p-6">
-          {/* Status and Actions */}
-          <div className="flex justify-between items-start mb-6">
-            <div className="flex items-center space-x-4">
-              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                status.color === 'green' 
-                  ? 'bg-green-100 text-green-800' 
-                  : status.color === 'orange'
-                  ? 'bg-orange-100 text-orange-800'
-                  : 'bg-gray-100 text-gray-800'
-              }`}>
-                {status.label}
-              </span>
-              {client.tags && client.tags.length > 0 && (
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'overview':
+        return (
+          <div className="space-y-6">
+            {/* Client Information */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Basic Information */}
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Basic Information</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500">Company Name</label>
+                      <p className="text-sm text-gray-900">{client.name || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500">Email</label>
+                      <p className="text-sm text-gray-900">{client.email || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500">Phone</label>
+                      <p className="text-sm text-gray-900">{client.phone || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500">Company</label>
+                      <p className="text-sm text-gray-900">{client.company || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500">Client Type</label>
+                      <p className="text-sm text-gray-900 capitalize">{client.client_type || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Address Information */}
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Address</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500">Address</label>
+                      <p className="text-sm text-gray-900">
+                        {[
+                          client.address_line1,
+                          client.address_line2,
+                          client.city,
+                          client.state,
+                          client.postal_code,
+                          client.country
+                        ].filter(Boolean).join(', ') || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Financial Information */}
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Financial Information</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500">Default Currency</label>
+                      <p className="text-sm text-gray-900">{client.default_currency || 'USD'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500">Payment Terms</label>
+                      <p className="text-sm text-gray-900">{client.payment_terms_days || 30} days</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500">Credit Limit</label>
+                      <p className="text-sm text-gray-900">
+                        {clientFormatters.formatCurrency(client.credit_limit || 0, client.default_currency)}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500">Current Balance</label>
+                      <p className="text-sm text-gray-900">
+                        {clientFormatters.formatCurrency(client.current_balance || 0, client.default_currency)}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500">Total Invoiced</label>
+                      <p className="text-sm text-gray-900">
+                        {clientFormatters.formatCurrency(client.total_invoiced || 0, client.default_currency)}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500">Total Paid</label>
+                      <p className="text-sm text-gray-900">
+                        {clientFormatters.formatCurrency(client.total_paid || 0, client.default_currency)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Communication Preferences */}
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Communication Preferences</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={client.email_notifications}
+                        disabled
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-700">Email Notifications</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={client.sms_notifications}
+                        disabled
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-700">SMS Notifications</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={client.whatsapp_notifications}
+                        disabled
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-700">WhatsApp Notifications</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Notes */}
+            {client.notes && (
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Notes</h3>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-sm text-gray-700">{client.notes}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Tags */}
+            {client.tags && client.tags.length > 0 && (
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Tags</h3>
                 <div className="flex flex-wrap gap-2">
                   {client.tags.map((tag, index) => (
                     <span
                       key={index}
-                      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                      className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
                     >
                       {tag}
                     </span>
                   ))}
                 </div>
-              )}
-            </div>
-            <button
-              onClick={() => onEdit(client)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              Edit Client
-            </button>
+              </div>
+            )}
           </div>
+        );
 
-          {/* Client Information Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Contact Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">Contact Information</h3>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-500">Email</label>
-                <div className="mt-1 text-sm text-gray-900">{client.email}</div>
-              </div>
+      case 'contacts':
+        return (
+          <ClientContactsManager 
+            clientId={client.id} 
+            clientName={client.name}
+          />
+        );
 
-              {client.phone && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Phone</label>
-                  <div className="mt-1 text-sm text-gray-900">{client.phone}</div>
-                </div>
-              )}
+      case 'addresses':
+        return (
+          <ClientAddressManager 
+            clientId={client.id} 
+            clientName={client.name}
+          />
+        );
 
-              {client.website && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Website</label>
-                  <div className="mt-1 text-sm text-gray-900">
-                    <a 
-                      href={client.website} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800"
-                    >
-                      {client.website}
-                    </a>
-                  </div>
-                </div>
-              )}
+      case 'financial':
+        return (
+          <ClientFinancialDashboard 
+            clientId={client.id} 
+            clientName={client.name}
+          />
+        );
 
-              {client.tax_number && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Tax Number</label>
-                  <div className="mt-1 text-sm text-gray-900">{client.tax_number}</div>
-                </div>
-              )}
-            </div>
-
-            {/* Address Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">Address</h3>
-              
-              {clientFormatters.formatAddress(client) ? (
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Address</label>
-                  <div className="mt-1 text-sm text-gray-900">
-                    {clientFormatters.formatAddress(client)}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-sm text-gray-500">No address on file</div>
-              )}
-            </div>
-
-            {/* Business Settings */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">Business Settings</h3>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-500">Default Currency</label>
-                <div className="mt-1 text-sm text-gray-900">{client.default_currency}</div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-500">Payment Terms</label>
-                <div className="mt-1 text-sm text-gray-900">
-                  {clientFormatters.formatPaymentTerms(client.payment_terms || 30)}
-                </div>
-              </div>
-
-              {client.discount_rate > 0 && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Default Discount</label>
-                  <div className="mt-1 text-sm text-gray-900">{client.discount_rate}%</div>
-                </div>
-              )}
-            </div>
-
-            {/* Financial Summary */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">Financial Summary</h3>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-500">Total Invoiced</label>
-                <div className="mt-1 text-sm text-gray-900">
-                  {clientFormatters.formatCurrency(
-                    client.total_invoiced || 0,
-                    client.default_currency
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-500">Total Paid</label>
-                <div className="mt-1 text-sm text-gray-900">
-                  {clientFormatters.formatCurrency(
-                    client.total_paid || 0,
-                    client.default_currency
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-500">Outstanding Balance</label>
-                <div className={`mt-1 text-sm font-medium ${
-                  (client.outstanding_balance || 0) > 0 ? 'text-red-600' : 'text-green-600'
-                }`}>
-                  {clientFormatters.formatCurrency(
-                    client.outstanding_balance || 0,
-                    client.default_currency
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-500">Total Invoices</label>
-                <div className="mt-1 text-sm text-gray-900">{client.invoice_count || 0}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Notes */}
-          {client.notes && (
-            <div className="mb-8">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Notes</h3>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">{client.notes}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Recent Invoices */}
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Recent Invoices</h3>
-              <button className="text-blue-600 hover:text-blue-800 text-sm">
+      case 'invoices':
+        return (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-medium text-gray-900">Recent Invoices</h3>
+              <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
                 View All Invoices
               </button>
             </div>
 
             {loadingInvoices ? (
-              <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                <span className="ml-2 text-gray-600">Loading invoices...</span>
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
             ) : invoices.length === 0 ? (
-              <div className="bg-gray-50 rounded-lg p-6 text-center">
-                <p className="text-gray-500">No invoices for this client yet</p>
-                <button className="mt-2 text-blue-600 hover:text-blue-800 text-sm">
-                  Create First Invoice
+              <div className="text-center py-12">
+                <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No invoices yet</h3>
+                <p className="text-gray-600 mb-4">Create your first invoice for this client</p>
+                <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                  Create Invoice
                 </button>
               </div>
             ) : (
-              <div className="bg-gray-50 rounded-lg overflow-hidden">
-                <table className="w-full">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Invoice
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Amount
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Status
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Due Date
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {invoices.map((invoice) => (
-                      <tr key={invoice.id} className="hover:bg-gray-100">
-                        <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                          {invoice.invoice_number}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">
+              <div className="space-y-4">
+                {invoices.map((invoice) => (
+                  <div key={invoice.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-medium text-gray-900">{invoice.invoice_number}</h4>
+                        <p className="text-sm text-gray-600">
+                          Created: {clientFormatters.formatDate(invoice.created_at)}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Due: {clientFormatters.formatDate(invoice.due_date)}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium text-gray-900">
                           {clientFormatters.formatCurrency(invoice.amount, client.default_currency)}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            invoice.status === 'paid'
-                              ? 'bg-green-100 text-green-800'
-                              : invoice.status === 'pending'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {invoice.status}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          {new Date(invoice.due_date).toLocaleDateString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        </p>
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          invoice.status === 'paid' 
+                            ? 'bg-green-100 text-green-800'
+                            : invoice.status === 'pending'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
+        );
 
-          {/* Timestamps */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-gray-500">
-              <div>
-                Created: {new Date(client.created_at).toLocaleString()}
-              </div>
-              {client.updated_at && (
-                <div>
-                  Last Updated: {new Date(client.updated_at).toLocaleString()}
-                </div>
-              )}
-            </div>
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center flex-shrink-0">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">
+              {client.name}
+            </h2>
+            {client.company && client.company !== client.name && (
+              <p className="text-sm text-gray-600">Company: {client.company}</p>
+            )}
           </div>
+          <div className="flex items-center space-x-3">
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+              status.color === 'green' 
+                ? 'bg-green-100 text-green-800' 
+                : status.color === 'orange'
+                ? 'bg-orange-100 text-orange-800'
+                : 'bg-gray-100 text-gray-800'
+            }`}>
+              {status.label}
+            </span>
+            <button
+              onClick={onEdit}
+              className="flex items-center space-x-2 px-3 py-2 text-blue-600 hover:text-blue-700 border border-blue-600 rounded-md hover:bg-blue-50 transition-colors"
+            >
+              <Edit2 className="w-4 h-4" />
+              <span>Edit</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 text-2xl"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="border-b border-gray-200 flex-shrink-0">
+          <nav className="flex space-x-8 px-6" aria-label="Tabs">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+                    activeTab === tab.id
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span>{tab.label}</span>
+                  {tab.count !== null && tab.count > 0 && (
+                    <span className="bg-gray-100 text-gray-600 ml-2 py-0.5 px-2 rounded-full text-xs">
+                      {tab.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Tab Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {renderTabContent()}
         </div>
       </div>
     </div>

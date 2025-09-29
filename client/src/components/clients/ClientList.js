@@ -16,7 +16,7 @@ export default function ClientList({
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTag, setSelectedTag] = useState('');
-  const [sortBy, setSortBy] = useState('companyName');
+  const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
   const [availableTags, setAvailableTags] = useState([]);
 
@@ -44,8 +44,9 @@ export default function ClientList({
   const loadClients = async () => {
     try {
       setLoading(true);
-      const response = await clientService.getClients(userId);
-      setClients(response.clients || []);
+      // Don't pass userId - server gets it from JWT token
+      const response = await clientService.getClients();
+      setClients(response.data.clients || []);
       setError(null);
     } catch (err) {
       console.error('Error loading clients:', {
@@ -75,9 +76,10 @@ export default function ClientList({
   };
 
   const handleDeleteClick = async (client) => {
-    if (window.confirm(`Are you sure you want to delete ${client.company_name}?`)) {
+    if (window.confirm(`Are you sure you want to delete ${client.name || client.company_name}?`)) {
       try {
-        await clientService.deleteClient(client.id, userId);
+        // Don't pass userId - server gets it from JWT token
+        await clientService.deleteClient(client.id);
         setClients(prev => prev.filter(c => c.id !== client.id));
         if (onDeleteClient) onDeleteClient(client);
       } catch (err) {
@@ -182,9 +184,9 @@ export default function ClientList({
               <tr>
                 <th 
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort('company_name')}
+                  onClick={() => handleSort('name')}
                 >
-                  Company {getSortIcon('company_name')}
+                  Company {getSortIcon('name')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Contact
@@ -197,9 +199,9 @@ export default function ClientList({
                 </th>
                 <th 
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort('outstanding_balance')}
+                  onClick={() => handleSort('current_balance')}
                 >
-                  Outstanding {getSortIcon('outstanding_balance')}
+                  Outstanding {getSortIcon('current_balance')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
@@ -221,11 +223,11 @@ export default function ClientList({
                     <td className="px-6 py-4">
                       <div>
                         <div className="text-sm font-medium text-gray-900">
-                          {client.company_name}
+                          {client.name}
                         </div>
-                        {client.contact_person && (
+                        {client.company && (
                           <div className="text-sm text-gray-500">
-                            {client.contact_person}
+                            {client.company}
                           </div>
                         )}
                         {client.tags && client.tags.length > 0 && (
@@ -261,10 +263,10 @@ export default function ClientList({
                     </td>
                     <td className="px-6 py-4 text-sm">
                       <span className={`font-medium ${
-                        (client.outstanding_balance || 0) > 0 ? 'text-red-600' : 'text-gray-900'
+                        (client.current_balance || 0) > 0 ? 'text-red-600' : 'text-gray-900'
                       }`}>
                         {clientFormatters.formatCurrency(
-                          client.outstanding_balance || 0,
+                          client.current_balance || 0,
                           client.default_currency
                         )}
                       </span>

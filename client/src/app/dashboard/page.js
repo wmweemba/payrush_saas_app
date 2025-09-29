@@ -595,18 +595,14 @@ export default function Dashboard() {
 
     setClientFormLoading(true);
     try {
-      const clientData = {
-        userId: user.id,
-        ...formData
-      };
-
+      // Don't include userId - server gets it from JWT token authentication
       if (selectedClient) {
         // Update existing client
-        await clientService.updateClient(selectedClient.id, clientData);
+        await clientService.updateClient(selectedClient.id, formData);
         setMessage('✅ Client updated successfully!');
       } else {
         // Create new client
-        await clientService.createClient(clientData);
+        await clientService.createClient(formData);
         setMessage('✅ Client created successfully!');
       }
 

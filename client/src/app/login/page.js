@@ -123,8 +123,8 @@ export default function Login() {
         </div>
 
         {/* Sign In Form */}
-        <form onSubmit={handleSignIn} className="space-y-6">
-          <div>
+        <form onSubmit={handleSignIn} className="space-y-6" suppressHydrationWarning>
+          <div suppressHydrationWarning>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Email Address
             </label>
@@ -140,10 +140,11 @@ export default function Login() {
                        focus:ring-2 focus:ring-blue-500 focus:border-transparent
                        transition-colors"
               placeholder="Enter your email"
+              suppressHydrationWarning
             />
           </div>
 
-          <div>
+          <div suppressHydrationWarning>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Password
             </label>
@@ -159,6 +160,7 @@ export default function Login() {
                        focus:ring-2 focus:ring-blue-500 focus:border-transparent
                        transition-colors"
               placeholder="Enter your password"
+              suppressHydrationWarning
             />
           </div>
 

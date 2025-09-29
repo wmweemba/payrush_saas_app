@@ -10,8 +10,8 @@ import { apiClient, API_ENDPOINTS } from './apiConfig';
 // Client management utilities
 export const clientService = {
   // Fetch all clients for a user
-  async getClients(userId, options = {}) {
-    // Remove userId from params since it comes from auth middleware
+  async getClients(options = {}) {
+    // UserId is obtained from JWT token on server side
     const params = new URLSearchParams({
       ...options
     });
@@ -21,31 +21,67 @@ export const clientService = {
   },
 
   // Get a specific client
-  async getClient(clientId, userId) {
-    // Remove userId from params since it comes from auth middleware
+  async getClient(clientId) {
+    // UserId is obtained from JWT token on server side
     const endpoint = `${API_ENDPOINTS.client(clientId)}`;
     return apiClient(endpoint);
   },
 
   // Create a new client
   async createClient(clientData) {
+    // Map frontend field names to backend expected field names
+    const mappedData = {
+      name: clientData.companyName, // Backend expects 'name', frontend sends 'companyName'
+      email: clientData.email,
+      phone: clientData.phone,
+      company: clientData.contactPerson || clientData.companyName, // Use company field for additional context
+      addressLine1: clientData.address,
+      city: clientData.city,
+      state: clientData.state,
+      country: clientData.country,
+      postalCode: clientData.postalCode,
+      notes: clientData.notes,
+      tags: clientData.tags,
+      defaultCurrency: clientData.defaultCurrency,
+      paymentTermsDays: clientData.paymentTerms, // Backend expects 'paymentTermsDays'
+      clientType: 'business' // Default client type
+    };
+
     return apiClient(API_ENDPOINTS.clients, {
       method: 'POST',
-      body: JSON.stringify(clientData),
+      body: JSON.stringify(mappedData),
     });
   },
 
   // Update a client
   async updateClient(clientId, clientData) {
+    // Map frontend field names to backend expected field names
+    const mappedData = {
+      name: clientData.companyName, // Backend expects 'name', frontend sends 'companyName'
+      email: clientData.email,
+      phone: clientData.phone,
+      company: clientData.contactPerson || clientData.companyName, // Use company field for additional context
+      addressLine1: clientData.address,
+      city: clientData.city,
+      state: clientData.state,
+      country: clientData.country,
+      postalCode: clientData.postalCode,
+      notes: clientData.notes,
+      tags: clientData.tags,
+      defaultCurrency: clientData.defaultCurrency,
+      paymentTermsDays: clientData.paymentTerms, // Backend expects 'paymentTermsDays'
+      clientType: 'business' // Default client type
+    };
+
     return apiClient(API_ENDPOINTS.client(clientId), {
       method: 'PUT',
-      body: JSON.stringify(clientData),
+      body: JSON.stringify(mappedData),
     });
   },
 
   // Delete a client
-  async deleteClient(clientId, userId) {
-    // Remove userId from params since it comes from auth middleware
+  async deleteClient(clientId) {
+    // UserId is obtained from JWT token on server side
     const endpoint = `${API_ENDPOINTS.client(clientId)}`;
     return apiClient(endpoint, {
       method: 'DELETE',
@@ -53,8 +89,8 @@ export const clientService = {
   },
 
   // Get client statistics
-  async getClientStats(userId) {
-    // Remove userId from params since it comes from auth middleware
+  async getClientStats() {
+    // UserId is obtained from JWT token on server side
     const endpoint = `${API_ENDPOINTS.clientStats}`;
     return apiClient(endpoint);
   }
@@ -84,7 +120,7 @@ export const clientValidation = {
   },
 
   validateRequiredFields(clientData) {
-    const required = ['companyName', 'email'];
+    const required = ['companyName', 'email']; // Frontend uses 'companyName', not 'name'
     const missing = required.filter(field => !clientData[field]?.trim());
     return {
       isValid: missing.length === 0,
@@ -145,10 +181,10 @@ export const clientFormatters = {
   },
 
   formatClientName(client) {
-    if (client.contactPerson) {
-      return `${client.companyName} (${client.contactPerson})`;
+    if (client.contact_person) {
+      return `${client.name} (${client.contact_person})`;
     }
-    return client.companyName;
+    return client.name;
   },
 
   formatPaymentTerms(days) {
@@ -167,7 +203,7 @@ export const clientFormatters = {
   },
 
   getClientStatus(client) {
-    if (client.outstandingBalance > 0) {
+    if (client.current_balance > 0) {
       return { status: 'outstanding', label: 'Outstanding Balance', color: 'orange' };
     }
     
@@ -191,8 +227,8 @@ export const clientFilters = {
     
     const term = searchTerm.toLowerCase();
     return clients.filter(client => 
-      client.companyName.toLowerCase().includes(term) ||
-      client.contactPerson?.toLowerCase().includes(term) ||
+      client.name.toLowerCase().includes(term) ||
+      client.contact_person?.toLowerCase().includes(term) ||
       client.email.toLowerCase().includes(term) ||
       client.tags?.some(tag => tag.toLowerCase().includes(term))
     );
@@ -203,7 +239,7 @@ export const clientFilters = {
     return clients.filter(client => client.tags?.includes(tag));
   },
 
-  sortClients(clients, sortBy = 'companyName', sortOrder = 'asc') {
+  sortClients(clients, sortBy = 'name', sortOrder = 'asc') {
     return [...clients].sort((a, b) => {
       let aValue = a[sortBy];
       let bValue = b[sortBy];

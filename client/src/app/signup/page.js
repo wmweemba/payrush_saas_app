@@ -138,8 +138,8 @@ export default function SignUp() {
         </div>
 
         {/* Sign Up Form */}
-        <form onSubmit={handleSignUp} className="space-y-6">
-          <div>
+        <form onSubmit={handleSignUp} className="space-y-6" suppressHydrationWarning>
+          <div suppressHydrationWarning>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Full Name
             </label>
@@ -155,10 +155,11 @@ export default function SignUp() {
                        focus:ring-2 focus:ring-blue-500 focus:border-transparent
                        transition-colors"
               placeholder="Enter your full name"
+              suppressHydrationWarning
             />
           </div>
 
-          <div>
+          <div suppressHydrationWarning>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Email Address
             </label>
@@ -174,10 +175,11 @@ export default function SignUp() {
                        focus:ring-2 focus:ring-blue-500 focus:border-transparent
                        transition-colors"
               placeholder="Enter your email"
+              suppressHydrationWarning
             />
           </div>
 
-          <div>
+          <div suppressHydrationWarning>
             <label htmlFor="businessName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Business Name
             </label>
@@ -193,10 +195,11 @@ export default function SignUp() {
                        focus:ring-2 focus:ring-blue-500 focus:border-transparent
                        transition-colors"
               placeholder="Enter your business name"
+              suppressHydrationWarning
             />
           </div>
 
-          <div>
+          <div suppressHydrationWarning>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Password
             </label>
@@ -213,6 +216,7 @@ export default function SignUp() {
                        focus:ring-2 focus:ring-blue-500 focus:border-transparent
                        transition-colors"
               placeholder="Create a strong password (min 6 characters)"
+              suppressHydrationWarning
             />
           </div>
 

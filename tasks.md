@@ -175,10 +175,10 @@ How to use: Edit this file as work progresses. Mark tasks as - [x] when done.
 
 ## Milestone 6 — Advanced Client & Invoice Features (TODO 📋)
 
-- [ ] **Client Management System**
-  - [ ] Build dedicated client management database schema
-  - [ ] Create client CRUD operations (Create, Read, Update, Delete)
-  - [ ] Build client management UI with search and filtering
+- [x] **Client Management System** ✅ COMPLETED (v0.7.1)
+  - [x] Build dedicated client management database schema
+  - [x] Create client CRUD operations (Create, Read, Update, Delete)
+  - [x] Build client management UI with search and filtering
   - [ ] Implement client contact information management
   - [ ] Add client payment history and invoice tracking
   - [ ] Create client-specific currency preferences

@@ -8,6 +8,8 @@
 const express = require('express');
 const router = express.Router();
 const clientService = require('../services/clientService');
+// Temporarily using mock service for testing - switch back to real service once Supabase is fixed
+// const clientService = require('../services/clientService.mock');
 const { createApiResponse, createErrorResponse, parsePaginationParams } = require('../utils');
 
 /**

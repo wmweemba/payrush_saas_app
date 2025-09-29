@@ -121,7 +121,59 @@ How to use: Edit this file as work progresses. Mark tasks as - [x] when done.
   - [x] Currency conversion and exchange rate tracking system
   - [x] Integration testing and build verification
 
-## Milestone 5 — Advanced Client & Invoice Features (TODO 📋)
+## Milestone 5 — Server-Client Architecture Migration & Database Integration (COMPLETED ✅)
+
+- [x] **Complete Architecture Overhaul**
+  - [x] Migrate from Next.js monolithic architecture to Express.js server + Next.js client
+  - [x] Set up Express.js server on port 5000 with proper routing and middleware
+  - [x] Configure CORS for client-server communication (localhost:3000 ↔ localhost:5000)
+  - [x] Create independent environment configurations for client and server
+  - [x] Implement JWT-based authentication middleware for protected routes
+  - [x] Set up centralized error handling and response formatting
+
+- [x] **API Routes Migration**
+  - [x] Migrate client management routes from Next.js API routes to Express endpoints
+  - [x] Create complete CRUD operations for client management:
+    - [x] GET /api/clients - List clients with search, filtering, pagination
+    - [x] POST /api/clients - Create new clients with validation
+    - [x] GET /api/clients/:id - Get specific client details
+    - [x] PUT /api/clients/:id - Update client information
+    - [x] DELETE /api/clients/:id - Soft delete clients
+    - [x] GET /api/clients/stats - Client statistics and analytics
+  - [x] Migrate authentication routes to Express:
+    - [x] POST /api/auth/login - User authentication with JWT tokens
+    - [x] POST /api/auth/register - User registration
+    - [x] POST /api/auth/logout - Session termination
+    - [x] GET /api/auth/me - Current user information
+  - [x] Migrate payment processing routes to server-side implementation
+
+- [x] **Database Integration & Schema Fixes**
+  - [x] Fix Supabase URL configuration mismatch (corrected project reference)
+  - [x] Resolve SQL migration parameter naming conflicts in search functions
+  - [x] Create demo user account with proper email confirmation
+  - [x] Set up user profiles with foreign key relationships
+  - [x] Align database schema with service layer expectations:
+    - [x] Fix column name mismatches (company_name → name, is_active → status)
+    - [x] Update client service to use correct database columns
+    - [x] Implement proper status values (active/inactive vs true/false)
+  - [x] Test end-to-end database operations with real Supabase integration
+
+- [x] **Client-Server Communication**
+  - [x] Update client-side API configuration to point to Express server
+  - [x] Fix client-side service calls to use new server endpoints
+  - [x] Implement proper error handling for server responses
+  - [x] Test authentication flow between client and server
+  - [x] Verify protected route access with JWT tokens
+
+- [x] **Development & Testing Infrastructure**
+  - [x] Create independent development environments for client and server
+  - [x] Set up proper environment variable management
+  - [x] Test complete authentication flow (login → token → protected routes)
+  - [x] Verify client CRUD operations with real database
+  - [x] Remove mock services and use live database integration
+  - [x] Document server-client architecture and API endpoints
+
+## Milestone 6 — Advanced Client & Invoice Features (TODO 📋)
 
 - [ ] **Client Management System**
   - [ ] Build dedicated client management database schema

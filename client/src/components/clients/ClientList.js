@@ -48,8 +48,18 @@ export default function ClientList({
       setClients(response.clients || []);
       setError(null);
     } catch (err) {
-      setError(err.message);
-      console.error('Error loading clients:', err);
+      console.error('Error loading clients:', {
+        message: err.message,
+        status: err.status,
+        data: err.data,
+        fullError: err
+      });
+      
+      if (err.status === 401) {
+        setError('Authentication failed. Please log in again.');
+      } else {
+        setError(err.message || 'Failed to load clients');
+      }
     } finally {
       setLoading(false);
     }

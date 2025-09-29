@@ -14,6 +14,7 @@ const supabase = createClient(
 
 export default function ClientManagementPage() {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [currentView, setCurrentView] = useState('list'); // 'list', 'form', 'profile'
   const [selectedClient, setSelectedClient] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -22,8 +23,16 @@ export default function ClientManagementPage() {
   useEffect(() => {
     // Get current user
     const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        console.log('Current user:', user ? { id: user.id, email: user.email } : null);
+        setUser(user);
+      } catch (error) {
+        console.error('Failed to get current user:', error);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
     };
     
     getCurrentUser();
@@ -88,12 +97,29 @@ export default function ClientManagementPage() {
     setRefreshTrigger(prev => prev + 1);
   };
 
-  if (!user) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Authentication Required</h1>
+          <p className="text-gray-600 mb-6">You need to be logged in to access client management.</p>
+          <a 
+            href="/login"
+            className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Go to Login
+          </a>
         </div>
       </div>
     );

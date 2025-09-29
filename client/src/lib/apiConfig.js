@@ -61,6 +61,12 @@ export const getDefaultHeaders = async () => {
       const { supabase } = await import('./supabaseClient');
       const { data: { session } } = await supabase.auth.getSession();
       
+      console.log('Auth session check:', { 
+        hasSession: !!session, 
+        hasToken: !!session?.access_token,
+        userId: session?.user?.id 
+      });
+      
       if (session?.access_token) {
         headers.Authorization = `Bearer ${session.access_token}`;
       }
@@ -102,7 +108,15 @@ export const apiClient = async (endpoint, options = {}) => {
         errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
       }
       
-      const error = new Error(errorData.error || errorData.message || 'API request failed');
+      // Debug logging
+      console.log('API Error Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorData,
+        url: response.url
+      });
+      
+      const error = new Error(errorData.message || errorData.error || 'API request failed');
       error.status = response.status;
       error.data = errorData;
       throw error;

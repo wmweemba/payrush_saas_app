@@ -11,8 +11,8 @@ import { apiClient, API_ENDPOINTS } from './apiConfig';
 export const clientService = {
   // Fetch all clients for a user
   async getClients(userId, options = {}) {
+    // Remove userId from params since it comes from auth middleware
     const params = new URLSearchParams({
-      userId,
       ...options
     });
 
@@ -22,8 +22,8 @@ export const clientService = {
 
   // Get a specific client
   async getClient(clientId, userId) {
-    const params = new URLSearchParams({ userId });
-    const endpoint = `${API_ENDPOINTS.client(clientId)}?${params}`;
+    // Remove userId from params since it comes from auth middleware
+    const endpoint = `${API_ENDPOINTS.client(clientId)}`;
     return apiClient(endpoint);
   },
 
@@ -45,8 +45,8 @@ export const clientService = {
 
   // Delete a client
   async deleteClient(clientId, userId) {
-    const params = new URLSearchParams({ userId });
-    const endpoint = `${API_ENDPOINTS.client(clientId)}?${params}`;
+    // Remove userId from params since it comes from auth middleware
+    const endpoint = `${API_ENDPOINTS.client(clientId)}`;
     return apiClient(endpoint, {
       method: 'DELETE',
     });
@@ -54,8 +54,8 @@ export const clientService = {
 
   // Get client statistics
   async getClientStats(userId) {
-    const params = new URLSearchParams({ userId });
-    const endpoint = `${API_ENDPOINTS.clientStats}?${params}`;
+    // Remove userId from params since it comes from auth middleware
+    const endpoint = `${API_ENDPOINTS.clientStats}`;
     return apiClient(endpoint);
   }
 };

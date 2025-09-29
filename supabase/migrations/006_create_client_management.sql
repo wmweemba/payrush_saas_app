@@ -201,7 +201,7 @@ CREATE OR REPLACE FUNCTION search_clients(
   search_user_id uuid,
   search_term text DEFAULT '',
   client_status text DEFAULT 'all',
-  client_type text DEFAULT 'all',
+  client_type_filter text DEFAULT 'all',
   limit_count integer DEFAULT 50,
   offset_count integer DEFAULT 0
 )
@@ -243,7 +243,7 @@ BEGIN
          cs.email ILIKE '%' || search_term || '%' OR
          cs.company ILIKE '%' || search_term || '%')
     AND (client_status = 'all' OR cs.status = client_status)
-    AND (client_type = 'all' OR cs.client_type = client_type)
+    AND (client_type_filter = 'all' OR cs.client_type = client_type_filter)
   ORDER BY cs.created_at DESC
   LIMIT limit_count
   OFFSET offset_count;

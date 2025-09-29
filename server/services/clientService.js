@@ -17,39 +17,38 @@ class ClientService {
    */
   async getClients(userId, options = {}) {
     try {
-      const { search, tag, limit = 50, offset = 0, sortBy = 'company_name', sortOrder = 'asc' } = options;
+      const { search, tag, limit = 50, offset = 0, sortBy = 'name', sortOrder = 'asc' } = options;
 
       let query = this.supabase
         .from('clients')
         .select(`
           id,
-          company_name,
-          contact_person,
+          name,
           email,
           phone,
-          address,
+          company,
+          address_line1,
+          address_line2,
           city,
           state,
           country,
           postal_code,
-          tax_number,
-          website,
-          notes,
-          tags,
           default_currency,
-          payment_terms,
-          discount_rate,
+          payment_terms_days,
+          status,
+          client_type,
+          credit_limit,
+          current_balance,
           total_invoiced,
           total_paid,
-          outstanding_balance,
-          last_invoice_date,
-          last_payment_date,
-          invoice_count,
+          notes,
+          tags,
           created_at,
-          updated_at
+          updated_at,
+          last_invoice_date
         `)
         .eq('user_id', userId)
-        .eq('is_active', true)
+        .eq('status', 'active')
         .order(sortBy, { ascending: sortOrder === 'asc' })
         .limit(limit);
 
@@ -60,7 +59,7 @@ class ClientService {
       // Add search functionality
       if (search) {
         query = query.or(
-          `company_name.ilike.%${search}%,contact_person.ilike.%${search}%,email.ilike.%${search}%`
+          `name.ilike.%${search}%,company.ilike.%${search}%,email.ilike.%${search}%`
         );
       }
 
@@ -100,34 +99,33 @@ class ClientService {
         .from('clients')
         .select(`
           id,
-          company_name,
-          contact_person,
+          name,
           email,
           phone,
-          address,
+          company,
+          address_line1,
+          address_line2,
           city,
           state,
           country,
           postal_code,
-          tax_number,
-          website,
-          notes,
-          tags,
           default_currency,
-          payment_terms,
-          discount_rate,
+          payment_terms_days,
+          status,
+          client_type,
+          credit_limit,
+          current_balance,
           total_invoiced,
           total_paid,
-          outstanding_balance,
-          last_invoice_date,
-          last_payment_date,
-          invoice_count,
+          notes,
+          tags,
           created_at,
-          updated_at
+          updated_at,
+          last_invoice_date
         `)
         .eq('id', clientId)
         .eq('user_id', userId)
-        .eq('is_active', true)
+        .eq('status', 'active')
         .single();
 
       if (error) {
@@ -160,11 +158,11 @@ class ClientService {
   async createClient(userId, clientData) {
     try {
       // Validate required fields
-      const { companyName, email } = clientData;
-      if (!companyName || !email) {
+      const { name, email } = clientData;
+      if (!name || !email) {
         return {
           success: false,
-          error: 'Company name and email are required',
+          error: 'Name and email are required',
           statusCode: 400
         };
       }
@@ -193,7 +191,7 @@ class ClientService {
         .select('id')
         .eq('user_id', userId)
         .eq('email', email.toLowerCase())
-        .eq('is_active', true)
+        .eq('status', 'active')
         .single();
 
       if (existingClient) {
@@ -207,27 +205,22 @@ class ClientService {
       // Prepare client data
       const newClientData = {
         user_id: userId,
-        company_name: sanitizeString(companyName),
-        contact_person: clientData.contactPerson ? sanitizeString(clientData.contactPerson) : null,
+        name: sanitizeString(name),
         email: email.toLowerCase(),
         phone: clientData.phone || null,
-        address: clientData.address ? sanitizeString(clientData.address) : null,
+        company: clientData.company ? sanitizeString(clientData.company) : null,
+        address_line1: clientData.addressLine1 ? sanitizeString(clientData.addressLine1) : null,
+        address_line2: clientData.addressLine2 ? sanitizeString(clientData.addressLine2) : null,
         city: clientData.city ? sanitizeString(clientData.city) : null,
         state: clientData.state ? sanitizeString(clientData.state) : null,
         country: clientData.country ? sanitizeString(clientData.country) : null,
         postal_code: clientData.postalCode ? sanitizeString(clientData.postalCode) : null,
-        tax_number: clientData.taxNumber ? sanitizeString(clientData.taxNumber) : null,
-        website: clientData.website || null,
         notes: clientData.notes ? sanitizeString(clientData.notes) : null,
         tags: clientData.tags || [],
         default_currency: clientData.defaultCurrency || 'USD',
-        payment_terms: clientData.paymentTerms || 30,
-        discount_rate: clientData.discountRate || 0,
-        total_invoiced: 0,
-        total_paid: 0,
-        outstanding_balance: 0,
-        invoice_count: 0,
-        is_active: true
+        payment_terms_days: clientData.paymentTermsDays || 30,
+        client_type: clientData.clientType || 'individual',
+        status: 'active'
       };
 
       const { data, error } = await this.supabase
@@ -260,11 +253,11 @@ class ClientService {
   async updateClient(clientId, userId, clientData) {
     try {
       // Validate required fields
-      const { companyName, email } = clientData;
-      if (!companyName || !email) {
+      const { name, email } = clientData;
+      if (!name || !email) {
         return {
           success: false,
-          error: 'Company name and email are required',
+          error: 'Name and email are required',
           statusCode: 400
         };
       }
@@ -293,7 +286,7 @@ class ClientService {
         .select('id')
         .eq('user_id', userId)
         .eq('email', email.toLowerCase())
-        .eq('is_active', true)
+        .eq('status', 'active')
         .neq('id', clientId)
         .single();
 
@@ -307,22 +300,21 @@ class ClientService {
 
       // Prepare update data
       const updateData = {
-        company_name: sanitizeString(companyName),
-        contact_person: clientData.contactPerson ? sanitizeString(clientData.contactPerson) : null,
+        name: sanitizeString(name),
         email: email.toLowerCase(),
         phone: clientData.phone || null,
-        address: clientData.address ? sanitizeString(clientData.address) : null,
+        company: clientData.company ? sanitizeString(clientData.company) : null,
+        address_line1: clientData.addressLine1 ? sanitizeString(clientData.addressLine1) : null,
+        address_line2: clientData.addressLine2 ? sanitizeString(clientData.addressLine2) : null,
         city: clientData.city ? sanitizeString(clientData.city) : null,
         state: clientData.state ? sanitizeString(clientData.state) : null,
         country: clientData.country ? sanitizeString(clientData.country) : null,
         postal_code: clientData.postalCode ? sanitizeString(clientData.postalCode) : null,
-        tax_number: clientData.taxNumber ? sanitizeString(clientData.taxNumber) : null,
-        website: clientData.website || null,
         notes: clientData.notes ? sanitizeString(clientData.notes) : null,
         tags: clientData.tags || [],
         default_currency: clientData.defaultCurrency || 'USD',
-        payment_terms: clientData.paymentTerms || 30,
-        discount_rate: clientData.discountRate || 0,
+        payment_terms_days: clientData.paymentTermsDays || 30,
+        client_type: clientData.clientType || 'individual',
         updated_at: new Date().toISOString()
       };
 
@@ -331,7 +323,7 @@ class ClientService {
         .update(updateData)
         .eq('id', clientId)
         .eq('user_id', userId)
-        .eq('is_active', true)
+        .eq('status', 'active')
         .select()
         .single();
 
@@ -387,12 +379,12 @@ class ClientService {
       const { data, error } = await this.supabase
         .from('clients')
         .update({ 
-          is_active: false, 
+          status: 'inactive', 
           updated_at: new Date().toISOString() 
         })
         .eq('id', clientId)
         .eq('user_id', userId)
-        .eq('is_active', true)
+        .eq('status', 'active')
         .select()
         .single();
 
@@ -427,9 +419,9 @@ class ClientService {
     try {
       const { data, error } = await this.supabase
         .from('clients')
-        .select('id, total_invoiced, total_paid, outstanding_balance')
+        .select('id, total_invoiced, total_paid, current_balance')
         .eq('user_id', userId)
-        .eq('is_active', true);
+        .eq('status', 'active');
 
       if (error) {
         throw new Error(`Failed to get client stats: ${error.message}`);
@@ -439,7 +431,7 @@ class ClientService {
         totalClients: data.length,
         totalInvoiced: data.reduce((sum, client) => sum + (client.total_invoiced || 0), 0),
         totalPaid: data.reduce((sum, client) => sum + (client.total_paid || 0), 0),
-        totalOutstanding: data.reduce((sum, client) => sum + (client.outstanding_balance || 0), 0)
+        totalOutstanding: data.reduce((sum, client) => sum + (client.current_balance || 0), 0)
       };
 
       return {

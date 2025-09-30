@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { clientFormatters } from '@/lib/clientService';
-import { User, MapPin, CreditCard, FileText, Edit2, TrendingUp } from 'lucide-react';
+import { User, MapPin, CreditCard, FileText, Edit2, TrendingUp, DollarSign, MessageCircle } from 'lucide-react';
 import ClientContactsManager from './ClientContactsManager';
 import ClientAddressManager from './ClientAddressManager';
 import ClientFinancialDashboard from './ClientFinancialDashboard';
+import ClientCurrencyPreferences from './ClientCurrencyPreferences';
+import ClientCommunication from './ClientCommunication';
 
 export default function ClientProfile({ client, onEdit, onClose }) {
   const [activeTab, setActiveTab] = useState('overview');
@@ -73,6 +75,18 @@ export default function ClientProfile({ client, onEdit, onClose }) {
       id: 'financial', 
       label: 'Financial', 
       icon: TrendingUp,
+      count: null
+    },
+    { 
+      id: 'currency', 
+      label: 'Currency', 
+      icon: DollarSign,
+      count: null
+    },
+    { 
+      id: 'communication', 
+      label: 'Communication', 
+      icon: MessageCircle,
       count: null
     },
     { 
@@ -265,6 +279,21 @@ export default function ClientProfile({ client, onEdit, onClose }) {
           <ClientFinancialDashboard 
             clientId={client.id} 
             clientName={client.name}
+          />
+        );
+
+      case 'currency':
+        return (
+          <ClientCurrencyPreferences 
+            clientId={client.id} 
+            clientName={client.name}
+          />
+        );
+
+      case 'communication':
+        return (
+          <ClientCommunication 
+            clientId={client.id} 
           />
         );
 

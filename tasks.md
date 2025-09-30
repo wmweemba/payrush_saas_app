@@ -216,6 +216,30 @@ How to use: Edit this file as work progresses. Mark tasks as - [x] when done.
   - [x] Create client-specific currency preferences
   - [x] Add client communication logs and notes
 
+## Milestone 6.5 — Client-Specific Features & Communication System (COMPLETED ✅)
+
+- [x] **Client-Specific Currency Preferences** ✅ COMPLETED (v0.9.0)
+  - [x] Add ability to set default currency per client (USD, EUR, GBP, CAD, AUD, JPY, CHF, SEK)
+  - [x] Implement preferred payment methods configuration per client
+  - [x] Build currency conversion system with exchange rates database table
+  - [x] Create professional currency preferences UI in client profile
+  - [x] Add automatic currency conversion option for client invoices
+  - [x] Implement currency service with exchange rate management
+  - [x] Create currency preferences API endpoints and database migration
+
+- [x] **Client Communication Logs and Notes System** ✅ COMPLETED (v0.9.0)
+  - [x] Create comprehensive system for tracking client interactions and communications
+  - [x] Implement note types (General, Meeting, Call, Email, Follow-up, Important) with priorities
+  - [x] Build activity timeline view showing chronological client interaction history
+  - [x] Add reminder management system with due dates and status tracking
+  - [x] Create communication statistics dashboard with metrics and insights
+  - [x] Implement advanced search and filtering for notes and communications
+  - [x] Build professional communication interface with Notes, Timeline, and Reminders tabs
+  - [x] Add communication service layer with comprehensive business logic
+  - [x] Create 3 new database tables (client_notes, client_interactions, client_reminders)
+  - [x] Implement automatic interaction tracking with database triggers
+  - [x] Add 8 new API endpoints for complete communication management
+
 ## Milestone 7 — Advanced Invoice Features (TODO 📋)
 
 ## Milestone 7 — Advanced Invoice Features (TODO 📋)

@@ -16,6 +16,43 @@ const communicationService = require('../services/communicationService');
 const { createApiResponse, createErrorResponse, parsePaginationParams } = require('../utils');
 
 /**
+ * GET /api/clients/currencies
+ * Get all supported currencies and payment methods
+ */
+router.get('/currencies', async (req, res, next) => {
+  try {
+    const currencies = currencyService.getSupportedCurrencies();
+    const paymentMethods = Object.values(currencyService.PAYMENT_METHODS);
+
+    res.json(createApiResponse(true, {
+      currencies,
+      payment_methods: paymentMethods
+    }, 'Supported currencies and payment methods retrieved successfully'));
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /api/clients/exchange-rates
+ * Get current exchange rates
+ */
+router.get('/exchange-rates', async (req, res, next) => {
+  try {
+    const { base_currency = 'USD' } = req.query;
+    const rates = await currencyService.getExchangeRates(base_currency);
+
+    res.json(createApiResponse(true, {
+      base_currency,
+      rates,
+      last_updated: new Date().toISOString()
+    }, 'Exchange rates retrieved successfully'));
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * GET /api/clients
  * Fetch all clients for a user with filtering and search
  */
@@ -525,43 +562,6 @@ router.put('/:id/currency-preferences', async (req, res, next) => {
     }
 
     res.json(createApiResponse(true, result.data, 'Client currency preferences updated successfully'));
-  } catch (error) {
-    next(error);
-  }
-});
-
-/**
- * GET /api/clients/currencies
- * Get all supported currencies and payment methods
- */
-router.get('/currencies', async (req, res, next) => {
-  try {
-    const currencies = currencyService.getSupportedCurrencies();
-    const paymentMethods = Object.values(currencyService.PAYMENT_METHODS);
-
-    res.json(createApiResponse(true, {
-      currencies,
-      payment_methods: paymentMethods
-    }, 'Supported currencies and payment methods retrieved successfully'));
-  } catch (error) {
-    next(error);
-  }
-});
-
-/**
- * GET /api/clients/exchange-rates
- * Get current exchange rates
- */
-router.get('/exchange-rates', async (req, res, next) => {
-  try {
-    const { base_currency = 'USD' } = req.query;
-    const rates = await currencyService.getExchangeRates(base_currency);
-
-    res.json(createApiResponse(true, {
-      base_currency,
-      rates,
-      last_updated: new Date().toISOString()
-    }, 'Exchange rates retrieved successfully'));
   } catch (error) {
     next(error);
   }

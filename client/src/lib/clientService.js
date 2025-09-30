@@ -202,6 +202,24 @@ export const clientFormatters = {
     }).format(amount);
   },
 
+  formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    
+    try {
+      const date = new Date(dateString);
+      // Check if date is valid
+      if (isNaN(date.getTime())) return 'Invalid Date';
+      
+      return new Intl.DateTimeFormat('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      }).format(date);
+    } catch (error) {
+      return 'Invalid Date';
+    }
+  },
+
   getClientStatus(client) {
     if (client.current_balance > 0) {
       return { status: 'outstanding', label: 'Outstanding Balance', color: 'orange' };

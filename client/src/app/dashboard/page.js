@@ -83,6 +83,12 @@ export default function Dashboard() {
 
         console.log('Valid session found for user:', session.user.id);
         setUser(session.user);
+        
+        // Store auth token for API requests - temporary solution for existing components
+        if (session.access_token) {
+          localStorage.setItem('authToken', session.access_token);
+          localStorage.setItem('token', session.access_token); // For components using 'token' key
+        }
 
         // Fetch user profile
         console.log('Fetching profile for user:', session.user.id);

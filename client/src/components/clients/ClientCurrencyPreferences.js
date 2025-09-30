@@ -72,6 +72,9 @@ const ClientCurrencyPreferences = ({ clientId, clientName }) => {
       const currenciesData = await currenciesRes.json();
       const ratesData = await ratesRes.json();
 
+      console.log('Currencies response:', currenciesData);
+      console.log('Available currencies:', currenciesData.data?.currencies);
+
       // Update state
       if (preferencesData.success) {
         const prefs = preferencesData.data;
@@ -84,6 +87,19 @@ const ClientCurrencyPreferences = ({ clientId, clientName }) => {
       if (currenciesData.success) {
         setAvailableCurrencies(currenciesData.data.currencies);
         setAvailablePaymentMethods(currenciesData.data.payment_methods);
+      } else {
+        // Fallback to default currencies if API fails
+        console.warn('Failed to fetch currencies, using fallback:', currenciesData);
+        setAvailableCurrencies([
+          { code: 'USD', name: 'US Dollar', symbol: '$', flag: '🇺🇸', decimals: 2, region: 'Global' },
+          { code: 'EUR', name: 'Euro', symbol: '€', flag: '🇪🇺', decimals: 2, region: 'Europe' },
+          { code: 'GBP', name: 'British Pound', symbol: '£', flag: '🇬🇧', decimals: 2, region: 'Europe' },
+          { code: 'ZMW', name: 'Zambian Kwacha', symbol: 'K', flag: '🇿🇲', decimals: 2, region: 'Africa' }
+        ]);
+        setAvailablePaymentMethods([
+          { id: 'card', name: 'Credit/Debit Card', supported_currencies: ['USD', 'EUR', 'GBP', 'ZMW'], regions: ['Global'] },
+          { id: 'bank_transfer', name: 'Bank Transfer', supported_currencies: ['USD', 'EUR', 'GBP', 'ZMW'], regions: ['Global'] }
+        ]);
       }
 
       if (ratesData.success) {
@@ -93,6 +109,18 @@ const ClientCurrencyPreferences = ({ clientId, clientName }) => {
     } catch (err) {
       console.error('Error loading currency data:', err);
       setError('Failed to load currency preferences');
+      
+      // Set fallback currencies even on network error
+      setAvailableCurrencies([
+        { code: 'USD', name: 'US Dollar', symbol: '$', flag: '🇺🇸', decimals: 2, region: 'Global' },
+        { code: 'EUR', name: 'Euro', symbol: '€', flag: '🇪🇺', decimals: 2, region: 'Europe' },
+        { code: 'GBP', name: 'British Pound', symbol: '£', flag: '🇬🇧', decimals: 2, region: 'Europe' },
+        { code: 'ZMW', name: 'Zambian Kwacha', symbol: 'K', flag: '🇿🇲', decimals: 2, region: 'Africa' }
+      ]);
+      setAvailablePaymentMethods([
+        { id: 'card', name: 'Credit/Debit Card', supported_currencies: ['USD', 'EUR', 'GBP', 'ZMW'], regions: ['Global'] },
+        { id: 'bank_transfer', name: 'Bank Transfer', supported_currencies: ['USD', 'EUR', 'GBP', 'ZMW'], regions: ['Global'] }
+      ]);
     } finally {
       setLoading(false);
     }
@@ -280,16 +308,20 @@ const ClientCurrencyPreferences = ({ clientId, clientName }) => {
             <div>
               <label className="block text-sm font-medium mb-2">Currency</label>
               <Select value={selectedCurrency} onValueChange={setSelectedCurrency}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-white border-gray-300">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
                   {availableCurrencies.map((currency) => (
-                    <SelectItem key={currency.code} value={currency.code}>
+                    <SelectItem 
+                      key={currency.code} 
+                      value={currency.code}
+                      className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer"
+                    >
                       <div className="flex items-center gap-2">
                         <span>{currency.flag}</span>
-                        <span>{currency.code}</span>
-                        <span className="text-gray-500">- {currency.name}</span>
+                        <span className="font-medium">{currency.code}</span>
+                        <span className="text-gray-600">- {currency.name}</span>
                       </div>
                     </SelectItem>
                   ))}

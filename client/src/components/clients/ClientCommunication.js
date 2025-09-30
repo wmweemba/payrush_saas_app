@@ -66,8 +66,8 @@ const ClientCommunication = ({ clientId }) => {
   // Filters
   const [noteFilters, setNoteFilters] = useState({
     search: '',
-    note_type: '',
-    priority: '',
+    note_type: 'all',
+    priority: 'all',
     tags: ''
   });
   
@@ -124,11 +124,17 @@ const ClientCommunication = ({ clientId }) => {
 
   const fetchNotes = async () => {
     try {
-      const params = new URLSearchParams({
+      const filteredParams = {
         limit: '20',
         offset: '0',
         ...noteFilters
-      });
+      };
+      
+      // Remove "all" values as they mean no filter
+      if (filteredParams.note_type === 'all') delete filteredParams.note_type;
+      if (filteredParams.priority === 'all') delete filteredParams.priority;
+      
+      const params = new URLSearchParams(filteredParams);
       
       const response = await fetch(`/api/clients/${clientId}/notes?${params}`, {
         headers: {
@@ -380,24 +386,24 @@ const ClientCommunication = ({ clientId }) => {
                     />
                   </div>
                   <Select value={noteFilters.note_type} onValueChange={(value) => setNoteFilters(prev => ({ ...prev, note_type: value }))}>
-                    <SelectTrigger className="w-40">
+                    <SelectTrigger className="w-40 bg-white border-gray-300">
                       <SelectValue placeholder="Type" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">All Types</SelectItem>
+                    <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+                      <SelectItem value="all" className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">All Types</SelectItem>
                       {noteTypes.map(type => (
-                        <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                        <SelectItem key={type.value} value={type.value} className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">{type.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                   <Select value={noteFilters.priority} onValueChange={(value) => setNoteFilters(prev => ({ ...prev, priority: value }))}>
-                    <SelectTrigger className="w-40">
+                    <SelectTrigger className="w-40 bg-white border-gray-300">
                       <SelectValue placeholder="Priority" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">All Priorities</SelectItem>
+                    <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+                      <SelectItem value="all" className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">All Priorities</SelectItem>
                       {priorities.map(priority => (
-                        <SelectItem key={priority.value} value={priority.value}>{priority.label}</SelectItem>
+                        <SelectItem key={priority.value} value={priority.value} className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">{priority.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -440,12 +446,12 @@ const ClientCommunication = ({ clientId }) => {
                         <div>
                           <Label htmlFor="note-type">Type</Label>
                           <Select value={noteForm.note_type} onValueChange={(value) => setNoteForm(prev => ({ ...prev, note_type: value }))}>
-                            <SelectTrigger>
+                            <SelectTrigger className="bg-white border-gray-300">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
                               {noteTypes.map(type => (
-                                <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                                <SelectItem key={type.value} value={type.value} className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">{type.label}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -454,12 +460,12 @@ const ClientCommunication = ({ clientId }) => {
                         <div>
                           <Label htmlFor="note-priority">Priority</Label>
                           <Select value={noteForm.priority} onValueChange={(value) => setNoteForm(prev => ({ ...prev, priority: value }))}>
-                            <SelectTrigger>
+                            <SelectTrigger className="bg-white border-gray-300">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
                               {priorities.map(priority => (
-                                <SelectItem key={priority.value} value={priority.value}>{priority.label}</SelectItem>
+                                <SelectItem key={priority.value} value={priority.value} className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">{priority.label}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -594,13 +600,13 @@ const ClientCommunication = ({ clientId }) => {
                     value={reminderFilters.status} 
                     onValueChange={(value) => setReminderFilters(prev => ({ ...prev, status: value }))}
                   >
-                    <SelectTrigger className="w-40">
+                    <SelectTrigger className="w-40 bg-white border-gray-300">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="all">All</SelectItem>
+                    <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+                      <SelectItem value="pending" className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">Pending</SelectItem>
+                      <SelectItem value="completed" className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">Completed</SelectItem>
+                      <SelectItem value="all" className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">All</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -652,12 +658,12 @@ const ClientCommunication = ({ clientId }) => {
                         <div>
                           <Label htmlFor="reminder-type">Type</Label>
                           <Select value={reminderForm.reminder_type} onValueChange={(value) => setReminderForm(prev => ({ ...prev, reminder_type: value }))}>
-                            <SelectTrigger>
+                            <SelectTrigger className="bg-white border-gray-300">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
                               {reminderTypes.map(type => (
-                                <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                                <SelectItem key={type.value} value={type.value} className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">{type.label}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -666,12 +672,12 @@ const ClientCommunication = ({ clientId }) => {
                         <div>
                           <Label htmlFor="reminder-priority">Priority</Label>
                           <Select value={reminderForm.priority} onValueChange={(value) => setReminderForm(prev => ({ ...prev, priority: value }))}>
-                            <SelectTrigger>
+                            <SelectTrigger className="bg-white border-gray-300">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
                               {priorities.map(priority => (
-                                <SelectItem key={priority.value} value={priority.value}>{priority.label}</SelectItem>
+                                <SelectItem key={priority.value} value={priority.value} className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">{priority.label}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>

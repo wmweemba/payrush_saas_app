@@ -1,36 +1,105 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# PayRush Client Application
 
-## Getting Started
+Next.js frontend for the PayRush SaaS platform.
 
-First, run the development server:
+## 🚀 Quick Start
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## 🏗️ Tech Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Framework**: Next.js 15.5.4 with App Router
+- **Styling**: Tailwind CSS
+- **UI Components**: shadcn/ui
+- **Icons**: Lucide React
+- **Date Handling**: date-fns
+- **HTTP Client**: Fetch API with custom service layer
 
-## Learn More
+## 📁 Key Components
 
-To learn more about Next.js, take a look at the following resources:
+### Client Management
+- `ClientProfile.js` - Main client interface with tabbed navigation
+- `ClientContactsManager.js` - Multiple contact management
+- `ClientAddressManager.js` - Multiple address management
+- `ClientFinancialDashboard.js` - Financial analytics and invoice tracking
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Communication System
+- `ClientCommunication.js` - Notes, timeline, and reminders
+- `ClientCurrencyPreferences.js` - Currency and payment method settings
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Core Features
+- **Multi-tab Interface**: Overview, Contacts, Addresses, Financial, Currency, Communication, Invoices
+- **Form Validation**: Client-side validation with error handling
+- **Responsive Design**: Mobile-friendly interface
+- **Real-time Updates**: Dynamic data fetching and updates
 
-## Deploy on Vercel
+## 🎨 UI Components
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Enhanced Select Components
+All dropdown menus include:
+- White background for visibility
+- Proper borders and shadows
+- Hover states for better UX
+- Z-index management for proper layering
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Form Components
+- Consistent styling across all forms
+- Validation feedback
+- Loading states
+- Error handling
+
+## 🔧 Configuration
+
+### Environment Variables (.env.local)
+```
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
+```
+
+### API Integration
+- Centralized API configuration in `lib/apiConfig.js`
+- Service layer in `lib/clientService.js`
+- JWT token management
+- Error handling and retry logic
+
+## 🧪 Development
+
+### Available Scripts
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+
+### Code Organization
+```
+src/
+├── app/                    # App Router pages
+│   ├── dashboard/         # Main dashboard
+│   └── layout.js          # Root layout
+├── components/
+│   ├── clients/           # Client-specific components
+│   └── ui/                # shadcn/ui components
+└── lib/                   # Utilities and services
+    ├── apiConfig.js       # API configuration
+    └── clientService.js   # Client service layer
+```
+
+## 🎯 Recent Updates
+
+### UI Enhancements
+- ✅ Fixed dropdown visibility issues across all components
+- ✅ Enhanced form validation and error handling
+- ✅ Improved loading states and empty states
+- ✅ Added proper date formatting utilities
+
+### New Features
+- ✅ Currency preferences with multi-currency support
+- ✅ Communication system with notes and reminders
+- ✅ Financial dashboard with invoice aging
+- ✅ Activity timeline tracking
+
+This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).

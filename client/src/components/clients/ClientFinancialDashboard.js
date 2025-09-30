@@ -75,12 +75,12 @@ const ClientFinancialDashboard = ({ clientId, clientName }) => {
       const agingData = await agingRes.json();
       const activityData = await activityRes.json();
 
-      // Update state
+      // Update state with proper fallbacks
       if (summaryData.success) setFinancialSummary(summaryData.data);
-      if (historyData.success) setPaymentHistory(historyData.data);
-      if (invoicesData.success) setInvoices(invoicesData.data);
+      if (historyData.success) setPaymentHistory(Array.isArray(historyData.data) ? historyData.data : []);
+      if (invoicesData.success) setInvoices(Array.isArray(invoicesData.data) ? invoicesData.data : []);
       if (agingData.success) setInvoiceAging(agingData.data);
-      if (activityData.success) setActivity(activityData.data);
+      if (activityData.success) setActivity(Array.isArray(activityData.data) ? activityData.data : []);
 
     } catch (err) {
       console.error('Error loading financial data:', err);
@@ -181,21 +181,21 @@ const ClientFinancialDashboard = ({ clientId, clientName }) => {
         </div>
         <div className="flex gap-2">
           <Select value={dateRange} onValueChange={setDateRange}>
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-[150px] bg-white border-gray-300">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1month">Last Month</SelectItem>
-              <SelectItem value="3months">Last 3 Months</SelectItem>
-              <SelectItem value="6months">Last 6 Months</SelectItem>
-              <SelectItem value="1year">Last Year</SelectItem>
+            <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+              <SelectItem value="1month" className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">Last Month</SelectItem>
+              <SelectItem value="3months" className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">Last 3 Months</SelectItem>
+              <SelectItem value="6months" className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">Last 6 Months</SelectItem>
+              <SelectItem value="1year" className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">Last Year</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
       {/* Financial Summary Cards */}
-      {financialSummary && (
+      {financialSummary ? (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-4">
@@ -245,6 +245,22 @@ const ClientFinancialDashboard = ({ clientId, clientName }) => {
             </CardContent>
           </Card>
         </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => (
+            <Card key={i}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">No Data Available</p>
+                    <p className="text-2xl font-bold">$0.00</p>
+                  </div>
+                  <DollarSign className="h-8 w-8 text-gray-300" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       )}
 
       {/* Tabs */}
@@ -258,7 +274,7 @@ const ClientFinancialDashboard = ({ clientId, clientName }) => {
 
         {/* Summary Tab */}
         <TabsContent value="summary" className="space-y-4">
-          {invoiceAging && (
+          {invoiceAging ? (
             <Card>
               <CardHeader>
                 <CardTitle>Invoice Aging Analysis</CardTitle>
@@ -299,6 +315,21 @@ const ClientFinancialDashboard = ({ clientId, clientName }) => {
                 </div>
               </CardContent>
             </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Invoice Aging Analysis</CardTitle>
+                <CardDescription>
+                  Track outstanding invoices by aging periods
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No invoice aging data available</p>
+                  <p className="text-sm text-gray-400">Invoice aging analysis will appear here once invoices are created</p>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
 
@@ -307,15 +338,15 @@ const ClientFinancialDashboard = ({ clientId, clientName }) => {
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold">Invoices</h3>
             <Select value={invoiceFilter} onValueChange={setInvoiceFilter}>
-              <SelectTrigger className="w-[150px]">
+              <SelectTrigger className="w-[150px] bg-white border-gray-300">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="overdue">Overdue</SelectItem>
+              <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+                <SelectItem value="all" className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">All Status</SelectItem>
+                <SelectItem value="draft" className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">Draft</SelectItem>
+                <SelectItem value="pending" className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">Pending</SelectItem>
+                <SelectItem value="paid" className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">Paid</SelectItem>
+                <SelectItem value="overdue" className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">Overdue</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -409,25 +440,33 @@ const ClientFinancialDashboard = ({ clientId, clientName }) => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {activity.map((item, index) => (
-                  <div key={index} className="flex items-start gap-3 pb-4 border-b last:border-b-0">
-                    <div className="mt-1">
-                      <Activity className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{item.description}</p>
-                      <p className="text-xs text-gray-500">{formatDate(item.created_at)}</p>
-                    </div>
-                    {item.amount && (
-                      <div className="text-sm font-medium">
-                        {formatCurrency(item.amount)}
+                {Array.isArray(activity) && activity.length > 0 ? (
+                  activity.map((item, index) => (
+                    <div key={index} className="flex items-start gap-3 pb-4 border-b last:border-b-0">
+                      <div className="mt-1">
+                        <Activity className="h-4 w-4 text-blue-600" />
                       </div>
-                    )}
-                  </div>
-                ))}
-                {activity.length === 0 && (
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{item.description}</p>
+                        <p className="text-xs text-gray-500">{formatDate(item.created_at)}</p>
+                      </div>
+                      {item.amount && (
+                        <div className="text-sm font-medium">
+                          {formatCurrency(item.amount)}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
                   <div className="text-center text-gray-500 py-8">
-                    No recent activity found.
+                    <Activity className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No Financial Activity Yet</h3>
+                    <p className="text-gray-600 mb-4">
+                      No financial activities or transactions have been recorded for this client yet.
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Activity will appear here when invoices are created, payments are received, or other financial events occur.
+                    </p>
                   </div>
                 )}
               </div>

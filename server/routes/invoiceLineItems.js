@@ -25,7 +25,7 @@ router.post('/', async (req, res, next) => {
       status,
       due_date,
       is_line_item_invoice,
-      notes
+      client_id
     } = req.body;
 
     // Validate required fields
@@ -64,9 +64,13 @@ router.post('/', async (req, res, next) => {
       currency: currency,
       status: status || 'draft',
       due_date: finalDueDate,
-      is_line_item_invoice: is_line_item_invoice || false,
-      notes: notes ? sanitizeString(notes.trim()) : null
+      is_line_item_invoice: is_line_item_invoice || false
     };
+
+    // Add client_id if provided
+    if (client_id) {
+      invoiceData.client_id = client_id;
+    }
 
     const { data: invoice, error } = await supabase
       .from('invoices')

@@ -288,6 +288,29 @@ How to use: Edit this file as work progresses. Mark tasks as - [x] when done.
   - [x] Implement email_logs database table for comprehensive email tracking and analytics
   - [x] Add comprehensive error handling and user feedback throughout bulk operations
 
+## Critical Bug Fixes & System Improvements (COMPLETED ✅)
+
+- [x] **Invoice Creation Database Error Resolution** ✅ COMPLETED (v1.4.1)
+  - [x] Fix missing 'notes' column database error preventing invoice creation
+  - [x] Update frontend form to remove unsupported notes field temporarily
+  - [x] Align server-side API with actual database schema
+  - [x] Implement proper error handling for database constraint violations
+  - [x] Add comprehensive debugging and error logging
+
+- [x] **Invoice Search & Display System Fixes** ✅ COMPLETED (v1.4.1)
+  - [x] Resolve 404 errors on invoice search API endpoints
+  - [x] Fix frontend API routing (localhost:3000 → localhost:5000)
+  - [x] Update all search components to use centralized apiClient
+  - [x] Fix CORS configuration for proper client-server communication
+  - [x] Restore invoice visibility in search results after creation
+
+- [x] **Client-Invoice Integration Restoration** ✅ COMPLETED (v1.4.1)
+  - [x] Restore client dropdown functionality in invoice creation
+  - [x] Fix client selection and auto-population of customer details
+  - [x] Add client_id field to invoice data model for proper relationships
+  - [x] Ensure data consistency between invoices and client records
+  - [x] Implement proper client loading and selection handlers
+
 - [ ] **Advanced Invoice Templates & Customization** (NEXT 🎯)
   - [ ] Create invoice template customization interface
   - [ ] Add custom branding and logo upload functionality

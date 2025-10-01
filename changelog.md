@@ -2,6 +2,40 @@
 
 All notable changes to the PayRush SaaS application will be documented in this file.
 
+## [1.4.1] - 2025-10-01
+
+### Fixed
+#### Critical Invoice Creation & Search System Fixes
+- **🐛 Invoice Creation Database Error**: Fixed missing 'notes' column causing invoice creation failures
+  - Removed non-existent `notes` field from invoice creation process
+  - Updated both frontend form and backend API to exclude notes temporarily
+  - Commented out notes UI field until database column is added
+  - Fixed server-side validation and data insertion process
+
+- **🔧 Invoice Search System API Routing**: Resolved 404 errors preventing invoice display and filtering
+  - Fixed frontend API calls pointing to wrong server (localhost:3000 → localhost:5000)
+  - Updated all search components to use centralized `apiClient` configuration
+  - Fixed CORS configuration to allow proper client-server communication
+  - Integrated proper authentication headers for all invoice search operations
+
+- **📋 Client-Invoice Mapping**: Restored client dropdown functionality for proper invoice-client linking
+  - Added client selection dropdown to invoice creation form
+  - Implemented auto-population of customer details from selected clients
+  - Added `client_id` field to invoice data model for proper relationships
+  - Fixed data consistency issues between invoices and existing client records
+
+### Enhanced
+- **⚡ Invoice Display System**: Invoices now properly appear in search results after creation
+- **🔍 Search & Filter Functions**: All quick filters (All Invoices, Overdue, Draft, Paid) now working correctly
+- **🔗 API Integration**: Improved error handling and response processing for all invoice operations
+- **🎯 User Experience**: Seamless invoice creation and immediate visibility in search results
+
+### Technical Improvements
+- **Database Schema Alignment**: Ensured frontend expectations match backend database structure
+- **API Configuration**: Centralized API client with proper base URL and authentication handling
+- **Error Handling**: Enhanced error messages and debugging capabilities
+- **Code Organization**: Improved component architecture and service layer integration
+
 ## [1.4.0] - 2025-10-01
 
 ### Added

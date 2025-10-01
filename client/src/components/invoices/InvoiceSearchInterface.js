@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CurrencySelect } from '@/components/ui/CurrencySelect';
 import { formatCurrency } from '@/lib/currency/currencies';
+import { apiClient } from '@/lib/apiConfig';
 
 const InvoiceSearchInterface = ({ 
   onSearch, 
@@ -72,21 +73,11 @@ const InvoiceSearchInterface = ({
 
   const loadFilterOptions = async () => {
     try {
-      const token = localStorage.getItem('authToken');
-      const response = await fetch('/api/invoices/search/filters', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setFilterOptions(prev => ({
-          ...prev,
-          ...data.data
-        }));
-      }
+      const data = await apiClient('/api/invoices/search/filters');
+      setFilterOptions(prev => ({
+        ...prev,
+        ...data.data
+      }));
     } catch (error) {
       console.error('Failed to load filter options:', error);
     }
@@ -124,19 +115,9 @@ const InvoiceSearchInterface = ({
     }
 
     try {
-      const token = localStorage.getItem('authToken');
-      const response = await fetch(`/api/invoices/search/quick/${preset}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        // This will trigger the parent component to show results
-        onSearch({ preset });
-      }
+      const data = await apiClient(`/api/invoices/search/quick/${preset}`);
+      // This will trigger the parent component to show results
+      onSearch({ preset });
     } catch (error) {
       console.error('Quick filter failed:', error);
     }

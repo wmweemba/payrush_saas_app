@@ -12,10 +12,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CurrencySelect, CurrencyInput } from "@/components/ui/CurrencySelect";
 import { getDefaultCurrency, formatCurrency } from "@/lib/currency/currencies";
+import { clientService } from "@/lib/clientService";
 import InvoiceLineItemsManager from "./InvoiceLineItemsManager";
-import { Calculator, Receipt, FileText } from "lucide-react";
+import { Calculator, Receipt, FileText, Users } from "lucide-react";
 
 const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
   const [invoiceType, setInvoiceType] = useState('simple'); // 'simple' or 'detailed'
@@ -23,6 +25,11 @@ const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
   const [createdInvoiceId, setCreatedInvoiceId] = useState(null);
+
+  // Client management state
+  const [clients, setClients] = useState([]);
+  const [selectedClientId, setSelectedClientId] = useState('');
+  const [loadingClients, setLoadingClients] = useState(false);
 
   // Form data for invoice header
   const [formData, setFormData] = useState({
@@ -33,8 +40,7 @@ const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
     // Simple invoice fields
     amount: initialData?.amount || '',
     // Detailed invoice will use line items
-    description: initialData?.description || 'Professional Services',
-    notes: initialData?.notes || ''
+    description: initialData?.description || 'Professional Services'
   });
 
   // Line items total for detailed invoices
@@ -50,6 +56,27 @@ const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
         due_date: defaultDueDate.toISOString().split('T')[0]
       }));
     }
+  }, []);
+
+  // Load clients on component mount
+  useEffect(() => {
+    const loadClients = async () => {
+      setLoadingClients(true);
+      try {
+        const response = await clientService.getClients();
+        if (response.success) {
+          setClients(response.data.clients || []);
+        } else {
+          console.error('Failed to load clients:', response.error);
+        }
+      } catch (error) {
+        console.error('Error loading clients:', error);
+      } finally {
+        setLoadingClients(false);
+      }
+    };
+
+    loadClients();
   }, []);
 
   const handleInputChange = (e) => {
@@ -76,6 +103,32 @@ const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
 
   const handleLineItemsTotalChange = (total) => {
     setLineItemsTotal(total);
+  };
+
+  // Handle client selection from dropdown
+  const handleClientSelect = (clientId) => {
+    setSelectedClientId(clientId);
+    
+    if (clientId === 'new') {
+      // Allow manual entry for new client
+      setFormData(prev => ({
+        ...prev,
+        customer_name: '',
+        customer_email: '',
+        currency: getDefaultCurrency()
+      }));
+    } else if (clientId) {
+      // Auto-populate from selected client
+      const selectedClient = clients.find(client => client.id === clientId);
+      if (selectedClient) {
+        setFormData(prev => ({
+          ...prev,
+          customer_name: selectedClient.name,
+          customer_email: selectedClient.email || '',
+          currency: selectedClient.default_currency || getDefaultCurrency()
+        }));
+      }
+    }
   };
 
   const validateForm = () => {
@@ -122,12 +175,16 @@ const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
         customer_email: formData.customer_email.trim() || null,
         currency: formData.currency,
         due_date: formData.due_date,
-        notes: formData.notes.trim() || null,
         // For simple invoices, use the amount. For detailed, we'll update it after line items
         amount: invoiceType === 'simple' ? parseFloat(formData.amount) : lineItemsTotal,
         is_line_item_invoice: invoiceType === 'detailed',
         status: 'draft'
       };
+
+      // Add client_id if a client is selected (not "new" or manual entry)
+      if (selectedClientId && selectedClientId !== 'new') {
+        invoiceData.client_id = selectedClientId;
+      }
 
       const response = await fetch('http://localhost:5000/api/invoices', {
         method: 'POST',
@@ -229,6 +286,53 @@ const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Client Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <Users className="inline-block w-4 h-4 mr-1" />
+                Select Client
+              </label>
+              <Select 
+                value={selectedClientId} 
+                onValueChange={handleClientSelect}
+                disabled={isSubmitting || loadingClients}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={loadingClients ? "Loading clients..." : "Select an existing client or enter new customer details"} />
+                </SelectTrigger>
+                <SelectContent className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-lg">
+                  <SelectItem value="new">
+                    <div className="flex items-center">
+                      <FileText className="w-4 h-4 mr-2" />
+                      <span>Enter New Customer Details</span>
+                    </div>
+                  </SelectItem>
+                  {clients.length > 0 && (
+                    <>
+                      <div className="px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-600 mt-1">
+                        Existing Clients
+                      </div>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          <div className="flex flex-col">
+                            <span className="font-medium">{client.name}</span>
+                            {client.email && (
+                              <span className="text-xs text-gray-500 dark:text-gray-400">{client.email}</span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </>
+                  )}
+                  {clients.length === 0 && !loadingClients && (
+                    <SelectItem value="" disabled>
+                      <span className="text-gray-500 dark:text-gray-400">No clients found</span>
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Customer Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -241,13 +345,18 @@ const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
                   value={formData.customer_name}
                   onChange={handleInputChange}
                   required
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || (selectedClientId && selectedClientId !== 'new')}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
                            bg-white dark:bg-slate-800 text-gray-900 dark:text-white 
                            focus:ring-2 focus:ring-blue-500 focus:border-transparent
                            disabled:opacity-50 disabled:cursor-not-allowed"
-                  placeholder="Enter customer name"
+                  placeholder={selectedClientId && selectedClientId !== 'new' ? "Auto-filled from selected client" : "Enter customer name"}
                 />
+                {selectedClientId && selectedClientId !== 'new' && (
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                    ✓ Auto-populated from selected client
+                  </p>
+                )}
               </div>
 
               <div>
@@ -259,13 +368,18 @@ const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
                   name="customer_email"
                   value={formData.customer_email}
                   onChange={handleInputChange}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || (selectedClientId && selectedClientId !== 'new')}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
                            bg-white dark:bg-slate-800 text-gray-900 dark:text-white 
                            focus:ring-2 focus:ring-blue-500 focus:border-transparent
                            disabled:opacity-50 disabled:cursor-not-allowed"
-                  placeholder="Enter customer email (optional)"
+                  placeholder={selectedClientId && selectedClientId !== 'new' ? "Auto-filled from selected client" : "Enter customer email (optional)"}
                 />
+                {selectedClientId && selectedClientId !== 'new' && formData.customer_email && (
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                    ✓ Auto-populated from selected client
+                  </p>
+                )}
               </div>
             </div>
 
@@ -370,7 +484,8 @@ const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
               </Tabs>
             </div>
 
-            {/* Notes */}
+            {/* Notes - Temporarily disabled until database column is added */}
+            {/* 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Notes (Optional)
@@ -388,6 +503,7 @@ const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
                 placeholder="Add any additional notes or terms..."
               />
             </div>
+            */}
 
             {/* Total Summary */}
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">

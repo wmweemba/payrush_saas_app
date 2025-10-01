@@ -10,9 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import InvoiceSearchInterface from './InvoiceSearchInterface';
 import EnhancedInvoiceSearchResults from './EnhancedInvoiceSearchResults';
 import InvoiceSearchStats from './InvoiceSearchStats';
+import EnhancedInvoiceForm from './EnhancedInvoiceForm';
 import { processPayment } from '@/lib/payments/flutterwave';
 import { downloadInvoicePDF, previewInvoicePDF } from '@/lib/pdf/invoicePDF';
 import { supabase } from '@/lib/supabaseClient';
+import { apiClient } from '@/lib/apiConfig';
 
 const AdvancedInvoiceManager = ({ 
   user, 
@@ -25,6 +27,9 @@ const AdvancedInvoiceManager = ({
   const [searchLoading, setSearchLoading] = useState(false);
   const [currentSearchParams, setCurrentSearchParams] = useState({});
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Invoice form state
+  const [showInvoiceForm, setShowInvoiceForm] = useState(false);
 
   // Active tab
   const [activeTab, setActiveTab] = useState('search');
@@ -52,41 +57,16 @@ const AdvancedInvoiceManager = ({
       setSearchLoading(true);
       setCurrentSearchParams(searchParams);
       
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-      
       // Handle quick filter presets
       if (searchParams.preset) {
-        const response = await fetch(`/api/invoices/search/quick/${searchParams.preset}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setSearchResults(data.data);
-        } else {
-          const errorData = await response.json().catch(() => ({}));
-          console.warn('Quick search response not ok:', response.status, errorData);
-          // Don't throw error for 404 or no results
-          if (response.status !== 404) {
-            throw new Error(errorData.error || 'Quick search failed');
-          }
-        }
+        const data = await apiClient(`/api/invoices/search/quick/${searchParams.preset}`);
+        setSearchResults(data.data);
         return;
       }
 
       // Regular search
-      const response = await fetch('/api/invoices/search', {
+      const data = await apiClient('/api/invoices/search', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({
           ...searchParams,
           page: searchParams.page || 1,
@@ -94,17 +74,7 @@ const AdvancedInvoiceManager = ({
         })
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setSearchResults(data.data);
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        console.warn('Search response not ok:', response.status, errorData);
-        // Don't throw error for 404 or no results
-        if (response.status !== 404) {
-          throw new Error(errorData.error || 'Search request failed');
-        }
-      }
+      setSearchResults(data.data);
     } catch (error) {
       console.error('Search error:', error);
       // Only show error message if it's a real error, not just empty results
@@ -385,6 +355,57 @@ const AdvancedInvoiceManager = ({
     }
   };
 
+  // Handle invoice form actions
+  const handleCreateInvoice = () => {
+    setShowInvoiceForm(true);
+  };
+
+  const handleInvoiceFormSuccess = (newInvoice) => {
+    setShowInvoiceForm(false);
+    onMessage('✅ Invoice created successfully!', false);
+    // Trigger a refresh of search results
+    setRefreshTrigger(prev => prev + 1);
+    if (onRefreshInvoices) {
+      onRefreshInvoices();
+    }
+  };
+
+  const handleInvoiceFormCancel = () => {
+    setShowInvoiceForm(false);
+  };
+
+  // Show invoice form if requested
+  if (showInvoiceForm) {
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              Create New Invoice
+            </h2>
+            <p className="text-gray-600 dark:text-gray-300 text-sm">
+              Fill in the details below to create a new invoice
+            </p>
+          </div>
+          <Button
+            onClick={handleInvoiceFormCancel}
+            variant="outline"
+            className="bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600"
+          >
+            ← Back to Invoices
+          </Button>
+        </div>
+
+        {/* Invoice Form */}
+        <EnhancedInvoiceForm
+          onSuccess={handleInvoiceFormSuccess}
+          onCancel={handleInvoiceFormCancel}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header with Simple Style like other tabs */}
@@ -407,7 +428,7 @@ const AdvancedInvoiceManager = ({
             🔄 Refresh
           </Button>
           <Button 
-            onClick={() => {/* TODO: Add new invoice modal */}}
+            onClick={handleCreateInvoice}
             className="payrush-gradient text-white hover:scale-105 transition-transform"
           >
             ➕ New Invoice

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { formatCurrency } from '@/lib/currency/currencies';
+import { apiClient } from '@/lib/apiConfig';
 
 const InvoiceSearchStats = ({ searchParams = {}, refreshTrigger = 0 }) => {
   const [stats, setStats] = useState(null);
@@ -21,7 +22,6 @@ const InvoiceSearchStats = ({ searchParams = {}, refreshTrigger = 0 }) => {
   const loadStats = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('authToken');
       
       // Build query parameters
       const queryParams = new URLSearchParams();
@@ -35,17 +35,8 @@ const InvoiceSearchStats = ({ searchParams = {}, refreshTrigger = 0 }) => {
         }
       });
 
-      const response = await fetch(`/api/invoices/search/stats?${queryParams}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data.data);
-      }
+      const data = await apiClient(`/api/invoices/search/stats?${queryParams}`);
+      setStats(data.data);
     } catch (error) {
       console.error('Failed to load statistics:', error);
     } finally {

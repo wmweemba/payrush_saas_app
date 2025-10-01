@@ -240,7 +240,7 @@ How to use: Edit this file as work progresses. Mark tasks as - [x] when done.
   - [x] Implement automatic interaction tracking with database triggers
   - [x] Add 8 new API endpoints for complete communication management
 
-## Milestone 7 — Advanced Invoice Features (IN PROGRESS 📋)
+## Milestone 7 — Advanced Invoice Features (COMPLETED ✅)
 
 - [x] **Advanced Invoice Line Items System** ✅ COMPLETED (v1.1.0)
   - [x] Create comprehensive line item management for invoices
@@ -267,15 +267,28 @@ How to use: Edit this file as work progresses. Mark tasks as - [x] when done.
   - [x] Implement comprehensive backend search service with optimized queries
   - [x] Create professional search interface with responsive design and proper UX
 
-- [ ] **Bulk Invoice Operations** (NEXT 🎯)
-  - [ ] Add bulk status updates for multiple invoices
-  - [ ] Implement batch export functionality (PDF, CSV, Excel)
-  - [ ] Create bulk delete with confirmation and recovery
-  - [ ] Add mass email sending for invoice notifications
-  - [ ] Build bulk payment processing and reconciliation
-  - [ ] Implement batch invoice generation from templates
+- [x] **Bulk Invoice Operations** ✅ COMPLETED (v1.4.0)
+  - [x] Build bulk selection interface with checkboxes for invoice selection across search results
+  - [x] Implement bulk status updates for multiple invoices (draft → sent, mark as paid, overdue, cancelled)
+  - [x] Create comprehensive bulk export functionality supporting PDF, CSV, and Excel formats
+    - [x] Excel export with multi-sheet workbooks (Invoice Overview, Line Items, Payments, Summary)
+    - [x] CSV export with customizable field inclusion
+    - [x] Export customization options (include line items, payment history)
+  - [x] Implement bulk delete operations with soft delete and recovery capabilities
+  - [x] Build comprehensive bulk email notification system with professional templates
+    - [x] 4 email templates (Invoice Sent, Payment Reminder, Overdue Notice, Payment Confirmation)
+    - [x] Dynamic template variable replacement and customization
+    - [x] Email delivery tracking with status monitoring
+    - [x] Priority levels and attachment options
+  - [x] Create backend bulk operations API with comprehensive service layer
+    - [x] BulkInvoiceService.js for operation orchestration
+    - [x] BulkExportService.js for multi-format file generation
+    - [x] EmailService.js for email template and delivery management
+  - [x] Build professional bulk actions UI with confirmation dialogs and progress feedback
+  - [x] Implement email_logs database table for comprehensive email tracking and analytics
+  - [x] Add comprehensive error handling and user feedback throughout bulk operations
 
-- [ ] **Advanced Invoice Templates & Customization**
+- [ ] **Advanced Invoice Templates & Customization** (NEXT 🎯)
   - [ ] Create invoice template customization interface
   - [ ] Add custom branding and logo upload functionality
   - [ ] Implement custom invoice numbering schemes

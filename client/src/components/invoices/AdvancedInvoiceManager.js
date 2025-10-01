@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import InvoiceSearchInterface from './InvoiceSearchInterface';
-import InvoiceSearchResults from './InvoiceSearchResults';
+import EnhancedInvoiceSearchResults from './EnhancedInvoiceSearchResults';
 import InvoiceSearchStats from './InvoiceSearchStats';
 import { processPayment } from '@/lib/payments/flutterwave';
 import { downloadInvoicePDF, previewInvoicePDF } from '@/lib/pdf/invoicePDF';
@@ -178,17 +178,16 @@ const AdvancedInvoiceManager = ({
       await processPayment(
         invoice,
         // onSuccess callback
-        async (response, verificationResult) => {
-          onMessage(`✅ Payment successful! Invoice #${invoice.id} has been paid.`, false);
-          // Refresh search results
-          handleSearch(currentSearchParams);
+        () => {
+          onMessage(`✅ Payment successful for invoice ${invoice.id}!`, false);
+          // Refresh invoices to update status
           setRefreshTrigger(prev => prev + 1);
           if (onRefreshInvoices) onRefreshInvoices();
         },
         // onError callback
-        (error, details) => {
-          console.error('Payment error:', error, details);
-          onMessage(`❌ Payment failed: ${typeof error === 'string' ? error : error.message}`, true);
+        (error) => {
+          console.error('Payment error:', error);
+          onMessage(`❌ Payment failed: ${error.message}`, true);
         }
       );
     } catch (error) {
@@ -202,18 +201,23 @@ const AdvancedInvoiceManager = ({
     try {
       const { error } = await supabase
         .from('invoices')
-        .update({ status: newStatus })
+        .update({ status: newStatus.toLowerCase() })
         .eq('id', invoiceId)
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        throw new Error(error.message);
+      }
 
-      onMessage(`✅ Invoice marked as ${newStatus}!`, false);
+      onMessage(`✅ Invoice marked as ${newStatus}`, false);
       
-      // Refresh search results
+      // Refresh search results to show updated status
       handleSearch(currentSearchParams);
-      setRefreshTrigger(prev => prev + 1);
-      if (onRefreshInvoices) onRefreshInvoices();
+      
+      // Also refresh the main invoice list if callback provided
+      if (onRefreshInvoices) {
+        onRefreshInvoices();
+      }
     } catch (error) {
       console.error('Status update error:', error);
       throw error;
@@ -232,6 +236,152 @@ const AdvancedInvoiceManager = ({
     } catch (error) {
       console.error('PDF generation error:', error);
       throw error;
+    }
+  };
+
+  // Handle bulk actions
+  const handleBulkAction = async (action, data) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const invoiceIds = data.invoices.map(invoice => invoice.id);
+      
+      switch (action) {
+        case 'updateStatus':
+          await handleBulkStatusUpdate(invoiceIds, data.status, token);
+          break;
+        case 'delete':
+          await handleBulkDelete(invoiceIds, token);
+          break;
+        case 'export':
+          await handleBulkExport(invoiceIds, data, token);
+          break;
+        case 'sendEmail':
+          await handleBulkEmail(invoiceIds, data, token);
+          break;
+        default:
+          throw new Error(`Unknown bulk action: ${action}`);
+      }
+
+      // Refresh search results after bulk action
+      handleSearch(currentSearchParams);
+      onMessage(`✅ Bulk ${action} completed successfully for ${invoiceIds.length} invoice(s)`, false);
+    } catch (error) {
+      console.error('Bulk action error:', error);
+      onMessage(`❌ Bulk ${action} failed: ${error.message}`, true);
+    }
+  };
+
+  // Bulk status update
+  const handleBulkStatusUpdate = async (invoiceIds, status, token) => {
+    const response = await fetch('/api/invoices/bulk/status', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ invoiceIds, status })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to update status');
+    }
+  };
+
+  // Bulk delete
+  const handleBulkDelete = async (invoiceIds, token) => {
+    const response = await fetch('/api/invoices/bulk/delete', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ invoiceIds })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to delete invoices');
+    }
+  };
+
+  // Bulk export
+  const handleBulkExport = async (invoiceIds, data, token) => {
+    const response = await fetch('/api/invoices/bulk/export', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ 
+        invoiceIds, 
+        format: data.format,
+        includeLineItems: data.includeLineItems,
+        includePayments: data.includePayments
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to export invoices');
+    }
+
+    // Handle different export formats
+    if (data.format === 'csv') {
+      // For CSV, the response will be the file content
+      const csvContent = await response.text();
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invoices_export_${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } else {
+      // For other formats, process JSON response
+      const result = await response.json();
+      onMessage(`📊 Export prepared: ${result.data.count} invoices ready for ${data.format.toUpperCase()}`, false);
+    }
+  };
+
+  // Bulk email
+  const handleBulkEmail = async (invoiceIds, data, token) => {
+    const { 
+      template = 'invoice_sent',
+      includeAttachment = true,
+      priority = 'normal'
+    } = data;
+
+    const response = await fetch('/api/invoices/bulk/send-emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ 
+        invoiceIds,
+        emailOptions: {
+          template,
+          includeAttachment,
+          priority
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to send email notifications');
+    }
+
+    const result = await response.json();
+    if (result.data.failed > 0) {
+      onMessage(`📧 Sent ${result.data.sent} emails successfully, ${result.data.failed} failed`, false);
+    } else {
+      onMessage(`✅ Successfully sent ${result.data.sent} email notifications`, true);
     }
   };
 
@@ -294,11 +444,12 @@ const AdvancedInvoiceManager = ({
         </TabsList>
 
         <TabsContent value="search" className="space-y-6 mt-6">
-          <InvoiceSearchResults
+          <EnhancedInvoiceSearchResults
             results={searchResults}
             loading={searchLoading}
             onPageChange={handlePageChange}
             onInvoiceAction={handleInvoiceAction}
+            onBulkAction={handleBulkAction}
             currentPage={searchResults?.page || 1}
           />
         </TabsContent>

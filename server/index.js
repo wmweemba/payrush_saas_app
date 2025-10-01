@@ -22,6 +22,7 @@ const authRoutes = require('./routes/auth');
 const invoiceLineItemsRoutes = require('./routes/invoiceLineItems');
 const invoiceSearchRoutes = require('./routes/invoiceSearch');
 const publicInvoiceRoutes = require('./routes/publicInvoice');
+const bulkInvoiceRoutes = require('./routes/bulkInvoices');
 
 // Import middleware
 const authMiddleware = require('./middleware/auth');
@@ -72,6 +73,7 @@ app.use('/api/clients', authMiddleware, clientRoutes);
 app.use('/api/payments', authMiddleware, paymentRoutes);
 app.use('/api/invoices', authMiddleware, invoiceLineItemsRoutes);
 app.use('/api/invoices', authMiddleware, invoiceSearchRoutes); // Search routes for invoices
+app.use('/api/invoices/bulk', authMiddleware, bulkInvoiceRoutes); // Bulk operations for invoices
 app.use('/api/public', publicInvoiceRoutes); // Public routes don't need auth
 app.use('/api/webhooks', webhookRoutes); // Webhooks don't need auth middleware
 

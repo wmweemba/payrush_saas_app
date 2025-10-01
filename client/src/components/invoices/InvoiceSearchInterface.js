@@ -324,7 +324,7 @@ const InvoiceSearchInterface = ({
                     <SelectTrigger className="bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
                       <SelectValue placeholder="Any currency" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-lg">
                       <SelectItem value="all">Any currency</SelectItem>
                       {filterOptions.currencies.map((currency) => (
                         <SelectItem key={currency} value={currency}>
@@ -376,7 +376,7 @@ const InvoiceSearchInterface = ({
                     <SelectTrigger className="bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-lg">
                       {sortOptions.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
@@ -394,7 +394,7 @@ const InvoiceSearchInterface = ({
                     <SelectTrigger className="bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-lg">
                       <SelectItem value="desc">Newest First</SelectItem>
                       <SelectItem value="asc">Oldest First</SelectItem>
                     </SelectContent>

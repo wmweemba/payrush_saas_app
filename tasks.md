@@ -240,27 +240,48 @@ How to use: Edit this file as work progresses. Mark tasks as - [x] when done.
   - [x] Implement automatic interaction tracking with database triggers
   - [x] Add 8 new API endpoints for complete communication management
 
-## Milestone 7 — Advanced Invoice Features (TODO 📋)
+## Milestone 7 — Advanced Invoice Features (IN PROGRESS 📋)
 
-## Milestone 7 — Advanced Invoice Features (TODO 📋)
+- [x] **Advanced Invoice Line Items System** ✅ COMPLETED (v1.1.0)
+  - [x] Create comprehensive line item management for invoices
+  - [x] Build add/edit/delete operations for invoice line items
+  - [x] Implement quantity × unit price calculations with totals
+  - [x] Add line item descriptions and professional formatting
+  - [x] Create line items database table with proper relationships
+  - [x] Build professional line item management UI components
 
-- [ ] **Advanced Invoice Features**
-  - [ ] Create advanced invoice creation with line items support
-  - [ ] Build invoice item management (add, edit, delete line items)
-  - [ ] Implement invoice templates customization interface
-  - [ ] Create public invoice view page for customers (/invoice/[id])
-  - [ ] Add invoice search, filtering, and sorting functionality
-  - [ ] Implement bulk invoice operations (export, status updates)
+- [x] **Public Invoice View Pages** ✅ COMPLETED (v1.2.0)
+  - [x] Create customer-facing invoice pages (/invoice/[id])
+  - [x] Build professional invoice display with company branding
+  - [x] Implement payment integration for public invoice pages
+  - [x] Add mobile-optimized invoice viewing experience
+  - [x] Create secure public invoice access with validation
+  - [x] Add payment processing directly from public invoice pages
+
+- [x] **Invoice Search & Filtering System** ✅ COMPLETED (v1.3.0)
+  - [x] Implement advanced search functionality with text search and multiple filters
+  - [x] Build real-time search results with pagination and sorting options
+  - [x] Create quick filter presets (Recent, Overdue, High Value, This Month, Pending)
+  - [x] Add expandable advanced filter panel with date ranges, amounts, clients, currencies, status
+  - [x] Build search analytics dashboard with statistics and metrics
+  - [x] Implement comprehensive backend search service with optimized queries
+  - [x] Create professional search interface with responsive design and proper UX
+
+- [ ] **Bulk Invoice Operations** (NEXT 🎯)
+  - [ ] Add bulk status updates for multiple invoices
+  - [ ] Implement batch export functionality (PDF, CSV, Excel)
+  - [ ] Create bulk delete with confirmation and recovery
+  - [ ] Add mass email sending for invoice notifications
+  - [ ] Build bulk payment processing and reconciliation
+  - [ ] Implement batch invoice generation from templates
+
+- [ ] **Advanced Invoice Templates & Customization**
+  - [ ] Create invoice template customization interface
+  - [ ] Add custom branding and logo upload functionality
+  - [ ] Implement custom invoice numbering schemes
+  - [ ] Build invoice approval workflows
   - [ ] Add invoice notes and internal comments system
   - [ ] Create invoice duplicate and template features
-
-- [ ] **Recurring & Subscription Invoices**
-  - [ ] Implement recurring invoice setup and management
-  - [ ] Build subscription billing with automatic invoice generation
-  - [ ] Add recurring payment schedules (weekly, monthly, yearly)
-  - [ ] Create subscription customer management
-  - [ ] Implement automatic payment retries for failed subscriptions
-  - [ ] Add subscription analytics and reporting
 
 ## Milestone 8 — Business Intelligence & Analytics (TODO 🚀)
 

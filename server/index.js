@@ -19,6 +19,9 @@ const clientRoutes = require('./routes/clients');
 const paymentRoutes = require('./routes/payments');
 const webhookRoutes = require('./routes/webhooks');
 const authRoutes = require('./routes/auth');
+const invoiceLineItemsRoutes = require('./routes/invoiceLineItems');
+const invoiceSearchRoutes = require('./routes/invoiceSearch');
+const publicInvoiceRoutes = require('./routes/publicInvoice');
 
 // Import middleware
 const authMiddleware = require('./middleware/auth');
@@ -67,6 +70,9 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/clients', authMiddleware, clientRoutes);
 app.use('/api/payments', authMiddleware, paymentRoutes);
+app.use('/api/invoices', authMiddleware, invoiceLineItemsRoutes);
+app.use('/api/invoices', authMiddleware, invoiceSearchRoutes); // Search routes for invoices
+app.use('/api/public', publicInvoiceRoutes); // Public routes don't need auth
 app.use('/api/webhooks', webhookRoutes); // Webhooks don't need auth middleware
 
 // API documentation endpoint

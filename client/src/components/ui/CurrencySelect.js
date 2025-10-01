@@ -8,6 +8,9 @@
 import React from 'react';
 import { getAllCurrencies, getCurrency, formatCurrency } from '@/lib/currency/currencies';
 
+// Re-export currency utilities for convenience
+export { formatCurrency, getCurrency, getAllCurrencies } from '@/lib/currency/currencies';
+
 export const CurrencySelect = ({ 
   value = 'USD', 
   onChange, 

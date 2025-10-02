@@ -23,6 +23,11 @@ const invoiceLineItemsRoutes = require('./routes/invoiceLineItems');
 const invoiceSearchRoutes = require('./routes/invoiceSearch');
 const publicInvoiceRoutes = require('./routes/publicInvoice');
 const bulkInvoiceRoutes = require('./routes/bulkInvoices');
+const templateRoutes = require('./routes/templates');
+const numberingSchemeRoutes = require('./routes/numberingSchemes');
+const brandingRoutes = require('./routes/branding');
+const invoiceNotesRoutes = require('./routes/invoiceNotes');
+const approvalRoutes = require('./routes/approvals');
 
 // Import middleware
 const authMiddleware = require('./middleware/auth');
@@ -74,6 +79,11 @@ app.use('/api/payments', authMiddleware, paymentRoutes);
 app.use('/api/invoices', authMiddleware, invoiceLineItemsRoutes);
 app.use('/api/invoices', authMiddleware, invoiceSearchRoutes); // Search routes for invoices
 app.use('/api/invoices/bulk', authMiddleware, bulkInvoiceRoutes); // Bulk operations for invoices
+app.use('/api/templates', authMiddleware, templateRoutes); // Template management routes
+app.use('/api/numbering-schemes', authMiddleware, numberingSchemeRoutes); // Numbering scheme routes
+app.use('/api/branding', authMiddleware, brandingRoutes); // Business branding routes
+app.use('/api/notes', authMiddleware, invoiceNotesRoutes); // Invoice notes routes
+app.use('/api/approvals', authMiddleware, approvalRoutes); // Invoice approval workflow routes
 app.use('/api/public', publicInvoiceRoutes); // Public routes don't need auth
 app.use('/api/webhooks', webhookRoutes); // Webhooks don't need auth middleware
 
@@ -86,6 +96,11 @@ app.get('/api', (req, res) => {
       auth: '/api/auth',
       clients: '/api/clients',
       payments: '/api/payments',
+      templates: '/api/templates',
+      numberingSchemes: '/api/numbering-schemes',
+      branding: '/api/branding',
+      notes: '/api/notes',
+      approvals: '/api/approvals',
       webhooks: '/api/webhooks',
       health: '/health'
     },

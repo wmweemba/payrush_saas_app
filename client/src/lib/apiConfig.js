@@ -23,6 +23,11 @@ export const API_ENDPOINTS = {
   client: (id) => `/api/clients/${id}`,
   clientStats: '/api/clients/stats',
   
+  // Template endpoints
+  templates: '/api/templates',
+  template: (id) => `/api/templates/${id}`,
+  templateStats: '/api/templates/stats',
+  
   // Payment endpoints
   paymentVerify: '/api/payments/verify',
   paymentHistory: '/api/payments/history',

@@ -28,6 +28,25 @@ export const API_ENDPOINTS = {
   template: (id) => `/api/templates/${id}`,
   templateStats: '/api/templates/stats',
   
+  // Invoice Notes endpoints
+  notes: '/api/notes',
+  note: (id) => `/api/notes/${id}`,
+  invoiceNotes: (invoiceId) => `/api/notes/invoice/${invoiceId}`,
+  invoiceNotesSearch: '/api/notes/search',
+  invoiceNotesSummary: (invoiceId) => `/api/notes/invoice/${invoiceId}/summary`,
+  invoiceNotesCustomer: (invoiceId) => `/api/notes/invoice/${invoiceId}/customer`,
+  invoiceNotesSystem: (invoiceId) => `/api/notes/invoice/${invoiceId}/system`,
+  notesBulk: '/api/notes/bulk',
+  notesBulkVisibility: '/api/notes/bulk/visibility',
+  
+  // Numbering Schemes endpoints
+  numberingSchemes: '/api/numbering-schemes',
+  numberingScheme: (id) => `/api/numbering-schemes/${id}`,
+  numberingSchemeDefault: (id) => `/api/numbering-schemes/${id}/default`,
+  numberingSchemeGenerate: (id) => `/api/numbering-schemes/${id}/generate`,
+  numberingSchemePreview: (id) => `/api/numbering-schemes/${id}/preview`,
+  numberingSchemesInitialize: '/api/numbering-schemes/initialize',
+  
   // Payment endpoints
   paymentVerify: '/api/payments/verify',
   paymentHistory: '/api/payments/history',

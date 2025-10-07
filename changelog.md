@@ -2,6 +2,44 @@
 
 All notable changes to the PayRush SaaS application will be documented in this file.
 
+## [1.6.1] - 2025-10-07
+
+### Fixed
+#### Critical UI Visibility Improvements - Dropdown Components
+- **🎨 Comprehensive Select Component Visibility Fixes**
+  - **Main Issue Resolution**: Fixed invisible dropdown options in invoice creation form customer selection
+  - **Dark Mode Support**: Added complete dark mode styling to all Select components across the application
+  - **Enhanced Contrast**: Applied explicit background and text colors to ensure visibility in both light and dark modes
+  - **Global CSS Improvements**: Enhanced globals.css with proper CSS variables and Select-specific styling rules
+
+- **📋 Components Updated with Proper Styling**
+  - **EnhancedInvoiceForm.js**: Client selection dropdown with explicit bg-white/dark:bg-slate-700 styling
+  - **CurrencySelect.js**: Currency selection with dark mode support and contrast-friendly colors
+  - **BulkInvoiceActions.js**: Export format selection with updated trigger styling
+  - **ClientCommunication.js**: Multiple Select components for notes and reminders with full dark mode support
+  - **Templates page**: Template type filter dropdown with proper visibility
+  - **FontSelector.js**: Font family, weight, and text transform selectors with dark mode styling
+  - **ClientCurrencyPreferences.js**: Currency selection with enhanced contrast
+  - **ClientFinancialDashboard.js**: Date range selector with proper visibility
+  - **ClientList.js**: Native select element for tag filtering with dark mode support
+
+- **🎯 Styling Standards Applied**
+  - **SelectTrigger**: `bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white`
+  - **SelectContent**: `bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-lg`
+  - **SelectItem**: `bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer`
+
+### User Experience Enhancements
+- **🔍 Professional Dropdown Visibility**: All dropdown options now clearly visible with proper contrast ratios
+- **🌙 Consistent Dark Mode**: Seamless experience across light and dark themes
+- **🎨 Enhanced Visual Hierarchy**: Improved color contrast and visual feedback for all select components
+- **⚡ Immediate Accessibility**: Fixed low contrast issues that impacted usability and accessibility compliance
+
+### Technical Improvements
+- **📦 Global Styling System**: Enhanced CSS custom properties for popover and select components
+- **🎨 Component Architecture**: Consistent styling patterns applied across all Select components
+- **🛠️ Maintainable Code**: Standardized styling approach for future Select component implementations
+- **🔧 Browser Compatibility**: Improved cross-browser dropdown rendering and visibility
+
 ## [1.6.0] - 2025-10-02
 
 ### Added

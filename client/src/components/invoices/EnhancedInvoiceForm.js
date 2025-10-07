@@ -297,11 +297,11 @@ const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
                 onValueChange={handleClientSelect}
                 disabled={isSubmitting || loadingClients}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
                   <SelectValue placeholder={loadingClients ? "Loading clients..." : "Select an existing client or enter new customer details"} />
                 </SelectTrigger>
-                <SelectContent className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-lg">
-                  <SelectItem value="new">
+                <SelectContent className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-lg max-h-60 overflow-y-auto">
+                  <SelectItem value="new" className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">
                     <div className="flex items-center">
                       <FileText className="w-4 h-4 mr-2" />
                       <span>Enter New Customer Details</span>
@@ -309,11 +309,11 @@ const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
                   </SelectItem>
                   {clients.length > 0 && (
                     <>
-                      <div className="px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-600 mt-1">
+                      <div className="px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-600 mt-1 bg-gray-50 dark:bg-slate-700">
                         Existing Clients
                       </div>
                       {clients.map((client) => (
-                        <SelectItem key={client.id} value={client.id}>
+                        <SelectItem key={client.id} value={client.id} className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">
                           <div className="flex flex-col">
                             <span className="font-medium">{client.name}</span>
                             {client.email && (
@@ -325,7 +325,7 @@ const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
                     </>
                   )}
                   {clients.length === 0 && !loadingClients && (
-                    <SelectItem value="" disabled>
+                    <SelectItem value="" disabled className="bg-white dark:bg-slate-800 text-gray-500 dark:text-gray-400">
                       <span className="text-gray-500 dark:text-gray-400">No clients found</span>
                     </SelectItem>
                   )}

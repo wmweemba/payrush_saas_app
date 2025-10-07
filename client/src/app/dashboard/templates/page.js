@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from '@/lib/apiConfig';
+import { useToast } from '@/hooks/use-toast';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState([]);
@@ -20,6 +22,7 @@ export default function TemplatesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState('all');
   const [templateStats, setTemplateStats] = useState(null);
+  const { toast } = useToast();
 
   // Fetch templates
   const fetchTemplates = async () => {
@@ -53,7 +56,14 @@ export default function TemplatesPage() {
         setTemplateStats(response.data);
       }
     } catch (err) {
-      console.error('Error fetching template stats:', err);
+      console.warn('Template stats temporarily unavailable:', err.message);
+      // Set default stats to prevent UI issues
+      setTemplateStats({
+        total: 0,
+        user_templates: 0,
+        system_templates: 0,
+        recently_used: 0
+      });
     }
   };
 
@@ -295,7 +305,12 @@ export default function TemplatesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <DashboardLayout
+      title="Invoice Templates"
+      description="Create and customize professional invoice templates for your business"
+      currentTab="templates"
+    >
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
@@ -304,18 +319,18 @@ export default function TemplatesPage() {
             Create and customize professional invoice templates for your business
           </p>
         </div>
-        <Button onClick={() => window.open('/dashboard/templates/editor/new', '_blank')}>
+        <Button onClick={() => window.open('/dashboard/templates/editor/new', '_blank')} className="bg-blue-600 hover:bg-blue-700 text-white">
           <Plus className="w-4 h-4 mr-2" />
           Create Template
         </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="templates">Templates</TabsTrigger>
-          <TabsTrigger value="branding">Branding</TabsTrigger>
-          <TabsTrigger value="numbering">Numbering</TabsTrigger>
-          <TabsTrigger value="approval">Approval</TabsTrigger>
+        <TabsList className="bg-gray-100 dark:bg-gray-800">
+          <TabsTrigger value="templates" className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white data-[state=active]:text-gray-900 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white">Templates</TabsTrigger>
+          <TabsTrigger value="branding" className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white data-[state=active]:text-gray-900 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white">Branding</TabsTrigger>
+          <TabsTrigger value="numbering" className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white data-[state=active]:text-gray-900 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white">Numbering</TabsTrigger>
+          <TabsTrigger value="approval" className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white data-[state=active]:text-gray-900 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white">Approval</TabsTrigger>
         </TabsList>
 
         <TabsContent value="templates" className="space-y-6">
@@ -333,17 +348,17 @@ export default function TemplatesPage() {
               />
             </div>
             <Select value={selectedType} onValueChange={setSelectedType}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-48 bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
                 <Filter className="w-4 h-4 mr-2" />
                 <SelectValue placeholder="Filter by type" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="professional">Professional</SelectItem>
-                <SelectItem value="minimal">Minimal</SelectItem>
-                <SelectItem value="modern">Modern</SelectItem>
-                <SelectItem value="classic">Classic</SelectItem>
-                <SelectItem value="custom">Custom</SelectItem>
+              <SelectContent className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-lg">
+                <SelectItem value="all" className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">All Types</SelectItem>
+                <SelectItem value="professional" className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">Professional</SelectItem>
+                <SelectItem value="minimal" className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">Minimal</SelectItem>
+                <SelectItem value="modern" className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">Modern</SelectItem>
+                <SelectItem value="classic" className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">Classic</SelectItem>
+                <SelectItem value="custom" className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">Custom</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -362,16 +377,16 @@ export default function TemplatesPage() {
                   </p>
                   {templates.length === 0 ? (
                     <div className="flex gap-2 justify-center">
-                      <Button onClick={initializeTemplates} variant="outline">
+                      <Button onClick={initializeTemplates} variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20">
                         Initialize Default Templates
                       </Button>
-                      <Button onClick={() => window.open('/dashboard/templates/editor/new', '_blank')}>
+                      <Button onClick={() => window.open('/dashboard/templates/editor/new', '_blank')} className="bg-blue-600 hover:bg-blue-700 text-white">
                         <Plus className="w-4 h-4 mr-2" />
                         Create Template
                       </Button>
                     </div>
                   ) : (
-                    <Button onClick={() => window.open('/dashboard/templates/editor/new', '_blank')}>
+                    <Button onClick={() => window.open('/dashboard/templates/editor/new', '_blank')} className="bg-blue-600 hover:bg-blue-700 text-white">
                       <Plus className="w-4 h-4 mr-2" />
                       Create Template
                     </Button>
@@ -414,9 +429,23 @@ export default function TemplatesPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <Settings className="w-12 h-12 mx-auto mb-4" />
-                <p>Numbering schemes coming soon...</p>
+              <div className="text-center py-8">
+                <div className="bg-gradient-to-r from-blue-500 to-purple-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">🔢</span>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                  Custom Numbering Schemes
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  Create and manage custom invoice numbering patterns with prefix, suffix, sequence management, and reset options.
+                </p>
+                <Button
+                  onClick={() => window.open('/dashboard/numbering', '_self')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Manage Numbering Schemes
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -439,6 +468,7 @@ export default function TemplatesPage() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }

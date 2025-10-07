@@ -308,15 +308,15 @@ const ClientCurrencyPreferences = ({ clientId, clientName }) => {
             <div>
               <label className="block text-sm font-medium mb-2">Currency</label>
               <Select value={selectedCurrency} onValueChange={setSelectedCurrency}>
-                <SelectTrigger className="bg-white border-gray-300">
+                <SelectTrigger className="bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+                <SelectContent className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-lg z-50">
                   {availableCurrencies.map((currency) => (
                     <SelectItem 
                       key={currency.code} 
                       value={currency.code}
-                      className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer"
+                      className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer"
                     >
                       <div className="flex items-center gap-2">
                         <span>{currency.flag}</span>

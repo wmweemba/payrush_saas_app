@@ -386,24 +386,24 @@ const ClientCommunication = ({ clientId }) => {
                     />
                   </div>
                   <Select value={noteFilters.note_type} onValueChange={(value) => setNoteFilters(prev => ({ ...prev, note_type: value }))}>
-                    <SelectTrigger className="w-40 bg-white border-gray-300">
+                    <SelectTrigger className="w-40 bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
                       <SelectValue placeholder="Type" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
-                      <SelectItem value="all" className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">All Types</SelectItem>
+                    <SelectContent className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-lg z-50">
+                      <SelectItem value="all" className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">All Types</SelectItem>
                       {noteTypes.map(type => (
-                        <SelectItem key={type.value} value={type.value} className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">{type.label}</SelectItem>
+                        <SelectItem key={type.value} value={type.value} className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">{type.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                   <Select value={noteFilters.priority} onValueChange={(value) => setNoteFilters(prev => ({ ...prev, priority: value }))}>
-                    <SelectTrigger className="w-40 bg-white border-gray-300">
+                    <SelectTrigger className="w-40 bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
                       <SelectValue placeholder="Priority" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
-                      <SelectItem value="all" className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">All Priorities</SelectItem>
+                    <SelectContent className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-lg z-50">
+                      <SelectItem value="all" className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">All Priorities</SelectItem>
                       {priorities.map(priority => (
-                        <SelectItem key={priority.value} value={priority.value} className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">{priority.label}</SelectItem>
+                        <SelectItem key={priority.value} value={priority.value} className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">{priority.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -446,12 +446,12 @@ const ClientCommunication = ({ clientId }) => {
                         <div>
                           <Label htmlFor="note-type">Type</Label>
                           <Select value={noteForm.note_type} onValueChange={(value) => setNoteForm(prev => ({ ...prev, note_type: value }))}>
-                            <SelectTrigger className="bg-white border-gray-300">
+                            <SelectTrigger className="bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+                            <SelectContent className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-lg z-50">
                               {noteTypes.map(type => (
-                                <SelectItem key={type.value} value={type.value} className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">{type.label}</SelectItem>
+                                <SelectItem key={type.value} value={type.value} className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">{type.label}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -460,12 +460,12 @@ const ClientCommunication = ({ clientId }) => {
                         <div>
                           <Label htmlFor="note-priority">Priority</Label>
                           <Select value={noteForm.priority} onValueChange={(value) => setNoteForm(prev => ({ ...prev, priority: value }))}>
-                            <SelectTrigger className="bg-white border-gray-300">
+                            <SelectTrigger className="bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+                            <SelectContent className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-lg z-50">
                               {priorities.map(priority => (
-                                <SelectItem key={priority.value} value={priority.value} className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">{priority.label}</SelectItem>
+                                <SelectItem key={priority.value} value={priority.value} className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">{priority.label}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -600,13 +600,13 @@ const ClientCommunication = ({ clientId }) => {
                     value={reminderFilters.status} 
                     onValueChange={(value) => setReminderFilters(prev => ({ ...prev, status: value }))}
                   >
-                    <SelectTrigger className="w-40 bg-white border-gray-300">
+                    <SelectTrigger className="w-40 bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
-                      <SelectItem value="pending" className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">Pending</SelectItem>
-                      <SelectItem value="completed" className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">Completed</SelectItem>
-                      <SelectItem value="all" className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">All</SelectItem>
+                    <SelectContent className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-lg z-50">
+                      <SelectItem value="pending" className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">Pending</SelectItem>
+                      <SelectItem value="completed" className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">Completed</SelectItem>
+                      <SelectItem value="all" className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">All</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -658,12 +658,12 @@ const ClientCommunication = ({ clientId }) => {
                         <div>
                           <Label htmlFor="reminder-type">Type</Label>
                           <Select value={reminderForm.reminder_type} onValueChange={(value) => setReminderForm(prev => ({ ...prev, reminder_type: value }))}>
-                            <SelectTrigger className="bg-white border-gray-300">
+                            <SelectTrigger className="bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+                            <SelectContent className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-lg z-50">
                               {reminderTypes.map(type => (
-                                <SelectItem key={type.value} value={type.value} className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">{type.label}</SelectItem>
+                                <SelectItem key={type.value} value={type.value} className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">{type.label}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -672,12 +672,12 @@ const ClientCommunication = ({ clientId }) => {
                         <div>
                           <Label htmlFor="reminder-priority">Priority</Label>
                           <Select value={reminderForm.priority} onValueChange={(value) => setReminderForm(prev => ({ ...prev, priority: value }))}>
-                            <SelectTrigger className="bg-white border-gray-300">
+                            <SelectTrigger className="bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+                            <SelectContent className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-lg z-50">
                               {priorities.map(priority => (
-                                <SelectItem key={priority.value} value={priority.value} className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">{priority.label}</SelectItem>
+                                <SelectItem key={priority.value} value={priority.value} className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">{priority.label}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>

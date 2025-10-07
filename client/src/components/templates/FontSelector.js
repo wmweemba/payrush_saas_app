@@ -138,7 +138,7 @@ export default function FontSelector({
             value={fontConfig.family || 'Arial, sans-serif'} 
             onValueChange={(value) => handleFontChange('family', value)}
           >
-            <SelectTrigger className="mt-1">
+            <SelectTrigger className="mt-1 bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -209,7 +209,7 @@ export default function FontSelector({
             value={fontConfig.weight || 'normal'} 
             onValueChange={(value) => handleFontChange('weight', value)}
           >
-            <SelectTrigger className="mt-1">
+            <SelectTrigger className="mt-1 bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -280,7 +280,7 @@ export default function FontSelector({
                 value={fontConfig.textTransform || 'none'} 
                 onValueChange={(value) => handleFontChange('textTransform', value)}
               >
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="mt-1 bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

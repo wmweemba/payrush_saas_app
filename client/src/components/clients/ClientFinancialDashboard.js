@@ -181,14 +181,14 @@ const ClientFinancialDashboard = ({ clientId, clientName }) => {
         </div>
         <div className="flex gap-2">
           <Select value={dateRange} onValueChange={setDateRange}>
-            <SelectTrigger className="w-[150px] bg-white border-gray-300">
+            <SelectTrigger className="w-[150px] bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
-              <SelectItem value="1month" className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">Last Month</SelectItem>
-              <SelectItem value="3months" className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">Last 3 Months</SelectItem>
-              <SelectItem value="6months" className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">Last 6 Months</SelectItem>
-              <SelectItem value="1year" className="bg-white hover:bg-gray-100 text-gray-900 cursor-pointer">Last Year</SelectItem>
+            <SelectContent className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-lg z-50">
+              <SelectItem value="1month" className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">Last Month</SelectItem>
+              <SelectItem value="3months" className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">Last 3 Months</SelectItem>
+              <SelectItem value="6months" className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">Last 6 Months</SelectItem>
+              <SelectItem value="1year" className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">Last Year</SelectItem>
             </SelectContent>
           </Select>
         </div>

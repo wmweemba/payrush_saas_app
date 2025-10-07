@@ -330,12 +330,12 @@ const ExportButton = ({ onExport, disabled }) => {
 
   return (
     <Select value={selectedFormat} onValueChange={handleExportChange} disabled={disabled}>
-      <SelectTrigger className="w-full">
+      <SelectTrigger className="w-full bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
         <SelectValue placeholder="Export" />
       </SelectTrigger>
       <SelectContent className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-lg">
         {exportOptions.map((option) => (
-          <SelectItem key={option.value} value={option.value}>
+          <SelectItem key={option.value} value={option.value} className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">
             {option.label}
           </SelectItem>
         ))}

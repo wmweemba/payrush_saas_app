@@ -38,8 +38,8 @@
     --ring: #60a5fa;
     --card: #0a0a0a;
     --card-foreground: #ededed;
-    --popover: #0a0a0a;
-    --popover-foreground: #ededed;
+    --popover: #1e293b;
+    --popover-foreground: #f8fafc;
     --accent: #1e293b;
     --accent-foreground: #f8fafc;
     --destructive: #dc2626;
@@ -69,4 +69,28 @@ body {
 
 .text-balance {
   text-wrap: balance;
+}
+
+/* Enhanced Select Component Styling */
+[data-radix-select-content] {
+  background-color: hsl(var(--popover));
+  color: hsl(var(--popover-foreground));
+  border: 1px solid hsl(var(--border));
+}
+
+[data-radix-select-item] {
+  color: hsl(var(--popover-foreground));
+}
+
+[data-radix-select-item]:hover,
+[data-radix-select-item][data-highlighted] {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+/* Additional Select Improvements */
+.select-content {
+  z-index: 50;
+  max-height: 300px;
+  overflow-y: auto;
 }

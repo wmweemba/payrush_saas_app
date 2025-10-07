@@ -185,45 +185,6 @@ router.delete('/:id', async (req, res, next) => {
 });
 
 /**
- * POST /api/notes/invoice/:invoiceId/system
- * Create a system note for an invoice
- */
-router.post('/invoice/:invoiceId/system', async (req, res, next) => {
-  try {
-    const userId = req.userId;
-    const invoiceId = req.params.invoiceId;
-    const { systemEvent, content, title } = req.body;
-
-    // Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(invoiceId)) {
-      return res.status(400).json(
-        createErrorResponse('Invalid invoice ID format', 400)
-      );
-    }
-
-    // Basic validation
-    if (!systemEvent || !content) {
-      return res.status(400).json(
-        createErrorResponse('System event and content are required', 400)
-      );
-    }
-
-    const result = await invoiceNotesService.createSystemNote(invoiceId, userId, systemEvent, content, title);
-
-    if (!result.success) {
-      return res.status(result.statusCode || 500).json(
-        createErrorResponse(result.error, result.statusCode || 500)
-      );
-    }
-
-    res.status(201).json(createApiResponse(true, result.data, 'System note created successfully'));
-  } catch (error) {
-    next(error);
-  }
-});
-
-/**
  * GET /api/notes/invoice/:invoiceId/summary
  * Get notes summary for an invoice
  */
@@ -294,11 +255,8 @@ router.get('/search', async (req, res, next) => {
     const { q: searchQuery, noteType, priority, invoiceId } = req.query;
     const { page, limit, offset } = parsePaginationParams(req);
 
-    if (!searchQuery) {
-      return res.status(400).json(
-        createErrorResponse('Search query is required', 400)
-      );
-    }
+    // Make search query optional - if empty, return all notes
+    const finalSearchQuery = searchQuery && searchQuery.trim() ? searchQuery.trim() : '';
 
     const options = {
       noteType,
@@ -308,7 +266,7 @@ router.get('/search', async (req, res, next) => {
       offset
     };
 
-    const result = await invoiceNotesService.searchNotes(userId, searchQuery, options);
+    const result = await invoiceNotesService.searchNotes(userId, finalSearchQuery, options);
 
     if (!result.success) {
       return res.status(result.statusCode || 500).json(
@@ -352,50 +310,6 @@ router.post('/bulk', async (req, res, next) => {
     }
 
     res.status(201).json(createApiResponse(true, result.data, 'Notes created successfully'));
-  } catch (error) {
-    next(error);
-  }
-});
-
-/**
- * PUT /api/notes/bulk/visibility
- * Bulk update note visibility
- */
-router.put('/bulk/visibility', async (req, res, next) => {
-  try {
-    const userId = req.userId;
-    const { noteIds, isVisible } = req.body;
-
-    if (!noteIds || !Array.isArray(noteIds) || noteIds.length === 0) {
-      return res.status(400).json(
-        createErrorResponse('Note IDs array is required', 400)
-      );
-    }
-
-    if (typeof isVisible !== 'boolean') {
-      return res.status(400).json(
-        createErrorResponse('isVisible must be a boolean value', 400)
-      );
-    }
-
-    // Validate all UUIDs
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    const invalidIds = noteIds.filter(id => !uuidRegex.test(id));
-    if (invalidIds.length > 0) {
-      return res.status(400).json(
-        createErrorResponse('Invalid note ID format in the list', 400)
-      );
-    }
-
-    const result = await invoiceNotesService.bulkUpdateNoteVisibility(noteIds, userId, isVisible);
-
-    if (!result.success) {
-      return res.status(result.statusCode || 500).json(
-        createErrorResponse(result.error, result.statusCode || 500)
-      );
-    }
-
-    res.json(createApiResponse(true, result.data, 'Note visibility updated successfully'));
   } catch (error) {
     next(error);
   }

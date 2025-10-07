@@ -5,6 +5,7 @@
 
 const { supabase } = require('../config/database');
 const { logger } = require('../middleware/logger');
+const EmailService = require('./emailService');
 
 class ApprovalService {
   // Create approval workflow
@@ -405,6 +406,49 @@ class ApprovalService {
         throw new Error(`Failed to update approval: ${updateError.message}`);
       }
 
+      // Send notification about approval result
+      try {
+        // Get approver details
+        const { data: approverProfile } = await supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('id', userId)
+          .single();
+
+        const approverName = approverProfile?.full_name || approverProfile?.email || 'Approver';
+
+        // Get invoice and workflow details for notification
+        const { data: fullApprovalData, error: fetchError } = await supabase
+          .from('invoice_approvals')
+          .select(`
+            *,
+            invoices (
+              id,
+              custom_invoice_number,
+              customer_name,
+              total_amount,
+              currency
+            ),
+            invoice_approval_workflows (
+              name
+            )
+          `)
+          .eq('id', approvalId)
+          .single();
+
+        if (!fetchError && fullApprovalData) {
+          await EmailService.sendApprovalResultNotification(
+            fullApprovalData,
+            action,
+            approverName,
+            comments
+          );
+        }
+      } catch (emailError) {
+        logger.error('Error sending approval result notification:', emailError);
+        // Don't fail the approval process if email fails
+      }
+
       logger.info('Successfully processed approval action:', { approvalId, action, newStatus });
       return updatedApproval;
     } catch (error) {
@@ -538,18 +582,81 @@ class ApprovalService {
       
       if (!step || !step.approvers) return;
 
-      // Here you would implement notification logic
-      // This could be email, in-app notifications, etc.
-      logger.info('Notification sent to approvers:', {
-        approvalId,
-        step: stepIndex,
-        approvers: step.approvers
-      });
+      // Get approval details with invoice information
+      const { data: approval, error } = await supabase
+        .from('invoice_approvals')
+        .select(`
+          *,
+          invoices (
+            id,
+            custom_invoice_number,
+            customer_name,
+            total_amount,
+            currency
+          )
+        `)
+        .eq('id', approvalId)
+        .single();
 
-      // For now, just log the notification
-      // In a real implementation, you'd integrate with your notification service
+      if (error || !approval) {
+        logger.error('Error fetching approval for notification:', error);
+        return;
+      }
+
+      // Get company name for the user who submitted the approval
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('company_name, full_name')
+        .eq('id', approval.submitted_by)
+        .single();
+
+      // Prepare approval data for email
+      const approvalData = {
+        ...approval,
+        workflow: workflow,
+        company_name: userProfile?.company_name || 'Your Company',
+        submitted_by_name: userProfile?.full_name || 'User'
+      };
+
+      // Send email notifications to all approvers in this step
+      for (const approverEmail of step.approvers) {
+        try {
+          await EmailService.sendApprovalNotification(
+            approvalData,
+            approverEmail,
+            approverEmail.split('@')[0] // Use email prefix as name fallback
+          );
+          
+          logger.info('Approval notification sent:', {
+            approvalId,
+            step: stepIndex,
+            approver: approverEmail
+          });
+        } catch (emailError) {
+          logger.error('Error sending approval notification email:', {
+            approvalId,
+            approver: approverEmail,
+            error: emailError.message
+          });
+        }
+      }
     } catch (error) {
       logger.error('Error in notifyNextApprovers:', error);
+    }
+  }
+
+  // Send approval reminders
+  async sendApprovalReminders(userId) {
+    try {
+      logger.info('Sending approval reminders for user:', userId);
+      
+      const result = await EmailService.sendApprovalReminders(userId);
+      
+      logger.info('Approval reminders sent:', result.data);
+      return result;
+    } catch (error) {
+      logger.error('Error in sendApprovalReminders:', error);
+      throw error;
     }
   }
 

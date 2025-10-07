@@ -393,6 +393,27 @@ router.get('/templates', async (req, res) => {
   }
 });
 
+// Send approval reminders
+router.post('/reminders', async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    const result = await approvalService.sendApprovalReminders(userId);
+
+    res.json({
+      success: true,
+      data: result.data,
+      message: `Sent ${result.data.reminders_sent} approval reminders`
+    });
+  } catch (error) {
+    logger.error('Error sending approval reminders:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to send approval reminders'
+    });
+  }
+});
+
 // Bulk Operations
 
 // Bulk approve invoices

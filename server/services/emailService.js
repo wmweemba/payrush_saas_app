@@ -30,6 +30,122 @@ class EmailService {
         <p>Best regards,<br>{company_name}</p>
       `
     },
+    approval_request: {
+      subject: 'Approval Required - Invoice #{invoice_number}',
+      template: `
+        <h2>Invoice Approval Request</h2>
+        <p>Dear {approver_name},</p>
+        <p>A new invoice requires your approval. Please review the details below:</p>
+        
+        <div style="background: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
+          <h3>Invoice Details</h3>
+          <p><strong>Invoice Number:</strong> #{invoice_number}</p>
+          <p><strong>Customer:</strong> {customer_name}</p>
+          <p><strong>Amount:</strong> {amount} {currency}</p>
+          <p><strong>Submitted By:</strong> {submitted_by}</p>
+          <p><strong>Submitted Date:</strong> {submitted_date}</p>
+          <p><strong>Workflow:</strong> {workflow_name}</p>
+          <p><strong>Approval Step:</strong> {approval_step}</p>
+        </div>
+        
+        {notes}
+        
+        <div style="margin: 30px 0;">
+          <a href="{approval_link}" style="background: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-right: 10px;">
+            Review & Approve
+          </a>
+          <a href="{rejection_link}" style="background: #dc3545; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+            Reject
+          </a>
+        </div>
+        
+        <p>Please process this approval at your earliest convenience.</p>
+        
+        <p>Best regards,<br>{company_name}</p>
+      `
+    },
+    approval_approved: {
+      subject: 'Invoice #{invoice_number} Approved',
+      template: `
+        <h2>Invoice Approved</h2>
+        <p>Dear {requester_name},</p>
+        <p>Great news! Your invoice has been approved.</p>
+        
+        <div style="background: #d4edda; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #28a745;">
+          <h3>Approval Details</h3>
+          <p><strong>Invoice Number:</strong> #{invoice_number}</p>
+          <p><strong>Customer:</strong> {customer_name}</p>
+          <p><strong>Amount:</strong> {amount} {currency}</p>
+          <p><strong>Approved By:</strong> {approved_by}</p>
+          <p><strong>Approved Date:</strong> {approved_date}</p>
+          <p><strong>Workflow:</strong> {workflow_name}</p>
+        </div>
+        
+        {approval_comments}
+        
+        <p>Your invoice is now ready to be sent to the customer.</p>
+        
+        <p>Best regards,<br>{company_name}</p>
+      `
+    },
+    approval_rejected: {
+      subject: 'Invoice #{invoice_number} Rejected',
+      template: `
+        <h2>Invoice Rejected</h2>
+        <p>Dear {requester_name},</p>
+        <p>Your invoice has been rejected and requires revision.</p>
+        
+        <div style="background: #f8d7da; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc3545;">
+          <h3>Rejection Details</h3>
+          <p><strong>Invoice Number:</strong> #{invoice_number}</p>
+          <p><strong>Customer:</strong> {customer_name}</p>
+          <p><strong>Amount:</strong> {amount} {currency}</p>
+          <p><strong>Rejected By:</strong> {rejected_by}</p>
+          <p><strong>Rejected Date:</strong> {rejected_date}</p>
+          <p><strong>Workflow:</strong> {workflow_name}</p>
+        </div>
+        
+        <div style="background: #fff3cd; padding: 15px; border-radius: 6px; margin: 20px 0;">
+          <h4>Rejection Reason:</h4>
+          <p>{rejection_reason}</p>
+        </div>
+        
+        <p>Please review the feedback and make the necessary changes before resubmitting.</p>
+        
+        <p>Best regards,<br>{company_name}</p>
+      `
+    },
+    approval_reminder: {
+      subject: 'Reminder: Approval Required - Invoice #{invoice_number}',
+      template: `
+        <h2>Approval Reminder</h2>
+        <p>Dear {approver_name},</p>
+        <p>This is a friendly reminder that an invoice is still awaiting your approval.</p>
+        
+        <div style="background: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
+          <h3>Invoice Details</h3>
+          <p><strong>Invoice Number:</strong> #{invoice_number}</p>
+          <p><strong>Customer:</strong> {customer_name}</p>
+          <p><strong>Amount:</strong> {amount} {currency}</p>
+          <p><strong>Submitted Date:</strong> {submitted_date}</p>
+          <p><strong>Days Pending:</strong> {days_pending}</p>
+          <p><strong>Workflow:</strong> {workflow_name}</p>
+        </div>
+        
+        <div style="margin: 30px 0;">
+          <a href="{approval_link}" style="background: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-right: 10px;">
+            Review & Approve
+          </a>
+          <a href="{rejection_link}" style="background: #dc3545; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+            Reject
+          </a>
+        </div>
+        
+        <p>Please process this approval to avoid delays.</p>
+        
+        <p>Best regards,<br>{company_name}</p>
+      `
+    },
     payment_reminder: {
       subject: 'Payment Reminder - Invoice #{invoice_number}',
       template: `
@@ -106,6 +222,296 @@ class EmailService {
     opened: 'Opened',
     clicked: 'Clicked'
   };
+
+  /**
+   * Send approval notification email
+   */
+  static async sendApprovalNotification(approvalData, approverEmail, approverName = 'Approver') {
+    try {
+      const templateVars = {
+        invoice_number: approvalData.invoice?.custom_invoice_number || `INV-${approvalData.invoice_id?.slice(-8)}`,
+        customer_name: approvalData.invoice?.customer_name || 'Unknown Customer',
+        amount: approvalData.invoice?.total_amount || '0.00',
+        currency: approvalData.invoice?.currency || 'USD',
+        submitted_by: approvalData.submitted_by_name || 'User',
+        submitted_date: new Date(approvalData.submitted_at).toLocaleDateString(),
+        workflow_name: approvalData.workflow?.name || 'Approval Workflow',
+        approval_step: `${(approvalData.current_step || 0) + 1}`,
+        approver_name: approverName,
+        company_name: approvalData.company_name || 'Your Company',
+        approval_link: `${process.env.CLIENT_URL || 'http://localhost:3000'}/dashboard/approvals`,
+        rejection_link: `${process.env.CLIENT_URL || 'http://localhost:3000'}/dashboard/approvals`,
+        notes: approvalData.notes ? `<div style="background: #e3f2fd; padding: 15px; border-radius: 6px; margin: 20px 0;"><h4>Submission Notes:</h4><p>${approvalData.notes}</p></div>` : ''
+      };
+
+      const emailTemplate = this.EMAIL_TEMPLATES.approval_request;
+      const subject = this.replaceTemplateVariables(emailTemplate.subject, templateVars);
+      const htmlContent = this.replaceTemplateVariables(emailTemplate.template, templateVars);
+
+      // Create email log
+      const emailLog = {
+        invoice_id: approvalData.invoice_id,
+        user_id: approvalData.user_id,
+        recipient_email: approverEmail,
+        recipient_name: approverName,
+        subject,
+        template_used: 'approval_request',
+        status: 'pending',
+        metadata: {
+          approval_id: approvalData.id,
+          workflow_id: approvalData.workflow_id,
+          approval_step: approvalData.current_step
+        }
+      };
+
+      const { data: logData, error: logError } = await supabase
+        .from('email_logs')
+        .insert(emailLog)
+        .select()
+        .single();
+
+      if (logError) {
+        console.error('Error creating approval email log:', logError);
+        throw new Error('Failed to create email log');
+      }
+
+      // Simulate sending email
+      const emailJob = {
+        to_email: approverEmail,
+        to_name: approverName,
+        subject,
+        html_content: htmlContent,
+        template_used: 'approval_request',
+        priority: 'high'
+      };
+
+      const result = await this.simulateEmailSending([emailJob], [logData]);
+
+      return {
+        success: true,
+        data: {
+          sent: result.sent,
+          failed: result.failed,
+          email_log: logData
+        }
+      };
+    } catch (error) {
+      console.error('EmailService.sendApprovalNotification error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Send approval result notification (approved/rejected)
+   */
+  static async sendApprovalResultNotification(approvalData, action, actionBy, comments = '') {
+    try {
+      const template = action === 'approve' ? 'approval_approved' : 'approval_rejected';
+      const templateVars = {
+        invoice_number: approvalData.invoice?.custom_invoice_number || `INV-${approvalData.invoice_id?.slice(-8)}`,
+        customer_name: approvalData.invoice?.customer_name || 'Unknown Customer',
+        amount: approvalData.invoice?.total_amount || '0.00',
+        currency: approvalData.invoice?.currency || 'USD',
+        requester_name: approvalData.submitted_by_name || 'User',
+        approved_by: actionBy,
+        rejected_by: actionBy,
+        approved_date: new Date().toLocaleDateString(),
+        rejected_date: new Date().toLocaleDateString(),
+        workflow_name: approvalData.workflow?.name || 'Approval Workflow',
+        company_name: approvalData.company_name || 'Your Company',
+        approval_comments: comments ? `<div style="background: #e8f5e8; padding: 15px; border-radius: 6px; margin: 20px 0;"><h4>Approval Comments:</h4><p>${comments}</p></div>` : '',
+        rejection_reason: comments || 'No specific reason provided'
+      };
+
+      const emailTemplate = this.EMAIL_TEMPLATES[template];
+      const subject = this.replaceTemplateVariables(emailTemplate.subject, templateVars);
+      const htmlContent = this.replaceTemplateVariables(emailTemplate.template, templateVars);
+
+      // Get requester email
+      const { data: requesterData, error: userError } = await supabase
+        .from('profiles')
+        .select('email, full_name')
+        .eq('id', approvalData.submitted_by)
+        .single();
+
+      if (userError || !requesterData?.email) {
+        console.warn('Could not get requester email for approval notification');
+        return { success: false, error: 'Requester email not found' };
+      }
+
+      // Create email log
+      const emailLog = {
+        invoice_id: approvalData.invoice_id,
+        user_id: approvalData.submitted_by,
+        recipient_email: requesterData.email,
+        recipient_name: requesterData.full_name || 'User',
+        subject,
+        template_used: template,
+        status: 'pending',
+        metadata: {
+          approval_id: approvalData.id,
+          workflow_id: approvalData.workflow_id,
+          action: action,
+          action_by: actionBy
+        }
+      };
+
+      const { data: logData, error: logError } = await supabase
+        .from('email_logs')
+        .insert(emailLog)
+        .select()
+        .single();
+
+      if (logError) {
+        console.error('Error creating approval result email log:', logError);
+        throw new Error('Failed to create email log');
+      }
+
+      // Simulate sending email
+      const emailJob = {
+        to_email: requesterData.email,
+        to_name: requesterData.full_name || 'User',
+        subject,
+        html_content: htmlContent,
+        template_used: template,
+        priority: 'high'
+      };
+
+      const result = await this.simulateEmailSending([emailJob], [logData]);
+
+      return {
+        success: true,
+        data: {
+          sent: result.sent,
+          failed: result.failed,
+          email_log: logData
+        }
+      };
+    } catch (error) {
+      console.error('EmailService.sendApprovalResultNotification error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Send approval reminder emails
+   */
+  static async sendApprovalReminders(userId) {
+    try {
+      // Get pending approvals older than reminder threshold
+      const reminderThreshold = new Date();
+      reminderThreshold.setHours(reminderThreshold.getHours() - 24); // 24 hours ago
+
+      const { data: pendingApprovals, error } = await supabase
+        .from('invoice_approvals')
+        .select(`
+          *,
+          invoices (custom_invoice_number, customer_name, total_amount, currency),
+          invoice_approval_workflows (name, approval_steps)
+        `)
+        .eq('status', 'pending')
+        .lt('submitted_at', reminderThreshold.toISOString())
+        .is('reminder_sent_at', null);
+
+      if (error) {
+        console.error('Error fetching pending approvals for reminders:', error);
+        throw new Error('Failed to fetch pending approvals');
+      }
+
+      if (!pendingApprovals || pendingApprovals.length === 0) {
+        return { success: true, data: { reminders_sent: 0 } };
+      }
+
+      let remindersSent = 0;
+
+      for (const approval of pendingApprovals) {
+        try {
+          const workflow = approval.invoice_approval_workflows;
+          const currentStep = approval.current_step || 0;
+          const approvers = workflow?.approval_steps?.[currentStep]?.approvers || [];
+
+          for (const approverEmail of approvers) {
+            const daysPending = Math.floor((new Date() - new Date(approval.submitted_at)) / (1000 * 60 * 60 * 24));
+            
+            const templateVars = {
+              invoice_number: approval.invoices?.custom_invoice_number || `INV-${approval.invoice_id?.slice(-8)}`,
+              customer_name: approval.invoices?.customer_name || 'Unknown Customer',
+              amount: approval.invoices?.total_amount || '0.00',
+              currency: approval.invoices?.currency || 'USD',
+              submitted_date: new Date(approval.submitted_at).toLocaleDateString(),
+              days_pending: daysPending,
+              workflow_name: workflow?.name || 'Approval Workflow',
+              approver_name: approverEmail.split('@')[0],
+              company_name: 'Your Company',
+              approval_link: `${process.env.CLIENT_URL || 'http://localhost:3000'}/dashboard/approvals`,
+              rejection_link: `${process.env.CLIENT_URL || 'http://localhost:3000'}/dashboard/approvals`
+            };
+
+            const emailTemplate = this.EMAIL_TEMPLATES.approval_reminder;
+            const subject = this.replaceTemplateVariables(emailTemplate.subject, templateVars);
+            const htmlContent = this.replaceTemplateVariables(emailTemplate.template, templateVars);
+
+            // Create email log
+            const emailLog = {
+              invoice_id: approval.invoice_id,
+              user_id: userId,
+              recipient_email: approverEmail,
+              recipient_name: approverEmail.split('@')[0],
+              subject,
+              template_used: 'approval_reminder',
+              status: 'pending',
+              metadata: {
+                approval_id: approval.id,
+                workflow_id: approval.workflow_id,
+                reminder_type: 'approval_reminder'
+              }
+            };
+
+            const { data: logData, error: logError } = await supabase
+              .from('email_logs')
+              .insert(emailLog)
+              .select()
+              .single();
+
+            if (!logError) {
+              // Simulate sending
+              const emailJob = {
+                to_email: approverEmail,
+                to_name: approverEmail.split('@')[0],
+                subject,
+                html_content: htmlContent,
+                template_used: 'approval_reminder',
+                priority: 'normal'
+              };
+
+              await this.simulateEmailSending([emailJob], [logData]);
+              remindersSent++;
+            }
+          }
+
+          // Mark reminder as sent
+          await supabase
+            .from('invoice_approvals')
+            .update({ reminder_sent_at: new Date().toISOString() })
+            .eq('id', approval.id);
+
+        } catch (approvalError) {
+          console.error(`Error sending reminder for approval ${approval.id}:`, approvalError);
+        }
+      }
+
+      return {
+        success: true,
+        data: {
+          reminders_sent: remindersSent,
+          pending_approvals_checked: pendingApprovals.length
+        }
+      };
+    } catch (error) {
+      console.error('EmailService.sendApprovalReminders error:', error);
+      throw error;
+    }
+  }
 
   /**
    * Send bulk emails to selected invoices

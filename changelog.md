@@ -2,6 +2,68 @@
 
 All notable changes to the PayRush SaaS application will be documented in this file.
 
+## [1.8.0] - 2025-10-07
+
+### Added
+#### Complete Invoice Approval Workflow System
+- **🎯 Comprehensive Approval Infrastructure**
+  - **Database Schema**: Complete approval workflow tables with proper relationships
+    - `invoice_approval_workflows`: Workflow definitions and configurations
+    - `invoice_approvals`: Approval instances and status tracking
+    - Database functions for approval statistics and authorization checks
+  - **Backend Service**: Full-featured ApprovalService with CRUD operations
+    - Workflow creation, update, and deletion
+    - Approval submission and processing
+    - Authorization checks and step management
+    - Auto-approval threshold support
+  - **RESTful API**: Complete approval endpoints for all operations
+    - `/api/approvals/workflows` - Workflow management
+    - `/api/approvals/pending` - Pending approvals for user
+    - `/api/approvals/:id/action` - Approve/reject actions
+    - `/api/approvals/reminders` - Send approval reminders
+
+- **📧 Email Notification System**
+  - **Professional Email Templates**: Approval-specific email templates
+    - Approval request notifications with action links
+    - Approval result notifications (approved/rejected)
+    - Reminder emails for pending approvals
+  - **EmailService Integration**: Enhanced with approval-specific methods
+    - `sendApprovalNotification()` - Notify approvers
+    - `sendApprovalResultNotification()` - Notify submitters
+    - `sendApprovalReminders()` - Automated reminders
+  - **Smart Variables**: Dynamic template variables for personalized communications
+
+- **🎨 Dedicated Frontend Interface**
+  - **Approvals Page**: `/dashboard/approvals` with comprehensive interface
+    - Multi-tab layout: Pending, Workflows, History
+    - Real-time approval statistics dashboard
+    - Workflow creation and management
+    - Pending approval processing with comments
+  - **Navigation Integration**: Added Approvals tab to main dashboard navigation
+  - **Invoice Integration**: Seamless approval workflow integration
+    - "Submit for Approval" button on draft invoices
+    - Approval status badges and indicators
+    - Status-specific action buttons
+
+- **🔄 Advanced Workflow Features**
+  - **Multi-Step Approvals**: Support for complex approval chains
+  - **Conditional Logic**: Auto-approval based on amount thresholds
+  - **Step Authorization**: Proper approver authorization checks
+  - **Status Management**: Complete approval state tracking
+    - `pending_approval` - Awaiting approval
+    - `approved` - Successfully approved
+    - `rejected` - Rejected with reasons
+  - **Audit Trail**: Complete approval history and activity tracking
+
+### Technical Improvements
+- **Component Architecture**: Modular, reusable approval components
+- **State Management**: Efficient approval state synchronization
+- **Error Handling**: Robust error handling and user feedback
+- **Performance**: Optimized queries with proper database indexing
+- **Integration**: Seamless integration with existing invoice management
+
+---
+
 ## [1.7.1] - 2025-10-07
 
 ### Fixed

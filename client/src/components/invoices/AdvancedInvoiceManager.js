@@ -14,7 +14,7 @@ import EnhancedInvoiceForm from './EnhancedInvoiceForm';
 import { processPayment } from '@/lib/payments/flutterwave';
 import { downloadInvoicePDF, previewInvoicePDF } from '@/lib/pdf/invoicePDF';
 import { supabase } from '@/lib/supabaseClient';
-import { apiClient } from '@/lib/apiConfig';
+import { apiClient, API_BASE_URL } from '@/lib/apiConfig';
 
 const AdvancedInvoiceManager = ({ 
   user, 
@@ -133,6 +133,9 @@ const AdvancedInvoiceManager = ({
         case 'download':
           await handleDownloadPDF(invoice);
           break;
+        case 'submitApproval':
+          await handleSubmitForApproval(invoice);
+          break;
         default:
           console.warn('Unknown action:', action);
       }
@@ -205,6 +208,74 @@ const AdvancedInvoiceManager = ({
       }
     } catch (error) {
       console.error('PDF generation error:', error);
+      throw error;
+    }
+  };
+
+  // Submit invoice for approval
+  const handleSubmitForApproval = async (invoice) => {
+    try {
+      // First, get user's workflows to select from
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      // Fetch available workflows
+      const workflowsResponse = await fetch(`${API_BASE_URL}/api/approvals/workflows`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!workflowsResponse.ok) {
+        throw new Error('Failed to fetch approval workflows');
+      }
+
+      const workflowsResult = await workflowsResponse.json();
+      const workflows = workflowsResult.data || [];
+
+      if (workflows.length === 0) {
+        onMessage('❌ No approval workflows found. Please create an approval workflow first.', true);
+        return;
+      }
+
+      // For now, use the first active workflow
+      // In a real implementation, you'd show a dialog to select workflow
+      const activeWorkflow = workflows.find(w => w.is_active) || workflows[0];
+
+      // Submit for approval
+      const approvalResponse = await fetch(`${API_BASE_URL}/api/approvals/invoices/${invoice.id}/submit`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          workflow_id: activeWorkflow.id,
+          notes: `Invoice submitted for approval via workflow: ${activeWorkflow.workflow_name || activeWorkflow.name}`
+        })
+      });
+
+      if (!approvalResponse.ok) {
+        const errorData = await approvalResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to submit invoice for approval');
+      }
+
+      const approvalResult = await approvalResponse.json();
+      
+      onMessage(`✅ Invoice submitted for approval using workflow: ${activeWorkflow.workflow_name || activeWorkflow.name}`, false);
+      
+      // Refresh search results to show updated status
+      handleSearch(currentSearchParams);
+      
+      // Also refresh the main invoice list if callback provided
+      if (onRefreshInvoices) {
+        onRefreshInvoices();
+      }
+    } catch (error) {
+      console.error('Approval submission error:', error);
       throw error;
     }
   };

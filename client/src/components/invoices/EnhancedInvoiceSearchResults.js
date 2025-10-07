@@ -125,6 +125,12 @@ const EnhancedInvoiceSearchResults = ({
         return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
       case 'Draft':
         return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
+      case 'pending_approval':
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400';
+      case 'approved':
+        return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400';
+      case 'rejected':
+        return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
       default:
         return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
     }
@@ -320,6 +326,37 @@ const EnhancedInvoiceSearchResults = ({
                           >
                             ✏️ Edit
                           </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleAction('send', invoice)}
+                            disabled={isActionLoading(invoice.id, 'send')}
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                          >
+                            {isActionLoading(invoice.id, 'send') ? 'Sending...' : '📧 Send'}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleAction('submitApproval', invoice)}
+                            disabled={isActionLoading(invoice.id, 'submitApproval')}
+                            className="border-purple-600 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:border-purple-400 dark:hover:bg-purple-900/20"
+                          >
+                            {isActionLoading(invoice.id, 'submitApproval') ? 'Submitting...' : '✅ Submit for Approval'}
+                          </Button>
+                        </>
+                      )}
+
+                      {invoice.status === 'pending_approval' && (
+                        <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400">
+                          Pending Approval
+                        </Badge>
+                      )}
+
+                      {invoice.status === 'approved' && (
+                        <>
+                          <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
+                            Approved
+                          </Badge>
                           <Button
                             size="sm"
                             onClick={() => handleAction('send', invoice)}

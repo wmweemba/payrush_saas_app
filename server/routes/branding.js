@@ -1,16 +1,18 @@
 /**
- * Business Branding Routes
+ * Enhanced Business Branding Routes
  * 
- * Express routes for business branding and asset management operations
+ * Express routes for comprehensive business branding and asset management operations
+ * Updated to support new database schema with brand_assets table and enhanced functionality
  */
 
 const express = require('express');
 const multer = require('multer');
 const router = express.Router();
 const brandingService = require('../services/brandingService');
+const auth = require('../middleware/auth');
 const { createApiResponse, createErrorResponse } = require('../utils');
 
-// Configure multer for file uploads
+// Configure multer for file uploads with enhanced settings
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
@@ -18,24 +20,26 @@ const upload = multer({
     files: 1
   },
   fileFilter: (req, file, cb) => {
-    // Basic file type validation
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/svg+xml', 'image/x-icon', 'image/vnd.microsoft.icon'];
+    // Enhanced file type validation
+    const allowedTypes = [
+      'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 
+      'image/svg+xml', 'image/webp', 'image/x-icon', 'image/vnd.microsoft.icon'
+    ];
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only images are allowed.'), false);
+      cb(new Error('Invalid file type. Only image files are allowed.'), false);
     }
   }
 });
 
 /**
  * GET /api/branding
- * Get business branding for the authenticated user
+ * Get comprehensive business branding including assets
  */
-router.get('/', async (req, res, next) => {
+router.get('/', auth, async (req, res, next) => {
   try {
-    const userId = req.userId; // From auth middleware
-
+    const userId = req.user.id;
     const result = await brandingService.getBranding(userId);
 
     if (!result.success) {
@@ -52,24 +56,12 @@ router.get('/', async (req, res, next) => {
 
 /**
  * PUT /api/branding
- * Create or update business branding
+ * Update business branding information
  */
-router.put('/', async (req, res, next) => {
+router.put('/', auth, async (req, res, next) => {
   try {
-    const userId = req.userId;
+    const userId = req.user.id;
     const brandingData = req.body;
-
-    // Validate color scheme if colors are provided
-    if (brandingData.primary_color || brandingData.secondary_color || 
-        brandingData.accent_color || brandingData.text_color || brandingData.background_color) {
-      
-      const colorValidation = brandingService.validateColorScheme(brandingData);
-      if (!colorValidation.valid) {
-        return res.status(400).json(
-          createErrorResponse(colorValidation.error, 400)
-        );
-      }
-    }
 
     const result = await brandingService.saveBranding(userId, brandingData);
 
@@ -79,37 +71,54 @@ router.put('/', async (req, res, next) => {
       );
     }
 
-    res.json(createApiResponse(true, result.data, 'Branding saved successfully'));
+    res.json(createApiResponse(true, result.data, 'Branding updated successfully'));
   } catch (error) {
     next(error);
   }
 });
 
 /**
- * POST /api/branding/upload/:assetType
- * Upload a branding asset (logo, favicon, watermark)
+ * POST /api/branding/upload
+ * Upload brand asset with enhanced metadata support
  */
-router.post('/upload/:assetType', upload.single('file'), async (req, res, next) => {
+router.post('/upload', auth, upload.single('asset'), async (req, res, next) => {
   try {
-    const userId = req.userId;
-    const assetType = req.params.assetType;
+    const userId = req.user.id;
     const file = req.file;
+    const { assetType, name, description, altText, width, height, usageContext } = req.body;
 
-    // Validate asset type
-    const validAssetTypes = ['logo', 'favicon', 'watermark'];
-    if (!validAssetTypes.includes(assetType)) {
-      return res.status(400).json(
-        createErrorResponse('Invalid asset type. Allowed types: logo, favicon, watermark', 400)
-      );
-    }
-
+    // Validate required fields
     if (!file) {
       return res.status(400).json(
         createErrorResponse('No file provided', 400)
       );
     }
 
-    const result = await brandingService.uploadAsset(userId, file, assetType);
+    if (!assetType) {
+      return res.status(400).json(
+        createErrorResponse('Asset type is required', 400)
+      );
+    }
+
+    // Validate asset type
+    const validAssetTypes = ['logo', 'favicon', 'letterhead', 'signature', 'background'];
+    if (!validAssetTypes.includes(assetType)) {
+      return res.status(400).json(
+        createErrorResponse(`Invalid asset type. Allowed types: ${validAssetTypes.join(', ')}`, 400)
+      );
+    }
+
+    // Prepare metadata
+    const metadata = {
+      name: name || file.originalname,
+      description: description || '',
+      altText: altText || '',
+      width: width ? parseInt(width) : null,
+      height: height ? parseInt(height) : null,
+      usageContext: usageContext ? JSON.parse(usageContext) : {}
+    };
+
+    const result = await brandingService.uploadAsset(userId, file, assetType, metadata);
 
     if (!result.success) {
       return res.status(result.statusCode || 500).json(
@@ -125,76 +134,21 @@ router.post('/upload/:assetType', upload.single('file'), async (req, res, next) 
           createErrorResponse('File size too large. Maximum size is 5MB', 400)
         );
       }
-      if (error.code === 'LIMIT_FILE_COUNT') {
-        return res.status(400).json(
-          createErrorResponse('Too many files. Only one file allowed', 400)
-        );
-      }
     }
-    next(error);
-  }
-});
-
-/**
- * PUT /api/branding/logo
- * Update logo in branding settings
- */
-router.put('/logo', async (req, res, next) => {
-  try {
-    const userId = req.userId;
-    const { logoUrl, logoWidth, logoHeight } = req.body;
-
-    if (!logoUrl) {
-      return res.status(400).json(
-        createErrorResponse('Logo URL is required', 400)
-      );
-    }
-
-    const result = await brandingService.updateLogo(userId, logoUrl, logoWidth, logoHeight);
-
-    if (!result.success) {
-      return res.status(result.statusCode || 500).json(
-        createErrorResponse(result.error, result.statusCode || 500)
-      );
-    }
-
-    res.json(createApiResponse(true, result.data, 'Logo updated successfully'));
-  } catch (error) {
-    next(error);
-  }
-});
-
-/**
- * DELETE /api/branding/logo
- * Remove logo from branding settings
- */
-router.delete('/logo', async (req, res, next) => {
-  try {
-    const userId = req.userId;
-
-    const result = await brandingService.removeLogo(userId);
-
-    if (!result.success) {
-      return res.status(result.statusCode || 500).json(
-        createErrorResponse(result.error, result.statusCode || 500)
-      );
-    }
-
-    res.json(createApiResponse(true, result.data, 'Logo removed successfully'));
-  } catch (error) {
     next(error);
   }
 });
 
 /**
  * GET /api/branding/assets
- * Get all assets for the authenticated user
+ * Get brand assets with optional filtering
  */
-router.get('/assets', async (req, res, next) => {
+router.get('/assets', auth, async (req, res, next) => {
   try {
-    const userId = req.userId;
+    const userId = req.user.id;
+    const { assetType } = req.query;
 
-    const result = await brandingService.getUserAssets(userId);
+    const result = await brandingService.getBrandAssets(userId, assetType);
 
     if (!result.success) {
       return res.status(result.statusCode || 500).json(
@@ -209,21 +163,21 @@ router.get('/assets', async (req, res, next) => {
 });
 
 /**
- * DELETE /api/branding/assets/:filename
- * Delete a specific asset
+ * DELETE /api/branding/assets/:assetId
+ * Delete a brand asset by ID
  */
-router.delete('/assets/:filename', async (req, res, next) => {
+router.delete('/assets/:assetId', auth, async (req, res, next) => {
   try {
-    const userId = req.userId;
-    const filename = req.params.filename;
+    const userId = req.user.id;
+    const { assetId } = req.params;
 
-    if (!filename) {
+    if (!assetId) {
       return res.status(400).json(
-        createErrorResponse('Filename is required', 400)
+        createErrorResponse('Asset ID is required', 400)
       );
     }
 
-    const result = await brandingService.deleteAsset(userId, filename);
+    const result = await brandingService.deleteAsset(userId, assetId);
 
     if (!result.success) {
       return res.status(result.statusCode || 500).json(
@@ -238,52 +192,104 @@ router.delete('/assets/:filename', async (req, res, next) => {
 });
 
 /**
- * POST /api/branding/upload-and-set-logo
- * Upload a logo and immediately set it in branding (combined operation)
+ * POST /api/branding/presets
+ * Create a branding preset for reuse
  */
-router.post('/upload-and-set-logo', upload.single('logo'), async (req, res, next) => {
+router.post('/presets', auth, async (req, res, next) => {
   try {
-    const userId = req.userId;
-    const file = req.file;
-    const logoWidth = req.body.logoWidth ? parseInt(req.body.logoWidth) : 150;
-    const logoHeight = req.body.logoHeight ? parseInt(req.body.logoHeight) : 75;
+    const userId = req.user.id;
+    const presetData = req.body;
 
-    if (!file) {
+    if (!presetData.name) {
       return res.status(400).json(
-        createErrorResponse('No logo file provided', 400)
+        createErrorResponse('Preset name is required', 400)
       );
     }
 
-    // Upload the asset
-    const uploadResult = await brandingService.uploadAsset(userId, file, 'logo');
-    if (!uploadResult.success) {
-      return res.status(uploadResult.statusCode || 500).json(
-        createErrorResponse(uploadResult.error, uploadResult.statusCode || 500)
+    const result = await brandingService.createBrandingPreset(userId, presetData);
+
+    if (!result.success) {
+      return res.status(result.statusCode || 500).json(
+        createErrorResponse(result.error, result.statusCode || 500)
       );
     }
 
-    // Set as logo in branding
-    const updateResult = await brandingService.updateLogo(userId, uploadResult.data.url, logoWidth, logoHeight);
-    if (!updateResult.success) {
-      // If setting logo fails, try to clean up uploaded file
-      await brandingService.deleteAsset(userId, uploadResult.data.filename);
-      return res.status(updateResult.statusCode || 500).json(
-        createErrorResponse(updateResult.error, updateResult.statusCode || 500)
-      );
-    }
-
-    res.status(201).json(createApiResponse(true, {
-      ...updateResult.data,
-      uploadedAsset: uploadResult.data
-    }, 'Logo uploaded and set successfully'));
+    res.status(201).json(createApiResponse(true, result.data, 'Branding preset created successfully'));
   } catch (error) {
-    if (error instanceof multer.MulterError) {
-      if (error.code === 'LIMIT_FILE_SIZE') {
-        return res.status(400).json(
-          createErrorResponse('File size too large. Maximum size is 5MB', 400)
-        );
-      }
+    next(error);
+  }
+});
+
+/**
+ * GET /api/branding/stats
+ * Get branding statistics and analytics
+ */
+router.get('/stats', auth, async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const result = await brandingService.getBrandingStats(userId);
+
+    if (!result.success) {
+      return res.status(result.statusCode || 500).json(
+        createErrorResponse(result.error, result.statusCode || 500)
+      );
     }
+
+    res.json(createApiResponse(true, result.data, 'Branding statistics retrieved successfully'));
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/branding/apply-to-template
+ * Apply branding to template data
+ */
+router.post('/apply-to-template', auth, async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { templateData } = req.body;
+
+    if (!templateData) {
+      return res.status(400).json(
+        createErrorResponse('Template data is required', 400)
+      );
+    }
+
+    // Get user's branding
+    const brandingResult = await brandingService.getBranding(userId);
+    if (!brandingResult.success) {
+      return res.status(brandingResult.statusCode || 500).json(
+        createErrorResponse(brandingResult.error, brandingResult.statusCode || 500)
+      );
+    }
+
+    // Apply branding to template
+    const brandedTemplate = brandingService.applyBrandingToTemplate(templateData, brandingResult.data);
+
+    res.json(createApiResponse(true, brandedTemplate, 'Branding applied to template successfully'));
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/branding/initialize
+ * Initialize default branding for a user
+ */
+router.post('/initialize', auth, async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const result = await brandingService.initializeDefaultBranding(userId);
+
+    if (!result.success) {
+      return res.status(result.statusCode || 500).json(
+        createErrorResponse(result.error, result.statusCode || 500)
+      );
+    }
+
+    res.status(201).json(createApiResponse(true, result.data, 'Default branding initialized successfully'));
+  } catch (error) {
     next(error);
   }
 });
@@ -292,10 +298,9 @@ router.post('/upload-and-set-logo', upload.single('logo'), async (req, res, next
  * POST /api/branding/validate-colors
  * Validate a color scheme
  */
-router.post('/validate-colors', async (req, res, next) => {
+router.post('/validate-colors', auth, async (req, res, next) => {
   try {
     const colors = req.body;
-
     const validation = brandingService.validateColorScheme(colors);
 
     if (!validation.valid) {
@@ -312,9 +317,9 @@ router.post('/validate-colors', async (req, res, next) => {
 
 /**
  * POST /api/branding/initialize-storage
- * Initialize storage bucket (admin/setup endpoint)
+ * Initialize storage bucket for brand assets
  */
-router.post('/initialize-storage', async (req, res, next) => {
+router.post('/initialize-storage', auth, async (req, res, next) => {
   try {
     const result = await brandingService.initializeStorage();
 
@@ -325,6 +330,58 @@ router.post('/initialize-storage', async (req, res, next) => {
     }
 
     res.json(createApiResponse(true, { message: 'Storage initialized successfully' }, 'Storage bucket ready'));
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Legacy endpoints for backward compatibility
+
+/**
+ * PUT /api/branding/logo (Legacy)
+ * Update logo in branding settings
+ */
+router.put('/logo', auth, async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { logoUrl, logoFilename, logoSize } = req.body;
+
+    if (!logoUrl) {
+      return res.status(400).json(
+        createErrorResponse('Logo URL is required', 400)
+      );
+    }
+
+    const result = await brandingService.updateLogo(userId, logoUrl, logoFilename, logoSize);
+
+    if (!result.success) {
+      return res.status(result.statusCode || 500).json(
+        createErrorResponse(result.error, result.statusCode || 500)
+      );
+    }
+
+    res.json(createApiResponse(true, result.data, 'Logo updated successfully'));
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * DELETE /api/branding/logo (Legacy)
+ * Remove logo from branding settings
+ */
+router.delete('/logo', auth, async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const result = await brandingService.removeLogo(userId);
+
+    if (!result.success) {
+      return res.status(result.statusCode || 500).json(
+        createErrorResponse(result.error, result.statusCode || 500)
+      );
+    }
+
+    res.json(createApiResponse(true, result.data, 'Logo removed successfully'));
   } catch (error) {
     next(error);
   }

@@ -42,7 +42,7 @@ class TemplateService {
           created_at,
           updated_at
         `)
-        .eq('user_id', userId);
+        .or(`user_id.eq.${userId},is_system_template.eq.true`);
 
       // Add filters
       if (!includeSystem) {
@@ -551,13 +551,23 @@ class TemplateService {
    */
   async getTemplateStats(userId) {
     try {
-      const { data, error } = await this.supabase
-        .from('template_usage_stats')
-        .select('*')
-        .eq('user_id', userId);
+      // Get all templates for the user (including system templates)
+      const { data: templates, error: templatesError } = await this.supabase
+        .from('invoice_templates')
+        .select(`
+          id,
+          template_name,
+          template_type,
+          is_default,
+          is_system_template,
+          usage_count,
+          last_used_at,
+          created_at
+        `)
+        .or(`user_id.eq.${userId},is_system_template.eq.true`);
 
-      if (error) {
-        console.error('Database error in getTemplateStats:', error);
+      if (templatesError) {
+        console.error('Database error in getTemplateStats:', templatesError);
         return {
           success: false,
           error: 'Failed to retrieve template statistics',
@@ -565,9 +575,55 @@ class TemplateService {
         };
       }
 
+      // Calculate statistics
+      const totalTemplates = templates?.length || 0;
+      const customTemplates = templates?.filter(t => !t.is_system_template).length || 0;
+      const systemTemplates = templates?.filter(t => t.is_system_template).length || 0;
+      const defaultTemplate = templates?.find(t => t.is_default);
+      const totalUsage = templates?.reduce((sum, t) => sum + (t.usage_count || 0), 0) || 0;
+      const mostUsedTemplate = templates?.reduce((max, t) => 
+        (!max || (t.usage_count || 0) > (max.usage_count || 0)) ? t : max, null);
+
+      // Calculate templates by type
+      const templatesByType = templates?.reduce((acc, template) => {
+        const type = template.template_type || 'custom';
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      }, {}) || {};
+
+      const stats = {
+        totalTemplates,
+        customTemplates,
+        systemTemplates,
+        totalUsage,
+        defaultTemplate: defaultTemplate ? {
+          id: defaultTemplate.id,
+          name: defaultTemplate.template_name,
+          type: defaultTemplate.template_type
+        } : null,
+        mostUsedTemplate: mostUsedTemplate ? {
+          id: mostUsedTemplate.id,
+          name: mostUsedTemplate.template_name,
+          type: mostUsedTemplate.template_type,
+          usageCount: mostUsedTemplate.usage_count || 0
+        } : null,
+        templatesByType,
+        recentlyCreated: templates?.filter(t => {
+          const weekAgo = new Date();
+          weekAgo.setDate(weekAgo.getDate() - 7);
+          return new Date(t.created_at) > weekAgo;
+        }).length || 0,
+        recentlyUsed: templates?.filter(t => {
+          if (!t.last_used_at) return false;
+          const weekAgo = new Date();
+          weekAgo.setDate(weekAgo.getDate() - 7);
+          return new Date(t.last_used_at) > weekAgo;
+        }).length || 0
+      };
+
       return {
         success: true,
-        data: data || []
+        data: stats
       };
     } catch (error) {
       console.error('Error in getTemplateStats:', error);

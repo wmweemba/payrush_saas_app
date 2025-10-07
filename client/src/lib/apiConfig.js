@@ -47,6 +47,19 @@ export const API_ENDPOINTS = {
   numberingSchemePreview: (id) => `/api/numbering-schemes/${id}/preview`,
   numberingSchemesInitialize: '/api/numbering-schemes/initialize',
   
+  // Branding endpoints
+  branding: '/api/branding',
+  brandingUpload: '/api/branding/upload',
+  brandingAssets: '/api/branding/assets',
+  brandingAsset: (id) => `/api/branding/assets/${id}`,
+  brandingPresets: '/api/branding/presets',
+  brandingStats: '/api/branding/stats',
+  brandingApplyToTemplate: '/api/branding/apply-to-template',
+  brandingInitialize: '/api/branding/initialize',
+  brandingValidateColors: '/api/branding/validate-colors',
+  brandingInitializeStorage: '/api/branding/initialize-storage',
+  brandingLogo: '/api/branding/logo',
+  
   // Payment endpoints
   paymentVerify: '/api/payments/verify',
   paymentHistory: '/api/payments/history',

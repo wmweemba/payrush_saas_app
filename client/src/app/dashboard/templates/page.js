@@ -33,7 +33,29 @@ export default function TemplatesPage() {
       });
       
       if (response.success) {
-        setTemplates(response.data.templates || []);
+        const templatesList = response.data.templates || [];
+        setTemplates(templatesList);
+        
+        // If no templates exist, initialize default templates
+        if (templatesList.length === 0) {
+          console.log('No templates found, initializing default templates...');
+          try {
+            const initResponse = await apiClient('/api/templates/initialize', {
+              method: 'POST'
+            });
+            
+            if (initResponse.success) {
+              console.log('Default templates initialized successfully');
+              // Refetch templates after initialization
+              setTimeout(() => {
+                fetchTemplates();
+              }, 1000);
+              return;
+            }
+          } catch (initErr) {
+            console.warn('Failed to initialize templates:', initErr.message);
+          }
+        }
       } else {
         setError('Failed to load templates');
       }
@@ -54,15 +76,24 @@ export default function TemplatesPage() {
       
       if (response.success) {
         setTemplateStats(response.data);
+      } else {
+        throw new Error(response.error || 'Failed to fetch template stats');
       }
     } catch (err) {
-      console.warn('Template stats temporarily unavailable:', err.message);
+      // Silently handle stats errors - the page will work fine without detailed stats
+      // since the StatsOverview component uses the templates array directly
+      
       // Set default stats to prevent UI issues
       setTemplateStats({
-        total: 0,
-        user_templates: 0,
-        system_templates: 0,
-        recently_used: 0
+        totalTemplates: 0,
+        customTemplates: 0,
+        systemTemplates: 0,
+        totalUsage: 0,
+        recentlyCreated: 0,
+        recentlyUsed: 0,
+        templatesByType: {},
+        defaultTemplate: null,
+        mostUsedTemplate: null
       });
     }
   };

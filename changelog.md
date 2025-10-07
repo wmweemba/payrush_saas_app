@@ -2,6 +2,44 @@
 
 All notable changes to the PayRush SaaS application will be documented in this file.
 
+## [1.7.1] - 2025-10-07
+
+### Fixed
+#### Critical Navigation UX Issue - Duplicate Menu Resolution
+- **🎯 Navigation Consistency Fix**
+  - **Main Issue Resolution**: Fixed duplicate navigation menus on main dashboard causing user confusion
+  - **Problem Identified**: Main dashboard had both DashboardLayout navigation AND custom navigation tabs
+  - **Clean Architecture**: Removed duplicate custom navigation, simplified main dashboard to show only invoices
+  - **Professional UX**: Single, consistent navigation across all dashboard pages
+
+- **🏗️ Improved Page Architecture**
+  - **Dedicated Pages**: Created separate pages for better organization:
+    - **Clients Page** (`/dashboard/clients`): Complete client management functionality moved to dedicated page
+    - **Payments Page** (`/dashboard/payments`): Payment integration interface with dedicated routing
+    - **Main Dashboard** (`/dashboard`): Simplified to focus on core invoice management
+  - **Navigation Updates**: Updated DashboardLayout links to point to correct dedicated pages
+  - **Code Cleanup**: Removed unused client management state, functions, and imports from main dashboard
+
+- **🎨 Enhanced User Experience**
+  - **Single Navigation**: Clean, professional navigation without duplication confusion
+  - **Logical Organization**: Each major feature area has its own dedicated page
+  - **Consistent Layout**: All pages use DashboardLayout with proper tab highlighting
+  - **Clear Navigation Flow**: Users can easily navigate between Invoice/Client/Payment management
+  - **Professional Interface**: Matches design standards shown in branding page layout
+
+### Technical Improvements
+- **Component Architecture**: Cleaner separation of concerns with dedicated page components
+- **State Management**: Removed unnecessary state and functions from main dashboard
+- **Code Organization**: Better file structure with feature-specific pages
+- **Performance**: Reduced component complexity and improved loading times
+- **Maintainability**: Easier to maintain and extend individual feature areas
+
+### User Experience Enhancements
+- **Navigation Clarity**: No more confusing duplicate menus or disappearing tabs
+- **Feature Discovery**: Clear separation makes features easier to find and use
+- **Professional Presentation**: Consistent, enterprise-grade navigation experience
+- **Mobile Responsive**: Better mobile experience with simplified navigation
+
 ## [1.7.0] - 2025-10-07
 
 ### Added

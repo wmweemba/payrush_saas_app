@@ -27,6 +27,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import ColorPicker from '@/components/templates/ColorPicker';
 import { apiClient } from '@/lib/apiConfig';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 const BrandingPage = () => {
   const { toast } = useToast();
@@ -270,24 +271,34 @@ const BrandingPage = () => {
 
   if (loading && !branding) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 animate-spin text-blue-500" />
-        <span className="ml-2 text-gray-600">Loading branding...</span>
-      </div>
+      <DashboardLayout
+        title="Business Branding"
+        description="Customize your brand identity and manage assets"
+        currentTab="branding"
+      >
+        <div className="flex items-center justify-center h-64">
+          <RefreshCw className="w-8 h-8 animate-spin text-blue-500" />
+          <span className="ml-2 text-gray-600">Loading branding...</span>
+        </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Business Branding</h1>
-          <p className="text-gray-600 dark:text-gray-400">Customize your brand identity and manage assets</p>
-        </div>
-        <Button 
-          onClick={handleSaveBranding} 
-          disabled={saving}
+    <DashboardLayout
+      title="Business Branding"
+      description="Customize your brand identity and manage assets"
+      currentTab="branding"
+    >
+      <div className="space-y-6">
+        {/* Header Actions */}
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-gray-600 dark:text-gray-400">Create a professional brand identity for your invoices and business communications</p>
+          </div>
+          <Button 
+            onClick={handleSaveBranding} 
+            disabled={saving}
           className="bg-blue-600 hover:bg-blue-700"
         >
           {saving ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
@@ -907,7 +918,8 @@ const BrandingPage = () => {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

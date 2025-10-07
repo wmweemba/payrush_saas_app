@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabaseClient";
+import DashboardLayout from "@/components/layout/DashboardLayout";
 
 export default function ProfileSettings() {
   const router = useRouter();

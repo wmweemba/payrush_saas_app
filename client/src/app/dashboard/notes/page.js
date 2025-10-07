@@ -462,7 +462,7 @@ export default function NotesPage() {
 
   return (
     <DashboardLayout 
-      activeTab="notes" 
+      currentTab="notes" 
       title="Invoice Notes & Comments"
       description="Manage internal business notes and customer-facing comments"
     >

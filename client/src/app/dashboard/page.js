@@ -513,7 +513,9 @@ export default function Dashboard() {
     setMessage('');
     
     try {
-      const result = await downloadInvoicePDF(invoice, profile);
+      // Use the template selected for this invoice
+      const templateId = invoice.template_id || null;
+      const result = await downloadInvoicePDF(invoice, profile, templateId);
       if (result.success) {
         setMessage(`✅ Invoice PDF downloaded successfully: ${result.filename}`);
         setIsError(false);
@@ -537,7 +539,9 @@ export default function Dashboard() {
     setMessage('');
     
     try {
-      const result = await previewInvoicePDF(invoice, profile);
+      // Use the template selected for this invoice
+      const templateId = invoice.template_id || null;
+      const result = await previewInvoicePDF(invoice, profile, templateId);
       if (result.success) {
         setMessage('✅ Invoice PDF preview opened in new tab');
         setIsError(false);

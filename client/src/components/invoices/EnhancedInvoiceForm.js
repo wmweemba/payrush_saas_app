@@ -16,8 +16,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CurrencySelect, CurrencyInput } from "@/components/ui/CurrencySelect";
 import { getDefaultCurrency, formatCurrency } from "@/lib/currency/currencies";
 import { clientService } from "@/lib/clientService";
+import { getAvailableTemplates } from "@/lib/pdf/templateService";
 import InvoiceLineItemsManager from "./InvoiceLineItemsManager";
-import { Calculator, Receipt, FileText, Users } from "lucide-react";
+import { Calculator, Receipt, FileText, Users, Palette } from "lucide-react";
 
 const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
   const [invoiceType, setInvoiceType] = useState('simple'); // 'simple' or 'detailed'
@@ -31,12 +32,18 @@ const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
   const [selectedClientId, setSelectedClientId] = useState('');
   const [loadingClients, setLoadingClients] = useState(false);
 
+  // Template selection state
+  const [templates, setTemplates] = useState([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
+
   // Form data for invoice header
   const [formData, setFormData] = useState({
     customer_name: initialData?.customer_name || '',
     customer_email: initialData?.customer_email || '',
     currency: initialData?.currency || getDefaultCurrency(),
     due_date: initialData?.due_date || '',
+    template_id: initialData?.template_id || '', // Add template selection
     // Simple invoice fields
     amount: initialData?.amount || '',
     // Detailed invoice will use line items
@@ -79,6 +86,33 @@ const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
     loadClients();
   }, []);
 
+  // Load available templates
+  useEffect(() => {
+    const loadTemplates = async () => {
+      setLoadingTemplates(true);
+      try {
+        const templates = await getAvailableTemplates();
+        setTemplates(templates);
+        
+        // Set default template if available
+        const defaultTemplate = templates.find(t => t.isDefault);
+        if (defaultTemplate && !formData.template_id) {
+          setFormData(prev => ({
+            ...prev,
+            template_id: defaultTemplate.id
+          }));
+          setSelectedTemplateId(defaultTemplate.id);
+        }
+      } catch (error) {
+        console.error('Error loading templates:', error);
+      } finally {
+        setLoadingTemplates(false);
+      }
+    };
+
+    loadTemplates();
+  }, []);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -98,6 +132,14 @@ const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
     setFormData(prev => ({
       ...prev,
       amount
+    }));
+  };
+
+  const handleTemplateChange = (templateId) => {
+    setSelectedTemplateId(templateId);
+    setFormData(prev => ({
+      ...prev,
+      template_id: templateId
     }));
   };
 
@@ -175,6 +217,7 @@ const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
         customer_email: formData.customer_email.trim() || null,
         currency: formData.currency,
         due_date: formData.due_date,
+        template_id: formData.template_id || null, // Add template selection
         // For simple invoices, use the amount. For detailed, we'll update it after line items
         amount: invoiceType === 'simple' ? parseFloat(formData.amount) : lineItemsTotal,
         is_line_item_invoice: invoiceType === 'detailed',
@@ -412,6 +455,55 @@ const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
                            disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
+            </div>
+
+            {/* Template Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <Palette className="inline-block w-4 h-4 mr-1" />
+                Invoice Template
+              </label>
+              <Select 
+                value={selectedTemplateId} 
+                onValueChange={handleTemplateChange}
+                disabled={isSubmitting || loadingTemplates}
+              >
+                <SelectTrigger className="w-full bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
+                  <SelectValue placeholder={loadingTemplates ? "Loading templates..." : "Choose a template for your invoice"} />
+                </SelectTrigger>
+                <SelectContent className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-lg max-h-60 overflow-y-auto">
+                  {templates.length === 0 && !loadingTemplates && (
+                    <SelectItem value="" disabled className="bg-white dark:bg-slate-800 text-gray-500 dark:text-gray-400">
+                      <span className="text-gray-500 dark:text-gray-400">No templates available</span>
+                    </SelectItem>
+                  )}
+                  {templates.map((template) => (
+                    <SelectItem key={template.id} value={template.id} className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">
+                      <div className="flex flex-col">
+                        <div className="flex items-center">
+                          <span className="font-medium">{template.name}</span>
+                          {template.isDefault && (
+                            <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">
+                              Default
+                            </span>
+                          )}
+                          {template.isSystem && (
+                            <span className="ml-2 px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">
+                              System
+                            </span>
+                          )}
+                        </div>
+                        {template.description && (
+                          <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{template.description}</span>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Choose how your invoice will look when generated as PDF
+              </p>
             </div>
 
             {/* Invoice Type Selection */}

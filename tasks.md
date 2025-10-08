@@ -319,15 +319,15 @@ How to use: Edit this file as work progresses. Mark tasks as - [x] when done.
   - [x] Ensure accessibility compliance with proper contrast ratios
   - [x] Standardize dropdown styling patterns across the application
 
-- [x] **Advanced Invoice Templates & Customization** ✅ COMPLETED (v1.7.0 - 6/8 Tasks Complete)
+- [x] **Advanced Invoice Templates & Customization** ✅ COMPLETED (v1.8.0 - All Tasks Complete)
   - [x] Create invoice template customization interface with real-time preview system
   - [x] Add custom branding and logo upload functionality with Supabase Storage integration
   - [x] Implement custom invoice numbering schemes with pattern management and database schema
   - [x] Add invoice notes and internal comments system with categorization and dashboard integration
   - [x] Fix dropdown visibility issues across all Select components for professional UX
   - [x] Create comprehensive business branding interface with asset management and color customization
-  - [ ] Build invoice approval workflows with multi-step approvals and email notifications
-  - [ ] Integrate template system with PDF generation for custom styled invoice outputs
+  - [x] Build invoice approval workflows with multi-step approvals and email notifications
+  - [x] Integrate template system with PDF generation for custom styled invoice outputs
 
 
 ## Milestone 8 — Business Intelligence & Analytics (TODO 🚀)

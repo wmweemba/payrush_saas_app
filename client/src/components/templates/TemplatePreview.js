@@ -1,326 +1,439 @@
 'use client';
 
-import { useState } from 'react';
-import { ZoomIn, ZoomOut, Download, Maximize2 } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import { formatCurrency } from '@/lib/utils';
+import React, { useState, useEffect } from 'react';
+import { loadBranding } from '../../lib/pdf/templateService';
 
-export default function TemplatePreview({ templateData, invoiceData, profileData }) {
-  const [zoom, setZoom] = useState(0.6);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+export default function TemplatePreview({ 
+  template, 
+  sampleData = {
+    businessInfo: {
+      name: 'Sample Business',
+      address: '123 Business St',
+      city: 'Business City',
+      state: 'BC',
+      zip: '12345',
+      phone: '(555) 123-4567',
+      email: 'contact@sample.com'
+    },
+    clientInfo: {
+      name: 'Sample Client',
+      email: 'client@example.com',
+      address: '456 Client Ave',
+      city: 'Client City',
+      state: 'CC',
+      zip: '67890'
+    },
+    invoiceData: {
+      invoiceNumber: 'INV-001',
+      invoiceDate: new Date().toISOString().split('T')[0],
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      subtotal: 1000,
+      tax: 100,
+      total: 1100,
+      currency: 'USD'
+    },
+    lineItems: [
+      {
+        description: 'Sample Service 1',
+        quantity: 2,
+        rate: 300,
+        amount: 600
+      },
+      {
+        description: 'Sample Service 2',
+        quantity: 1,
+        rate: 400,
+        amount: 400
+      }
+    ]
+  },
+  onTemplateChange,
+  businessId
+}) {
+  const [branding, setBranding] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 2));
-  const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.3));
+  useEffect(() => {
+    const fetchBranding = async () => {
+      if (businessId) {
+        try {
+          const brandingData = await loadBranding(businessId);
+          setBranding(brandingData);
+        } catch (error) {
+          console.warn('Could not load branding:', error);
+        }
+      }
+      setLoading(false);
+    };
 
-  // Calculate totals
-  const subtotal = invoiceData.line_items?.reduce((sum, item) => sum + item.total, 0) || invoiceData.amount;
-  const total = subtotal; // Could add tax calculations here
+    fetchBranding();
+  }, [businessId]);
 
-  const previewStyle = {
-    transform: `scale(${zoom})`,
-    transformOrigin: 'top left',
-    width: `${100 / zoom}%`,
-    height: `${100 / zoom}%`
+  if (loading) {
+    return (
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="animate-pulse">
+          <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+          <div className="h-32 bg-gray-200 rounded mb-4"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!template) {
+    return (
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="text-center text-gray-500">
+          <p>Select a template to preview</p>
+        </div>
+      </div>
+    );
+  }
+
+  const getTemplateStyles = () => {
+    const baseStyles = {
+      fontFamily: template.typography?.fontFamily || 'Arial, sans-serif',
+      fontSize: template.typography?.fontSize || '14px',
+      lineHeight: template.typography?.lineHeight || '1.5'
+    };
+
+    if (template.layout?.colorScheme && branding?.primaryColor) {
+      return {
+        ...baseStyles,
+        '--primary-color': branding.primaryColor,
+        '--secondary-color': branding.secondaryColor || '#6b7280'
+      };
+    }
+
+    return baseStyles;
   };
 
-  const InvoiceContent = () => (
-    <div 
-      className="bg-white shadow-lg"
-      style={{
-        width: '595px', // A4 width in pixels at 72 DPI
-        minHeight: '842px', // A4 height in pixels at 72 DPI
-        padding: `${templateData.layout.marginY}px ${templateData.layout.marginX}px`,
-        fontFamily: templateData.fonts.body.family || 'Arial, sans-serif',
-        color: templateData.colors.text
-      }}
-    >
-      {/* Header Section */}
+  const renderModernTemplate = () => (
+    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+      {/* Header */}
       <div 
-        className="flex justify-between items-start mb-8"
+        className="p-6 border-b"
         style={{ 
-          minHeight: `${templateData.layout.headerHeight}px`,
-          borderBottom: `2px solid ${templateData.colors.primary}`,
-          paddingBottom: '16px'
+          backgroundColor: branding?.primaryColor || '#3b82f6',
+          color: 'white'
         }}
       >
-        <div>
-          <h1 
-            style={{ 
-              fontSize: `${templateData.fonts.heading.size}px`,
-              fontWeight: templateData.fonts.heading.weight,
-              fontFamily: templateData.fonts.heading.family || templateData.fonts.body.family || 'Arial, sans-serif',
-              lineHeight: templateData.fonts.heading.lineHeight || 1.2,
-              letterSpacing: templateData.fonts.heading.letterSpacing ? `${templateData.fonts.heading.letterSpacing}px` : 'normal',
-              textTransform: templateData.fonts.heading.textTransform || 'none',
-              color: templateData.colors.primary,
-              margin: 0,
-              marginBottom: '8px'
-            }}
-          >
-            INVOICE
-          </h1>
-          <div style={{ fontSize: `${templateData.fonts.body.size}px` }}>
-            <strong>Invoice #:</strong> {invoiceData.id}
-          </div>
-          <div style={{ fontSize: `${templateData.fonts.body.size}px` }}>
-            <strong>Date:</strong> {new Date(invoiceData.created_at).toLocaleDateString()}
-          </div>
-          <div style={{ fontSize: `${templateData.fonts.body.size}px` }}>
-            <strong>Due Date:</strong> {new Date(invoiceData.due_date).toLocaleDateString()}
-          </div>
-        </div>
-        <div className="text-right">
-          <div 
-            style={{ 
-              fontSize: `${templateData.fonts.subheading.size}px`,
-              fontWeight: templateData.fonts.subheading.weight,
-              color: templateData.colors.primary,
-              marginBottom: '8px'
-            }}
-          >
-            {profileData.business_name}
-          </div>
-          <div style={{ fontSize: `${templateData.fonts.small.size}px`, lineHeight: '1.4' }}>
-            {profileData.name}<br/>
-            {profileData.phone}<br/>
-            {profileData.address}<br/>
-            {profileData.website}
-          </div>
-        </div>
-      </div>
-
-      {/* Bill To Section */}
-      <div className="mb-8">
-        <h2 
-          style={{ 
-            fontSize: `${templateData.fonts.subheading.size}px`,
-            fontWeight: templateData.fonts.subheading.weight,
-            fontFamily: templateData.fonts.subheading.family || templateData.fonts.body.family || 'Arial, sans-serif',
-            lineHeight: templateData.fonts.subheading.lineHeight || 1.3,
-            letterSpacing: templateData.fonts.subheading.letterSpacing ? `${templateData.fonts.subheading.letterSpacing}px` : 'normal',
-            textTransform: templateData.fonts.subheading.textTransform || 'none',
-            color: templateData.colors.primary,
-            margin: 0,
-            marginBottom: '8px'
-          }}
-        >
-          BILL TO
-        </h2>
-        <div style={{ fontSize: `${templateData.fonts.body.size}px`, lineHeight: '1.4' }}>
-          <strong>{invoiceData.customer_name}</strong><br/>
-          {invoiceData.customer_email}
-        </div>
-      </div>
-
-      {/* Line Items Table */}
-      <div className="mb-8">
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ backgroundColor: templateData.colors.accent }}>
-              <th style={{ 
-                padding: '12px 8px', 
-                textAlign: 'left', 
-                fontSize: `${templateData.fonts.subheading.size}px`,
-                fontWeight: templateData.fonts.subheading.weight,
-                fontFamily: templateData.fonts.subheading.family || templateData.fonts.body.family || 'Arial, sans-serif',
-                lineHeight: templateData.fonts.subheading.lineHeight || 1.3,
-                color: templateData.colors.primary,
-                borderBottom: `1px solid ${templateData.colors.secondary}`
-              }}>
-                Description
-              </th>
-              <th style={{ 
-                padding: '12px 8px', 
-                textAlign: 'center', 
-                fontSize: `${templateData.fonts.subheading.size}px`,
-                fontWeight: templateData.fonts.subheading.weight,
-                color: templateData.colors.primary,
-                borderBottom: `1px solid ${templateData.colors.secondary}`
-              }}>
-                Qty
-              </th>
-              <th style={{ 
-                padding: '12px 8px', 
-                textAlign: 'right', 
-                fontSize: `${templateData.fonts.subheading.size}px`,
-                fontWeight: templateData.fonts.subheading.weight,
-                color: templateData.colors.primary,
-                borderBottom: `1px solid ${templateData.colors.secondary}`
-              }}>
-                Rate
-              </th>
-              <th style={{ 
-                padding: '12px 8px', 
-                textAlign: 'right', 
-                fontSize: `${templateData.fonts.subheading.size}px`,
-                fontWeight: templateData.fonts.subheading.weight,
-                color: templateData.colors.primary,
-                borderBottom: `1px solid ${templateData.colors.secondary}`
-              }}>
-                Amount
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {invoiceData.line_items?.map((item, index) => (
-              <tr key={index}>
-                <td style={{ 
-                  padding: '8px', 
-                  fontSize: `${templateData.fonts.body.size}px`,
-                  borderBottom: `1px solid ${templateData.colors.accent}`
-                }}>
-                  {item.description}
-                </td>
-                <td style={{ 
-                  padding: '8px', 
-                  textAlign: 'center', 
-                  fontSize: `${templateData.fonts.body.size}px`,
-                  borderBottom: `1px solid ${templateData.colors.accent}`
-                }}>
-                  {item.quantity}
-                </td>
-                <td style={{ 
-                  padding: '8px', 
-                  textAlign: 'right', 
-                  fontSize: `${templateData.fonts.body.size}px`,
-                  borderBottom: `1px solid ${templateData.colors.accent}`
-                }}>
-                  {formatCurrency(item.unit_price, invoiceData.currency)}
-                </td>
-                <td style={{ 
-                  padding: '8px', 
-                  textAlign: 'right', 
-                  fontSize: `${templateData.fonts.body.size}px`,
-                  borderBottom: `1px solid ${templateData.colors.accent}`
-                }}>
-                  {formatCurrency(item.total, invoiceData.currency)}
-                </td>
-              </tr>
-            )) || (
-              <tr>
-                <td style={{ 
-                  padding: '8px', 
-                  fontSize: `${templateData.fonts.body.size}px`,
-                  borderBottom: `1px solid ${templateData.colors.accent}`
-                }}>
-                  Sample Service
-                </td>
-                <td style={{ 
-                  padding: '8px', 
-                  textAlign: 'center', 
-                  fontSize: `${templateData.fonts.body.size}px`,
-                  borderBottom: `1px solid ${templateData.colors.accent}`
-                }}>
-                  1
-                </td>
-                <td style={{ 
-                  padding: '8px', 
-                  textAlign: 'right', 
-                  fontSize: `${templateData.fonts.body.size}px`,
-                  borderBottom: `1px solid ${templateData.colors.accent}`
-                }}>
-                  {formatCurrency(invoiceData.amount, invoiceData.currency)}
-                </td>
-                <td style={{ 
-                  padding: '8px', 
-                  textAlign: 'right', 
-                  fontSize: `${templateData.fonts.body.size}px`,
-                  borderBottom: `1px solid ${templateData.colors.accent}`
-                }}>
-                  {formatCurrency(invoiceData.amount, invoiceData.currency)}
-                </td>
-              </tr>
+        <div className="flex justify-between items-start">
+          <div>
+            {branding?.logoUrl && (
+              <img 
+                src={branding.logoUrl} 
+                alt="Business Logo" 
+                className="h-12 w-auto mb-4"
+              />
             )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Totals Section */}
-      <div className="flex justify-end mb-8">
-        <div style={{ width: '250px' }}>
-          <div className="flex justify-between mb-2">
-            <span style={{ fontSize: `${templateData.fonts.body.size}px` }}>Subtotal:</span>
-            <span style={{ fontSize: `${templateData.fonts.body.size}px` }}>
-              {formatCurrency(subtotal, invoiceData.currency)}
-            </span>
+            <h1 className="text-2xl font-bold">{sampleData.businessInfo.name}</h1>
           </div>
-          <div 
-            className="flex justify-between pt-2"
-            style={{ 
-              borderTop: `2px solid ${templateData.colors.primary}`,
-              fontSize: `${templateData.fonts.subheading.size}px`,
-              fontWeight: templateData.fonts.subheading.weight,
-              color: templateData.colors.primary
-            }}
-          >
-            <span>Total:</span>
-            <span>{formatCurrency(total, invoiceData.currency)}</span>
+          <div className="text-right">
+            <h2 className="text-xl font-semibold">INVOICE</h2>
+            <p className="text-sm opacity-90">#{sampleData.invoiceData.invoiceNumber}</p>
           </div>
         </div>
       </div>
 
-      {/* Footer */}
-      <div 
-        className="text-center pt-4"
-        style={{ 
-          borderTop: `1px solid ${templateData.colors.secondary}`,
-          fontSize: `${templateData.fonts.small.size}px`,
-          color: templateData.colors.secondary
-        }}
-      >
-        Thank you for your business!
+      {/* Content */}
+      <div className="p-6">
+        <div className="grid grid-cols-2 gap-8 mb-8">
+          {/* Business Info */}
+          <div>
+            <h3 className="font-semibold text-gray-800 mb-2">From:</h3>
+            <div className="text-sm text-gray-600">
+              <p>{sampleData.businessInfo.address}</p>
+              <p>{sampleData.businessInfo.city}, {sampleData.businessInfo.state} {sampleData.businessInfo.zip}</p>
+              <p>{sampleData.businessInfo.phone}</p>
+              <p>{sampleData.businessInfo.email}</p>
+            </div>
+          </div>
+
+          {/* Client Info */}
+          <div>
+            <h3 className="font-semibold text-gray-800 mb-2">To:</h3>
+            <div className="text-sm text-gray-600">
+              <p className="font-medium">{sampleData.clientInfo.name}</p>
+              <p>{sampleData.clientInfo.address}</p>
+              <p>{sampleData.clientInfo.city}, {sampleData.clientInfo.state} {sampleData.clientInfo.zip}</p>
+              <p>{sampleData.clientInfo.email}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Invoice Details */}
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          <div>
+            <p className="text-sm text-gray-500">Invoice Date</p>
+            <p className="font-medium">{sampleData.invoiceData.invoiceDate}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Due Date</p>
+            <p className="font-medium">{sampleData.invoiceData.dueDate}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Amount Due</p>
+            <p className="font-bold text-lg" style={{ color: branding?.primaryColor || '#3b82f6' }}>
+              {sampleData.invoiceData.currency} {sampleData.invoiceData.total.toFixed(2)}
+            </p>
+          </div>
+        </div>
+
+        {/* Line Items */}
+        <div className="mb-8">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b-2" style={{ borderColor: branding?.primaryColor || '#3b82f6' }}>
+                <th className="text-left py-2 text-sm font-semibold text-gray-800">Description</th>
+                <th className="text-right py-2 text-sm font-semibold text-gray-800">Qty</th>
+                <th className="text-right py-2 text-sm font-semibold text-gray-800">Rate</th>
+                <th className="text-right py-2 text-sm font-semibold text-gray-800">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sampleData.lineItems.map((item, index) => (
+                <tr key={index} className="border-b border-gray-200">
+                  <td className="py-3 text-sm">{item.description}</td>
+                  <td className="py-3 text-sm text-right">{item.quantity}</td>
+                  <td className="py-3 text-sm text-right">{sampleData.invoiceData.currency} {item.rate.toFixed(2)}</td>
+                  <td className="py-3 text-sm text-right font-medium">{sampleData.invoiceData.currency} {item.amount.toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Totals */}
+        <div className="flex justify-end">
+          <div className="w-64">
+            <div className="flex justify-between py-2">
+              <span className="text-sm">Subtotal:</span>
+              <span className="text-sm">{sampleData.invoiceData.currency} {sampleData.invoiceData.subtotal.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between py-2">
+              <span className="text-sm">Tax:</span>
+              <span className="text-sm">{sampleData.invoiceData.currency} {sampleData.invoiceData.tax.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between py-2 border-t border-gray-300 font-bold">
+              <span>Total:</span>
+              <span style={{ color: branding?.primaryColor || '#3b82f6' }}>
+                {sampleData.invoiceData.currency} {sampleData.invoiceData.total.toFixed(2)}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 
-  return (
-    <div className="h-full flex flex-col">
-      {/* Preview Controls */}
-      <div className="flex items-center justify-between mb-4 flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleZoomOut}
-            disabled={zoom <= 0.3}
-          >
-            <ZoomOut className="w-4 h-4" />
-          </Button>
-          <span className="text-sm text-muted-foreground min-w-[60px] text-center">
-            {Math.round(zoom * 100)}%
-          </span>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleZoomIn}
-            disabled={zoom >= 2}
-          >
-            <ZoomIn className="w-4 h-4" />
-          </Button>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-1" />
-            PDF
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => setIsFullscreen(!isFullscreen)}
-          >
-            <Maximize2 className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Preview Container */}
-      <div className="flex-1 overflow-auto bg-gray-100 rounded-lg">
-        <div className="p-4">
-          <div style={previewStyle}>
-            <InvoiceContent />
+  const renderClassicTemplate = () => (
+    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+      {/* Header */}
+      <div className="p-6 border-b-2 border-gray-800">
+        <div className="flex justify-between items-start">
+          <div>
+            {branding?.logoUrl && (
+              <img 
+                src={branding.logoUrl} 
+                alt="Business Logo" 
+                className="h-12 w-auto mb-4"
+              />
+            )}
+            <h1 className="text-2xl font-bold text-gray-800">{sampleData.businessInfo.name}</h1>
+            <div className="text-sm text-gray-600 mt-2">
+              <p>{sampleData.businessInfo.address}</p>
+              <p>{sampleData.businessInfo.city}, {sampleData.businessInfo.state} {sampleData.businessInfo.zip}</p>
+              <p>{sampleData.businessInfo.phone} | {sampleData.businessInfo.email}</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <h2 className="text-3xl font-bold text-gray-800">INVOICE</h2>
+            <p className="text-lg font-medium">#{sampleData.invoiceData.invoiceNumber}</p>
           </div>
         </div>
       </div>
+
+      {/* Content */}
+      <div className="p-6">
+        <div className="flex justify-between mb-8">
+          <div>
+            <h3 className="font-bold text-gray-800 mb-2">BILL TO:</h3>
+            <div className="text-sm">
+              <p className="font-medium">{sampleData.clientInfo.name}</p>
+              <p>{sampleData.clientInfo.address}</p>
+              <p>{sampleData.clientInfo.city}, {sampleData.clientInfo.state} {sampleData.clientInfo.zip}</p>
+              <p>{sampleData.clientInfo.email}</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="mb-4">
+              <p className="text-sm font-medium">Invoice Date: {sampleData.invoiceData.invoiceDate}</p>
+              <p className="text-sm font-medium">Due Date: {sampleData.invoiceData.dueDate}</p>
+            </div>
+            <div className="bg-gray-100 p-4 rounded">
+              <p className="text-sm font-medium">Amount Due</p>
+              <p className="text-2xl font-bold text-gray-800">
+                {sampleData.invoiceData.currency} {sampleData.invoiceData.total.toFixed(2)}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Line Items */}
+        <div className="mb-8">
+          <table className="w-full border border-gray-300">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="text-left py-3 px-4 font-semibold text-gray-800 border-r border-gray-300">Description</th>
+                <th className="text-right py-3 px-4 font-semibold text-gray-800 border-r border-gray-300">Qty</th>
+                <th className="text-right py-3 px-4 font-semibold text-gray-800 border-r border-gray-300">Rate</th>
+                <th className="text-right py-3 px-4 font-semibold text-gray-800">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sampleData.lineItems.map((item, index) => (
+                <tr key={index} className="border-b border-gray-300">
+                  <td className="py-3 px-4 border-r border-gray-300">{item.description}</td>
+                  <td className="py-3 px-4 text-right border-r border-gray-300">{item.quantity}</td>
+                  <td className="py-3 px-4 text-right border-r border-gray-300">{sampleData.invoiceData.currency} {item.rate.toFixed(2)}</td>
+                  <td className="py-3 px-4 text-right font-medium">{sampleData.invoiceData.currency} {item.amount.toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Totals */}
+        <div className="flex justify-end">
+          <div className="w-64 border border-gray-300">
+            <div className="flex justify-between py-2 px-4 bg-gray-50 border-b border-gray-300">
+              <span className="font-medium">Subtotal:</span>
+              <span>{sampleData.invoiceData.currency} {sampleData.invoiceData.subtotal.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between py-2 px-4 bg-gray-50 border-b border-gray-300">
+              <span className="font-medium">Tax:</span>
+              <span>{sampleData.invoiceData.currency} {sampleData.invoiceData.tax.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between py-3 px-4 bg-gray-800 text-white font-bold">
+              <span>TOTAL:</span>
+              <span>{sampleData.invoiceData.currency} {sampleData.invoiceData.total.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderMinimalTemplate = () => (
+    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+      <div className="p-8" style={getTemplateStyles()}>
+        {/* Header */}
+        <div className="flex justify-between items-start mb-8">
+          <div>
+            {branding?.logoUrl && (
+              <img 
+                src={branding.logoUrl} 
+                alt="Business Logo" 
+                className="h-10 w-auto mb-4"
+              />
+            )}
+            <h1 className="text-xl font-light text-gray-800">{sampleData.businessInfo.name}</h1>
+          </div>
+          <div className="text-right">
+            <h2 className="text-lg font-light text-gray-600">Invoice</h2>
+            <p className="text-sm text-gray-500">#{sampleData.invoiceData.invoiceNumber}</p>
+          </div>
+        </div>
+
+        {/* Details */}
+        <div className="grid grid-cols-2 gap-8 mb-8 text-sm">
+          <div>
+            <p className="font-medium text-gray-800">{sampleData.clientInfo.name}</p>
+            <p className="text-gray-600">{sampleData.clientInfo.address}</p>
+            <p className="text-gray-600">{sampleData.clientInfo.city}, {sampleData.clientInfo.state} {sampleData.clientInfo.zip}</p>
+          </div>
+          <div className="text-right text-gray-600">
+            <p>Date: {sampleData.invoiceData.invoiceDate}</p>
+            <p>Due: {sampleData.invoiceData.dueDate}</p>
+          </div>
+        </div>
+
+        {/* Line Items */}
+        <div className="mb-8">
+          <div className="border-b border-gray-200 pb-2 mb-4">
+            <div className="grid grid-cols-4 gap-4 text-xs font-medium text-gray-500 uppercase tracking-wide">
+              <div>Description</div>
+              <div className="text-right">Qty</div>
+              <div className="text-right">Rate</div>
+              <div className="text-right">Amount</div>
+            </div>
+          </div>
+          {sampleData.lineItems.map((item, index) => (
+            <div key={index} className="grid grid-cols-4 gap-4 py-2 text-sm border-b border-gray-100">
+              <div>{item.description}</div>
+              <div className="text-right">{item.quantity}</div>
+              <div className="text-right">{sampleData.invoiceData.currency} {item.rate.toFixed(2)}</div>
+              <div className="text-right">{sampleData.invoiceData.currency} {item.amount.toFixed(2)}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Total */}
+        <div className="flex justify-end">
+          <div className="w-48 text-sm">
+            <div className="flex justify-between py-1">
+              <span>Subtotal</span>
+              <span>{sampleData.invoiceData.currency} {sampleData.invoiceData.subtotal.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between py-1">
+              <span>Tax</span>
+              <span>{sampleData.invoiceData.currency} {sampleData.invoiceData.tax.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between py-2 border-t border-gray-300 font-medium">
+              <span>Total</span>
+              <span>{sampleData.invoiceData.currency} {sampleData.invoiceData.total.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderTemplate = () => {
+    switch (template.name) {
+      case 'Modern Professional':
+        return renderModernTemplate();
+      case 'Classic Business':
+        return renderClassicTemplate();
+      case 'Minimal Clean':
+        return renderMinimalTemplate();
+      default:
+        return renderModernTemplate();
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-gray-800">Template Preview</h3>
+        {template && (
+          <span className="text-sm text-gray-500">
+            {template.name}
+          </span>
+        )}
+      </div>
+      
+      <div className="transform scale-75 origin-top-left w-[133%]">
+        {renderTemplate()}
+      </div>
+      
+      {template && (
+        <div className="text-xs text-gray-500 mt-4">
+          <p>Preview shows how your invoice will look with current template and branding settings.</p>
+        </div>
+      )}
     </div>
   );
 }

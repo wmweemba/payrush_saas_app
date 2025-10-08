@@ -7,17 +7,37 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { formatCurrency, getCurrency } from '@/lib/currency/currencies';
 import { generateTemplatedPDF, INVOICE_TEMPLATES } from './templates';
+import { getTemplateForPDF, getUserDefaultTemplate, recordTemplateUsage } from './templateService';
 
 /**
- * Generate PDF invoice from invoice data with template support
+ * Generate PDF invoice from invoice data with database template support
  */
-export const generateInvoicePDF = async (invoice, profileData = {}, templateId = 'professional') => {
-  // Use the new template system if templateId is provided
-  if (templateId && templateId !== 'default') {
-    return generateTemplatedPDF(invoice, profileData, templateId);
+export const generateInvoicePDF = async (invoice, profileData = {}, templateId = null) => {
+  try {
+    // Get template configuration from database or use default
+    const templateConfig = templateId 
+      ? await getTemplateForPDF(templateId)
+      : await getUserDefaultTemplate();
+
+    // Record template usage for analytics
+    if (templateConfig.id && templateConfig.id !== 'default') {
+      await recordTemplateUsage(templateConfig.id);
+    }
+
+    // Generate PDF using database template configuration
+    return await generateDatabaseTemplatedPDF(invoice, profileData, templateConfig);
+  } catch (error) {
+    console.error('Error generating PDF with database template:', error);
+    
+    // Fallback to original template system
+    return generateTemplatedPDF(invoice, profileData, templateId || 'professional');
   }
-  
-  // Default/original template (keeping for backward compatibility)
+};
+
+/**
+ * Generate PDF invoice using database template configuration
+ */
+export const generateDatabaseTemplatedPDF = async (invoice, profileData = {}, templateConfig) => {
   const pdf = new jsPDF('p', 'mm', 'a4');
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
@@ -25,41 +45,100 @@ export const generateInvoicePDF = async (invoice, profileData = {}, templateId =
   // Get currency configuration
   const currency = getCurrency(invoice.currency || 'USD');
   
-  // Colors
-  const primaryColor = '#2563eb'; // Blue
-  const secondaryColor = '#64748b'; // Gray
-  const textColor = '#1f2937'; // Dark gray
+  // Helper function to convert hex to RGB
+  const hexToRgb = (hex) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : { r: 0, g: 0, b: 0 };
+  };
+  
+  const primaryRgb = hexToRgb(templateConfig.colors.primary);
+  const secondaryRgb = hexToRgb(templateConfig.colors.secondary);
+  const textRgb = hexToRgb(templateConfig.colors.text);
+  const accentRgb = hexToRgb(templateConfig.colors.accent);
   
   // Company/Business Information
-  const businessName = profileData.business_name || 'Your Business';
+  const businessName = profileData.business_name || templateConfig.branding.businessName || 'Your Business';
   const businessAddress = profileData.address || '';
   const businessPhone = profileData.phone || '';
   const businessWebsite = profileData.website || '';
   const businessEmail = profileData.email || '';
   
-  // Header - Business Info
-  pdf.setFillColor(37, 99, 235); // Primary blue
-  pdf.rect(0, 0, pageWidth, 40, 'F');
+  // Load logo if available
+  let logoImage = null;
+  if (templateConfig.branding.logoUrl && templateConfig.branding.showLogo) {
+    try {
+      logoImage = await loadImageFromUrl(templateConfig.branding.logoUrl);
+    } catch (error) {
+      console.warn('Failed to load logo image:', error);
+    }
+  }
   
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(24);
+  // Header with template colors
+  pdf.setFillColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+  pdf.rect(0, 0, pageWidth, templateConfig.layout.headerHeight, 'F');
+  
+  // Logo placement (if available)
+  if (logoImage && templateConfig.branding.showLogo) {
+    try {
+      const logoSize = 24; // Fixed logo height
+      const logoX = templateConfig.layout.marginX;
+      const logoY = 8;
+      
+      // Calculate width maintaining aspect ratio
+      const logoWidth = (logoImage.width / logoImage.height) * logoSize;
+      
+      pdf.addImage(logoImage.data, 'PNG', logoX, logoY, logoWidth, logoSize);
+      
+      // Adjust text position to account for logo
+      const textStartX = logoX + logoWidth + 10;
+      
+      // Company/brand name next to logo
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(templateConfig.fonts.heading.size);
+      pdf.setFont('helvetica', templateConfig.fonts.heading.weight);
+      pdf.text('PayRush', textStartX, 25);
+      
+      // Business name
+      pdf.setFontSize(templateConfig.fonts.body.size);
+      pdf.setFont('helvetica', templateConfig.fonts.body.weight);
+      pdf.text(businessName, textStartX, 35);
+    } catch (error) {
+      console.warn('Error adding logo to PDF:', error);
+      // Fallback to text-only header
+      addTextOnlyHeader();
+    }
+  } else {
+    // Text-only header
+    addTextOnlyHeader();
+  }
+  
+  function addTextOnlyHeader() {
+    // Company/brand name in header
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(templateConfig.fonts.heading.size);
+    pdf.setFont('helvetica', templateConfig.fonts.heading.weight);
+    pdf.text('PayRush', templateConfig.layout.marginX, 25);
+    
+    // Business name
+    pdf.setFontSize(templateConfig.fonts.body.size);
+    pdf.setFont('helvetica', templateConfig.fonts.body.weight);
+    pdf.text(businessName, templateConfig.layout.marginX, 35);
+  }
+  
+  // Invoice title with template colors
+  pdf.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+  pdf.setFontSize(templateConfig.fonts.heading.size + 8);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('PayRush', 20, 25);
-  
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text(businessName, 20, 35);
-  
-  // Invoice Title
-  pdf.setTextColor(37, 99, 235);
-  pdf.setFontSize(32);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('INVOICE', pageWidth - 20, 25, { align: 'right' });
+  pdf.text('INVOICE', pageWidth - templateConfig.layout.marginX, 25, { align: 'right' });
   
   // Invoice Details Box
-  pdf.setTextColor(100, 116, 139);
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(secondaryRgb.r, secondaryRgb.g, secondaryRgb.b);
+  pdf.setFontSize(templateConfig.fonts.body.size);
+  pdf.setFont('helvetica', templateConfig.fonts.body.weight);
   
   const invoiceDetailsX = pageWidth - 70;
   const invoiceDetailsY = 35;
@@ -70,128 +149,147 @@ export const generateInvoicePDF = async (invoice, profileData = {}, templateId =
   pdf.text(`Status: ${(invoice.status || 'draft').toUpperCase()}`, invoiceDetailsX, invoiceDetailsY + 15);
   
   // Business Details Section
-  let currentY = 60;
+  let currentY = templateConfig.layout.headerHeight + 20;
   
-  pdf.setTextColor(31, 41, 55);
-  pdf.setFontSize(12);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('From:', 20, currentY);
+  pdf.setTextColor(textRgb.r, textRgb.g, textRgb.b);
+  pdf.setFontSize(templateConfig.fonts.subheading.size);
+  pdf.setFont('helvetica', templateConfig.fonts.subheading.weight);
+  pdf.text('From:', templateConfig.layout.marginX, currentY);
   
   currentY += 8;
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text(businessName, 20, currentY);
+  pdf.setFontSize(templateConfig.fonts.body.size);
+  pdf.setFont('helvetica', templateConfig.fonts.body.weight);
+  pdf.text(businessName, templateConfig.layout.marginX, currentY);
   
   if (businessAddress) {
     currentY += 5;
-    pdf.text(businessAddress, 20, currentY);
+    pdf.text(businessAddress, templateConfig.layout.marginX, currentY);
   }
   
   if (businessPhone) {
     currentY += 5;
-    pdf.text(`Phone: ${businessPhone}`, 20, currentY);
+    pdf.text(`Phone: ${businessPhone}`, templateConfig.layout.marginX, currentY);
   }
   
   if (businessEmail) {
     currentY += 5;
-    pdf.text(`Email: ${businessEmail}`, 20, currentY);
+    pdf.text(`Email: ${businessEmail}`, templateConfig.layout.marginX, currentY);
   }
   
   if (businessWebsite) {
     currentY += 5;
-    pdf.text(`Website: ${businessWebsite}`, 20, currentY);
+    pdf.text(`Website: ${businessWebsite}`, templateConfig.layout.marginX, currentY);
   }
   
   // Customer Details Section
-  currentY = 60;
+  const customerY = templateConfig.layout.headerHeight + 20;
   
-  pdf.setFontSize(12);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Bill To:', pageWidth - 70, currentY);
+  pdf.setFontSize(templateConfig.fonts.subheading.size);
+  pdf.setFont('helvetica', templateConfig.fonts.subheading.weight);
+  pdf.text('Bill To:', pageWidth - 70, customerY);
   
-  currentY += 8;
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text(invoice.customer_name || 'Customer Name', pageWidth - 70, currentY);
+  pdf.setFontSize(templateConfig.fonts.body.size);
+  pdf.setFont('helvetica', templateConfig.fonts.body.weight);
+  pdf.text(invoice.customer_name || 'Customer Name', pageWidth - 70, customerY + 8);
   
   if (invoice.customer_email) {
-    currentY += 5;
-    pdf.text(invoice.customer_email, pageWidth - 70, currentY);
+    pdf.text(invoice.customer_email, pageWidth - 70, customerY + 13);
   }
   
   // Invoice Items Table
-  currentY = Math.max(currentY, 120);
+  currentY = Math.max(currentY, customerY + 30, 120);
   const tableStartY = currentY;
   
-  // Table Header
-  pdf.setFillColor(248, 250, 252); // Light gray background
-  pdf.rect(20, tableStartY, pageWidth - 40, 10, 'F');
+  // Table Header with template accent color
+  pdf.setFillColor(accentRgb.r, accentRgb.g, accentRgb.b);
+  pdf.rect(templateConfig.layout.marginX, tableStartY, pageWidth - (templateConfig.layout.marginX * 2), 10, 'F');
   
-  pdf.setTextColor(31, 41, 55);
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(textRgb.r, textRgb.g, textRgb.b);
+  pdf.setFontSize(templateConfig.fonts.body.size);
+  pdf.setFont('helvetica', templateConfig.fonts.body.weight);
   
-  pdf.text('Description', 25, tableStartY + 7);
+  pdf.text('Description', templateConfig.layout.marginX + 5, tableStartY + 7);
   pdf.text('Quantity', pageWidth - 80, tableStartY + 7, { align: 'center' });
   pdf.text('Rate', pageWidth - 50, tableStartY + 7, { align: 'center' });
-  pdf.text('Amount', pageWidth - 25, tableStartY + 7, { align: 'right' });
+  pdf.text('Amount', pageWidth - templateConfig.layout.marginX, tableStartY + 7, { align: 'right' });
   
   // Table Border
-  pdf.setDrawColor(229, 231, 235);
+  pdf.setDrawColor(secondaryRgb.r, secondaryRgb.g, secondaryRgb.b);
   pdf.setLineWidth(0.1);
-  pdf.rect(20, tableStartY, pageWidth - 40, 10);
+  pdf.rect(templateConfig.layout.marginX, tableStartY, pageWidth - (templateConfig.layout.marginX * 2), 10);
   
-  // Invoice Item (for now, single item)
+  // Invoice Items (handle line items if available)
   currentY = tableStartY + 15;
   
-  pdf.setFont('helvetica', 'normal');
-  pdf.text('Invoice Payment', 25, currentY);
-  pdf.text('1', pageWidth - 80, currentY, { align: 'center' });
-  pdf.text(formatCurrency(invoice.amount, invoice.currency), pageWidth - 50, currentY, { align: 'center' });
-  pdf.text(formatCurrency(invoice.amount, invoice.currency), pageWidth - 25, currentY, { align: 'right' });
-  
-  // Table row border
-  pdf.rect(20, currentY - 5, pageWidth - 40, 10);
+  if (invoice.line_items && invoice.line_items.length > 0) {
+    invoice.line_items.forEach((item, index) => {
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(item.description || 'Item', templateConfig.layout.marginX + 5, currentY);
+      pdf.text((item.quantity || 1).toString(), pageWidth - 80, currentY, { align: 'center' });
+      pdf.text(formatCurrency(item.unit_price || 0, invoice.currency), pageWidth - 50, currentY, { align: 'center' });
+      pdf.text(formatCurrency(item.total || (item.quantity * item.unit_price), invoice.currency), pageWidth - templateConfig.layout.marginX, currentY, { align: 'right' });
+      
+      // Row border
+      pdf.rect(templateConfig.layout.marginX, currentY - 5, pageWidth - (templateConfig.layout.marginX * 2), 10);
+      currentY += 10;
+    });
+  } else {
+    // Single invoice amount (fallback)
+    pdf.setFont('helvetica', 'normal');
+    pdf.text('Invoice Payment', templateConfig.layout.marginX + 5, currentY);
+    pdf.text('1', pageWidth - 80, currentY, { align: 'center' });
+    pdf.text(formatCurrency(invoice.amount, invoice.currency), pageWidth - 50, currentY, { align: 'center' });
+    pdf.text(formatCurrency(invoice.amount, invoice.currency), pageWidth - templateConfig.layout.marginX, currentY, { align: 'right' });
+    
+    // Row border
+    pdf.rect(templateConfig.layout.marginX, currentY - 5, pageWidth - (templateConfig.layout.marginX * 2), 10);
+    currentY += 10;
+  }
   
   // Totals Section
-  currentY += 20;
+  currentY += 15;
   const totalsX = pageWidth - 80;
+  
+  // Calculate totals
+  const subtotal = invoice.line_items 
+    ? invoice.line_items.reduce((sum, item) => sum + (item.total || (item.quantity * item.unit_price)), 0)
+    : invoice.amount;
   
   // Subtotal
   pdf.setFont('helvetica', 'normal');
   pdf.text('Subtotal:', totalsX, currentY);
-  pdf.text(formatCurrency(invoice.amount, invoice.currency), pageWidth - 25, currentY, { align: 'right' });
+  pdf.text(formatCurrency(subtotal, invoice.currency), pageWidth - templateConfig.layout.marginX, currentY, { align: 'right' });
   
   currentY += 8;
   
-  // Total (highlight)
-  pdf.setFillColor(37, 99, 235);
+  // Total (highlight with template primary color)
+  pdf.setFillColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
   pdf.rect(totalsX - 5, currentY - 5, 75, 12, 'F');
   
   pdf.setTextColor(255, 255, 255);
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(12);
+  pdf.setFontSize(templateConfig.fonts.subheading.size);
   pdf.text('Total:', totalsX, currentY + 2);
-  pdf.text(formatCurrency(invoice.amount, invoice.currency), pageWidth - 25, currentY + 2, { align: 'right' });
+  pdf.text(formatCurrency(invoice.amount, invoice.currency), pageWidth - templateConfig.layout.marginX, currentY + 2, { align: 'right' });
   
   // Currency Information
   currentY += 20;
-  pdf.setTextColor(100, 116, 139);
-  pdf.setFontSize(9);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text(`Currency: ${currency.name} (${currency.code}) ${currency.flag}`, 20, currentY);
+  pdf.setTextColor(secondaryRgb.r, secondaryRgb.g, secondaryRgb.b);
+  pdf.setFontSize(templateConfig.fonts.small.size);
+  pdf.setFont('helvetica', templateConfig.fonts.small.weight);
+  pdf.text(`Currency: ${currency.name} (${currency.code}) ${currency.flag}`, templateConfig.layout.marginX, currentY);
   
-  // Footer
+  // Footer with template accent
   const footerY = pageHeight - 30;
   
-  pdf.setFillColor(248, 250, 252);
+  pdf.setFillColor(accentRgb.r, accentRgb.g, accentRgb.b);
   pdf.rect(0, footerY - 10, pageWidth, 40, 'F');
   
-  pdf.setTextColor(100, 116, 139);
-  pdf.setFontSize(9);
+  pdf.setTextColor(secondaryRgb.r, secondaryRgb.g, secondaryRgb.b);
+  pdf.setFontSize(templateConfig.fonts.small.size);
   pdf.text('Thank you for your business!', pageWidth / 2, footerY, { align: 'center' });
   
-  pdf.setFontSize(8);
+  pdf.setFontSize(templateConfig.fonts.small.size - 1);
   pdf.text('Generated by PayRush - Professional Invoice Management', pageWidth / 2, footerY + 5, { align: 'center' });
   pdf.text(`Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, pageWidth / 2, footerY + 10, { align: 'center' });
   
@@ -199,9 +297,51 @@ export const generateInvoicePDF = async (invoice, profileData = {}, templateId =
 };
 
 /**
+ * Helper function to load images from URLs for PDF generation
+ */
+const loadImageFromUrl = (url) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous'; // Handle CORS
+    
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      canvas.width = img.width;
+      canvas.height = img.height;
+      
+      ctx.drawImage(img, 0, 0);
+      
+      try {
+        const dataUrl = canvas.toDataURL('image/png');
+        resolve({
+          data: dataUrl,
+          width: img.width,
+          height: img.height
+        });
+      } catch (error) {
+        reject(new Error('Failed to convert image to data URL'));
+      }
+    };
+    
+    img.onerror = () => {
+      reject(new Error('Failed to load image from URL'));
+    };
+    
+    // Add timestamp to avoid caching issues
+    const urlWithTimestamp = url.includes('?') 
+      ? `${url}&t=${Date.now()}` 
+      : `${url}?t=${Date.now()}`;
+      
+    img.src = urlWithTimestamp;
+  });
+};
+
+/**
  * Download invoice as PDF
  */
-export const downloadInvoicePDF = async (invoice, profileData = {}, templateId = 'professional') => {
+export const downloadInvoicePDF = async (invoice, profileData = {}, templateId = null) => {
   try {
     const pdf = await generateInvoicePDF(invoice, profileData, templateId);
     const filename = `invoice-${invoice.id?.slice(0, 8) || 'draft'}-${Date.now()}.pdf`;
@@ -216,7 +356,7 @@ export const downloadInvoicePDF = async (invoice, profileData = {}, templateId =
 /**
  * Preview invoice PDF in new tab
  */
-export const previewInvoicePDF = async (invoice, profileData = {}, templateId = 'professional') => {
+export const previewInvoicePDF = async (invoice, profileData = {}, templateId = null) => {
   try {
     const pdf = await generateInvoicePDF(invoice, profileData, templateId);
     const pdfBlob = pdf.output('blob');
@@ -276,6 +416,7 @@ export const generatePDFFromHTML = async (elementId, filename = 'invoice.pdf') =
 
 export default {
   generateInvoicePDF,
+  generateDatabaseTemplatedPDF,
   downloadInvoicePDF,
   previewInvoicePDF,
   generatePDFFromHTML,

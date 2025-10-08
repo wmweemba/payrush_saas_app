@@ -200,7 +200,9 @@ const AdvancedInvoiceManager = ({
   // Download PDF
   const handleDownloadPDF = async (invoice) => {
     try {
-      const result = await downloadInvoicePDF(invoice, profile);
+      // Use the template selected for this invoice
+      const templateId = invoice.template_id || null;
+      const result = await downloadInvoicePDF(invoice, profile, templateId);
       if (result.success) {
         onMessage(`✅ Invoice PDF downloaded successfully: ${result.filename}`, false);
       } else {

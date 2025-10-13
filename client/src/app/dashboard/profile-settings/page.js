@@ -23,9 +23,18 @@ export default function ProfileSettings() {
     address: '',
     website: ''
   });
+  const [originalData, setOriginalData] = useState({});
   const [saving, setSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
+  const [availableFields, setAvailableFields] = useState({
+    name: true,
+    business_name: true,
+    phone: true,
+    address: true,
+    website: true
+  });
 
   // Authentication guard and profile loading
   useEffect(() => {
@@ -49,14 +58,10 @@ export default function ProfileSettings() {
           .single();
 
         if (profileError && profileError.code === 'PGRST116') {
-          // Profile doesn't exist, create one with defaults
+          // Profile doesn't exist, create one with minimal data
           const defaultProfile = {
             id: session.user.id,
-            name: session.user.email?.split('@')[0] || 'User',
-            business_name: 'My Business',
-            phone: '',
-            address: '',
-            website: ''
+            business_name: 'My Business'
           };
 
           const { data: newProfile, error: createError } = await supabase
@@ -69,13 +74,21 @@ export default function ProfileSettings() {
             console.error('Failed to create profile:', createError);
             // Use defaults for display
             setProfileData({
-              ...defaultProfile,
-              email: session.user.email || ''
+              name: session.user.email?.split('@')[0] || 'User',
+              business_name: 'My Business',
+              email: session.user.email || '',
+              phone: '',
+              address: '',
+              website: ''
             });
           } else {
             setProfileData({
-              ...newProfile,
-              email: session.user.email || ''
+              name: newProfile.name || session.user.email?.split('@')[0] || 'User',
+              business_name: newProfile.business_name || 'My Business',
+              email: session.user.email || '',
+              phone: newProfile.phone || '',
+              address: newProfile.address || '',
+              website: newProfile.website || ''
             });
           }
         } else if (profileError) {
@@ -83,10 +96,16 @@ export default function ProfileSettings() {
           setMessage('Error loading profile data');
           setIsError(true);
         } else {
-          setProfileData({
-            ...profile,
-            email: session.user.email || ''
-          });
+          const loadedData = {
+            name: session.user.email?.split('@')[0] || 'User',
+            business_name: profile.business_name || 'My Business',
+            email: session.user.email || '',
+            phone: '',
+            address: '',
+            website: ''
+          };
+          setProfileData(loadedData);
+          setOriginalData({ ...loadedData });
         }
 
       } catch (error) {
@@ -112,13 +131,22 @@ export default function ProfileSettings() {
     return () => subscription.unsubscribe();
   }, [router]);
 
-  // Handle input changes
+  // Handle input changes (only for business_name since that's the only editable field)
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setProfileData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    // Only allow changes to business_name
+    if (name === 'business_name') {
+      const newData = {
+        ...profileData,
+        [name]: value
+      };
+      setProfileData(newData);
+      
+      // Check if business name has changed from original
+      const hasChanges = newData.business_name !== originalData.business_name;
+      setHasChanges(hasChanges);
+    }
   };
 
   // Save profile changes
@@ -131,27 +159,45 @@ export default function ProfileSettings() {
     setIsError(false);
 
     try {
-      // Prepare data for update (exclude email as it's managed by Supabase Auth)
+      // Only update business name since that's the only field we can save
       const updateData = {
-        name: profileData.name.trim(),
-        business_name: profileData.business_name.trim(),
-        phone: profileData.phone.trim() || null,
-        address: profileData.address.trim() || null,
-        website: profileData.website.trim() || null
+        business_name: profileData.business_name.trim()
       };
 
-      const { error } = await supabase
+      console.log('Updating business name:', updateData);
+
+      const { data: updatedProfile, error } = await supabase
         .from('profiles')
         .update(updateData)
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select()
+        .single();
 
       if (error) throw error;
 
-      setMessage('✅ Profile updated successfully!');
+      console.log('Business name updated successfully:', updatedProfile);
+
+      // Update the local state with the saved data
+      if (updatedProfile) {
+        const newData = {
+          ...profileData,
+          business_name: updatedProfile.business_name
+        };
+        setProfileData(newData);
+        setOriginalData({ ...newData });
+        setHasChanges(false);
+      }
+
+      setMessage('✅ Business name updated successfully!');
       setIsError(false);
+
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        setMessage('');
+      }, 5000);
     } catch (error) {
       console.error('Profile update error:', error);
-      setMessage(`❌ Failed to update profile: ${error.message}`);
+      setMessage(`❌ Failed to update business name: ${error.message}`);
       setIsError(true);
     } finally {
       setSaving(false);
@@ -241,59 +287,12 @@ export default function ProfileSettings() {
         {/* Profile Settings Form */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8">
           <form onSubmit={saveProfile} className="space-y-6">
-            {/* Basic Information Section */}
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                Basic Information
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Full Name *
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={profileData.name}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
-                             bg-white dark:bg-slate-700 text-gray-900 dark:text-white 
-                             focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                             transition-colors"
-                    placeholder="Enter your full name"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={profileData.email}
-                    disabled
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
-                             bg-gray-50 dark:bg-slate-600 text-gray-500 dark:text-gray-400
-                             transition-colors cursor-not-allowed"
-                    placeholder="Email managed by account settings"
-                  />
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Email address is managed through your account settings
-                  </p>
-                </div>
-              </div>
-            </div>
-
             {/* Business Information Section */}
-            <div className="border-t border-gray-200 dark:border-gray-600 pt-6">
+            <div>
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
                 Business Information
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6">
                 <div>
                   <label htmlFor="business_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Business Name *
@@ -312,59 +311,67 @@ export default function ProfileSettings() {
                     placeholder="Enter your business name"
                   />
                 </div>
+              </div>
+            </div>
 
+            {/* Account Information (Read-only) */}
+            <div className="border-t border-gray-200 dark:border-gray-600 pt-6">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                Account Information
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Phone Number
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Email Address
                   </label>
                   <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    value={profileData.phone}
-                    onChange={handleInputChange}
+                    type="email"
+                    value={profileData.email}
+                    disabled
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
-                             bg-white dark:bg-slate-700 text-gray-900 dark:text-white 
-                             focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                             transition-colors"
-                    placeholder="Enter your phone number"
+                             bg-gray-50 dark:bg-slate-600 text-gray-500 dark:text-gray-400
+                             transition-colors cursor-not-allowed"
                   />
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Email address is managed through your account settings
+                  </p>
                 </div>
 
                 <div>
-                  <label htmlFor="website" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Website
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Display Name
                   </label>
                   <input
-                    type="url"
-                    id="website"
-                    name="website"
-                    value={profileData.website}
-                    onChange={handleInputChange}
+                    type="text"
+                    value={profileData.name}
+                    disabled
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
-                             bg-white dark:bg-slate-700 text-gray-900 dark:text-white 
-                             focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                             transition-colors"
-                    placeholder="https://your-website.com"
+                             bg-gray-50 dark:bg-slate-600 text-gray-500 dark:text-gray-400
+                             transition-colors cursor-not-allowed"
                   />
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Display name is derived from your email address
+                  </p>
                 </div>
+              </div>
+            </div>
 
-                <div>
-                  <label htmlFor="address" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Business Address
-                  </label>
-                  <textarea
-                    id="address"
-                    name="address"
-                    value={profileData.address}
-                    onChange={handleInputChange}
-                    rows={3}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
-                             bg-white dark:bg-slate-700 text-gray-900 dark:text-white 
-                             focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                             transition-colors resize-none"
-                    placeholder="Enter your business address"
-                  />
+            {/* Future Features Notice */}
+            <div className="border-t border-gray-200 dark:border-gray-600 pt-6">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <div className="flex items-start">
+                  <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-1">
+                      Additional Profile Fields Coming Soon
+                    </h4>
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      We're working on adding more profile fields like phone number, address, and website. 
+                      For now, you can update your business name which will be displayed throughout the application.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -378,20 +385,34 @@ export default function ProfileSettings() {
               >
                 Cancel
               </Link>
-              <Button 
-                type="submit"
-                disabled={saving}
-                className="payrush-gradient text-white hover:scale-105 transition-transform px-8"
-              >
-                {saving ? (
-                  <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                    Saving...
-                  </div>
-                ) : (
-                  'Save Changes'
+              <div className="flex space-x-3">
+                <Button 
+                  type="submit"
+                  disabled={saving || !hasChanges}
+                  className={`text-white hover:scale-105 transition-transform px-8 ${
+                    hasChanges ? 'payrush-gradient' : 'bg-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  {saving ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                      Saving...
+                    </div>
+                  ) : hasChanges ? (
+                    'Save Changes'
+                  ) : (
+                    'No Changes'
+                  )}
+                </Button>
+                {message && !isError && (
+                  <Link
+                    href="/dashboard"
+                    className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                  >
+                    Back to Dashboard
+                  </Link>
                 )}
-              </Button>
+              </div>
             </div>
           </form>
         </div>

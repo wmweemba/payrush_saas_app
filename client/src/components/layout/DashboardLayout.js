@@ -1,59 +1,27 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabaseClient';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
-export default function DashboardLayout({ children, currentTab = null, title, description }) {
+export default function DashboardLayout({ children, currentTab = null, title, description, user: propUser, profile: propProfile, onSignOut }) {
   const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const getUser = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error getting session:', error);
-          router.push('/login');
-          return;
-        }
-
-        if (session?.user) {
-          setUser(session.user);
-          
-          // Get user profile
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          
-          if (profileData) {
-            setProfile(profileData);
-          }
-        } else {
-          router.push('/login');
-        }
-      } catch (error) {
-        console.error('Error in getUser:', error);
-        router.push('/login');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    getUser();
-  }, [router]);
+  const { user: hookUser, profile: hookProfile, loading, error } = useUserProfile();
+  
+  // Use props if provided (for backward compatibility), otherwise use hook values
+  const user = propUser || hookUser;
+  const profile = propProfile || hookProfile;
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
-      router.push('/login');
+      if (onSignOut) {
+        onSignOut();
+      } else {
+        await supabase.auth.signOut();
+        router.push('/login');
+      }
     } catch (error) {
       console.error('Error signing out:', error);
     }
@@ -70,16 +38,39 @@ export default function DashboardLayout({ children, currentTab = null, title, de
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 dark:text-red-400 mb-4">
+            <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-sm">{error}</p>
+          </div>
+          <Button onClick={() => window.location.reload()} variant="outline">
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800">
       {/* Header Navigation */}
       <header className="bg-white dark:bg-slate-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <Link href="/dashboard" className="text-2xl font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
-              PayRush
-            </Link>
+            {/* Logo and Business Name */}
+            <div className="flex items-center space-x-4">
+              <Link href="/dashboard" className="text-2xl font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
+                PayRush
+              </Link>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                <span className="font-medium">{profile?.business_name || 'My Business'}</span>
+              </div>
+            </div>
 
             {/* User menu */}
             <div className="flex items-center space-x-4">
@@ -105,11 +96,11 @@ export default function DashboardLayout({ children, currentTab = null, title, de
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                {title}
+                {title || `Welcome back, ${profile?.name || 'User'}! 👋`}
               </h1>
               <p className="text-gray-600 dark:text-gray-300">
-                <span className="font-medium">{profile?.business_name || 'Your Business'}</span> • 
-                {description}
+                <span className="font-medium">{profile?.business_name || 'My Business'}</span> • 
+                {description || 'Dashboard'}
               </p>
             </div>
             <div className="hidden sm:block">

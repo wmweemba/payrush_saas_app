@@ -87,25 +87,31 @@ export const createApiUrl = (endpoint) => {
  * Default headers for API requests
  */
 export const getDefaultHeaders = async () => {
-  const headers = {
-    'Content-Type': 'application/json'
-  };
+  const headers = {};
 
   // Add authorization header if user session exists
   if (typeof window !== 'undefined') {
     try {
       // Dynamically import supabase to avoid SSR issues
       const { supabase } = await import('./supabaseClient');
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.warn('Session retrieval error:', error.message);
+        return headers;
+      }
       
       console.log('Auth session check:', { 
         hasSession: !!session, 
         hasToken: !!session?.access_token,
-        userId: session?.user?.id 
+        userId: session?.user?.id,
+        tokenLength: session?.access_token?.length
       });
       
       if (session?.access_token) {
         headers.Authorization = `Bearer ${session.access_token}`;
+      } else {
+        console.warn('No access token found in session');
       }
     } catch (error) {
       console.error('Failed to get auth session:', error);
@@ -125,11 +131,17 @@ export const apiClient = async (endpoint, options = {}) => {
   const url = createApiUrl(endpoint);
   const defaultHeaders = await getDefaultHeaders();
   
+  // For JSON requests, add Content-Type header
+  const finalHeaders = { ...defaultHeaders };
+  if (options.body && typeof options.body === 'string') {
+    finalHeaders['Content-Type'] = 'application/json';
+  }
+  
   const config = {
-    headers: defaultHeaders,
+    headers: finalHeaders,
     ...options,
     headers: {
-      ...defaultHeaders,
+      ...finalHeaders,
       ...(options.headers || {})
     }
   };
@@ -150,8 +162,15 @@ export const apiClient = async (endpoint, options = {}) => {
         status: response.status,
         statusText: response.statusText,
         errorData,
-        url: response.url
+        url: response.url,
+        hasAuth: !!config.headers.Authorization
       });
+      
+      // Handle specific auth errors
+      if (response.status === 401) {
+        console.warn('Authentication failed - token may be expired or invalid');
+        // Optionally trigger a re-login or token refresh here
+      }
       
       const error = new Error(errorData.message || errorData.error || 'API request failed');
       error.status = response.status;

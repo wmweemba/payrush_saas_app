@@ -75,12 +75,31 @@ class BrandingService {
    */
   async initializeDefaultBranding(userId) {
     try {
-      const { data, error } = await this.supabase.rpc('initialize_default_branding', {
-        p_user_id: userId
-      });
+      // Use the actual column names that exist in the database
+      const defaultBranding = {
+        user_id: userId,
+        primary_color: '#2563eb',
+        secondary_color: '#64748b', 
+        accent_color: '#10b981',
+        text_color: '#1f2937',
+        background_color: '#ffffff',
+        heading_font: 'Inter, sans-serif',
+        body_font: 'Inter, sans-serif', // Note: using body_font, not primary_font
+        display_business_name: true,
+        display_address: true,
+        display_phone: true,
+        display_email: true,
+        display_website: true
+      };
+
+      const { data, error } = await this.supabase
+        .from('business_branding')
+        .insert(defaultBranding)
+        .select()
+        .single();
 
       if (error) {
-        console.error('Error initializing default branding:', error);
+        console.error('Error inserting default branding:', error);
         return {
           success: false,
           error: 'Failed to initialize branding',
@@ -88,8 +107,10 @@ class BrandingService {
         };
       }
 
-      // Return the newly created branding
-      return await this.getBranding(userId);
+      return {
+        success: true,
+        data: data
+      };
     } catch (error) {
       console.error('Error in initializeDefaultBranding:', error);
       return {

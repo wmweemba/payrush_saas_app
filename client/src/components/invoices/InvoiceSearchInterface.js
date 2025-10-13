@@ -1,7 +1,51 @@
 /**
  * Invoice Search and Filter Interface
- * Provides advanced search, filtering, and sorting capabilities for invoice management
- */
+ * Provides advanced search, filtering, and sorting capabilities for invoic  // Handle quick filter selection
+  const handleQuickFilter = async (preset) => {
+    if (preset === 'all') {
+      handleClearFilters();
+      return;
+    }
+
+    try {
+      // Check for valid session before making API calls
+      const { supabase } = await import('@/lib/supabaseClient');
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        console.log('No valid session found, applying basic filter');
+        // Apply basic preset filters without API call
+        const basicFilters = {
+          overdue: { statuses: ['overdue'] },
+          draft: { statuses: ['draft'] },
+          paid: { statuses: ['paid'] },
+          pending: { statuses: ['pending'] },
+          thisMonth: { 
+            dateFrom: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
+            dateTo: new Date().toISOString().split('T')[0]
+          },
+          last30Days: {
+            dateFrom: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            dateTo: new Date().toISOString().split('T')[0]
+          },
+          highValue: { amountMin: 1000 }
+        };
+        
+        if (basicFilters[preset]) {
+          onSearch(basicFilters[preset]);
+        }
+        return;
+      }
+
+      const data = await apiClient(`/api/invoices/search/quick/${preset}`);
+      // This will trigger the parent component to show results
+      onSearch({ preset });
+    } catch (error) {
+      console.warn('Quick filter API failed, applying basic filter:', error.message);
+      // Fallback to basic client-side filters
+      handleQuickFilter(preset);
+    }
+  };*/
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
@@ -73,13 +117,24 @@ const InvoiceSearchInterface = ({
 
   const loadFilterOptions = async () => {
     try {
+      // Check if we have a valid session before making API calls
+      const { supabase } = await import('@/lib/supabaseClient');
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        console.log('No valid session found, skipping filter options load');
+        return;
+      }
+
       const data = await apiClient('/api/invoices/search/filters');
       setFilterOptions(prev => ({
         ...prev,
         ...data.data
       }));
     } catch (error) {
-      console.error('Failed to load filter options:', error);
+      console.warn('Failed to load filter options (continuing without):', error.message);
+      // Don't throw error - just continue without advanced filters
+      // The search interface should still work with basic filters
     }
   };
 

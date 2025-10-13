@@ -74,10 +74,24 @@ const BrandingPage = () => {
   const loadBrandingData = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/api/branding');
+      console.log('Loading branding data from /api/branding...');
       
-      if (response.data.success) {
-        const brandingData = response.data.data;
+      // Check authentication before making API call
+      const { supabase } = await import('@/lib/supabaseClient');
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      console.log('Session check before API call:', { 
+        hasSession: !!session, 
+        hasToken: !!session?.access_token,
+        userId: session?.user?.id,
+        sessionError: sessionError?.message
+      });
+      
+      const response = await apiClient('/api/branding', { method: 'GET' });
+      console.log('Branding API response:', response);
+      
+      if (response.success) {
+        const brandingData = response.data;
+        console.log('Branding data loaded successfully:', brandingData);
         setBranding(brandingData);
         setBrandingForm({
           primary_color: brandingData.primary_color || '#2563eb',
@@ -93,12 +107,56 @@ const BrandingPage = () => {
           apply_branding_to_templates: brandingData.apply_branding_to_templates ?? true,
           apply_branding_to_emails: brandingData.apply_branding_to_emails ?? true
         });
+      } else {
+        console.warn('Branding API returned unsuccessful response:', response);
+        // Initialize with default values if API call is unsuccessful
+        setBrandingForm({
+          primary_color: '#2563eb',
+          secondary_color: '#64748b',
+          accent_color: '#10b981',
+          text_color: '#1f2937',
+          background_color: '#ffffff',
+          primary_font: 'Inter, sans-serif',
+          heading_font: 'Inter, sans-serif',
+          company_name: '',
+          company_tagline: '',
+          company_website: '',
+          apply_branding_to_templates: true,
+          apply_branding_to_emails: true
+        });
       }
     } catch (error) {
       console.error('Error loading branding:', error);
+      console.error('Error details:', {
+        message: error.message,
+        status: error.status,
+        data: error.data,
+        stack: error.stack
+      });
+      
+      // Log the full error object to see what's missing
+      console.error('Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+      
+      // Initialize with default values if API call fails
+      setBrandingForm({
+        primary_color: '#2563eb',
+        secondary_color: '#64748b',
+        accent_color: '#10b981',
+        text_color: '#1f2937',
+        background_color: '#ffffff',
+        primary_font: 'Inter, sans-serif',
+        heading_font: 'Inter, sans-serif',
+        company_name: '',
+        company_tagline: '',
+        company_website: '',
+        apply_branding_to_templates: true,
+        apply_branding_to_emails: true
+      });
+      
+      // Show user-friendly message
       toast({
         title: "Error",
-        description: "Failed to load branding information",
+        description: "Failed to load branding information. Using defaults.",
         variant: "destructive"
       });
     } finally {
@@ -108,9 +166,9 @@ const BrandingPage = () => {
 
   const loadAssets = async () => {
     try {
-      const response = await apiClient.get('/api/branding/assets');
-      if (response.data.success) {
-        setAssets(response.data.data);
+      const response = await apiClient('/api/branding/assets', { method: 'GET' });
+      if (response.success) {
+        setAssets(response.data);
       }
     } catch (error) {
       console.error('Error loading assets:', error);
@@ -119,9 +177,9 @@ const BrandingPage = () => {
 
   const loadStats = async () => {
     try {
-      const response = await apiClient.get('/api/branding/stats');
-      if (response.data.success) {
-        setStats(response.data.data);
+      const response = await apiClient('/api/branding/stats', { method: 'GET' });
+      if (response.success) {
+        setStats(response.data);
       }
     } catch (error) {
       console.error('Error loading stats:', error);
@@ -131,10 +189,13 @@ const BrandingPage = () => {
   const handleSaveBranding = async () => {
     try {
       setSaving(true);
-      const response = await apiClient.put('/api/branding', brandingForm);
+      const response = await apiClient('/api/branding', { 
+        method: 'PUT',
+        body: JSON.stringify(brandingForm)
+      });
       
-      if (response.data.success) {
-        setBranding(response.data.data);
+      if (response.success) {
+        setBranding(response.data);
         toast({
           title: "Success",
           description: "Branding updated successfully"
@@ -189,13 +250,15 @@ const BrandingPage = () => {
       formData.append('description', uploadForm.description);
       formData.append('altText', uploadForm.altText);
 
-      const response = await apiClient.post('/api/branding/upload', formData, {
+      const response = await apiClient('/api/branding/upload', {
+        method: 'POST',
+        body: formData,
         headers: {
-          'Content-Type': 'multipart/form-data'
+          // Don't set Content-Type for FormData, let browser set it
         }
       });
 
-      if (response.data.success) {
+      if (response.success) {
         toast({
           title: "Success",
           description: "Asset uploaded successfully"
@@ -234,8 +297,8 @@ const BrandingPage = () => {
     }
 
     try {
-      const response = await apiClient.delete(`/api/branding/assets/${assetId}`);
-      if (response.data.success) {
+      const response = await apiClient(`/api/branding/assets/${assetId}`, { method: 'DELETE' });
+      if (response.success) {
         toast({
           title: "Success",
           description: "Asset deleted successfully"

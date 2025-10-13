@@ -40,27 +40,40 @@ export default function Login() {
   // Ensure user profile exists
   const ensureProfileExists = async (user) => {
     try {
+      console.log('Checking profile for user:', user.id, user.email);
+      
       // Check if profile exists
       const { data: existingProfile, error: fetchError } = await supabase
         .from('profiles')
-        .select('id')
+        .select('*')
         .eq('id', user.id)
         .single();
 
+      console.log('Existing profile check:', { existingProfile, fetchError });
+
       if (fetchError && fetchError.code === 'PGRST116') {
-        // Profile doesn't exist, create a basic one
-        const { error: insertError } = await supabase
+        // Profile doesn't exist, create a basic one (this should be rare if signup worked correctly)
+        const profileData = {
+          id: user.id,
+          name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+          business_name: 'My Business' // Basic fallback only
+        };
+
+        console.log('Creating new profile:', profileData);
+
+        const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
-          .insert({
-            id: user.id,
-            name: user.email?.split('@')[0] || 'User',
-            business_name: 'My Business'
-          });
+          .insert(profileData)
+          .select()
+          .single();
 
         if (insertError) {
           console.error('Failed to create profile:', insertError);
+        } else {
+          console.log('Profile created successfully:', newProfile);
         }
       }
+      // Remove the update logic that was overriding existing profiles
     } catch (error) {
       console.error('Error ensuring profile exists:', error);
     }

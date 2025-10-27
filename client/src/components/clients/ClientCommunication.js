@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { apiClient } from '@/lib/apiConfig';
 import { 
   MessageCircle, 
   Plus, 
@@ -30,6 +31,7 @@ import {
   MessageSquare,
   User,
   FileText,
+  CheckSquare,
   Activity
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
@@ -44,13 +46,13 @@ const ClientCommunication = ({ clientId }) => {
   
   // Note form state
   const [isAddingNote, setIsAddingNote] = useState(false);
+  const [editingNote, setEditingNote] = useState(null); // Track note being edited
   const [noteForm, setNoteForm] = useState({
     title: '',
     content: '',
     note_type: 'general',
-    priority: 'medium',
-    tags: [],
-    is_private: false
+    priority: 'normal',
+    tags: []
   });
   
   // Reminder form state
@@ -59,7 +61,7 @@ const ClientCommunication = ({ clientId }) => {
     title: '',
     description: '',
     reminder_date: '',
-    priority: 'medium',
+    priority: 'normal',
     reminder_type: 'general'
   });
   
@@ -78,17 +80,20 @@ const ClientCommunication = ({ clientId }) => {
 
   const noteTypes = [
     { value: 'general', label: 'General', icon: FileText },
+    { value: 'communication', label: 'Communication', icon: MessageSquare },
     { value: 'meeting', label: 'Meeting', icon: User },
     { value: 'call', label: 'Phone Call', icon: Phone },
     { value: 'email', label: 'Email', icon: Mail },
     { value: 'follow_up', label: 'Follow-up', icon: Clock },
-    { value: 'important', label: 'Important', icon: AlertCircle }
+    { value: 'task', label: 'Task', icon: CheckSquare },
+    { value: 'reminder', label: 'Reminder', icon: AlertCircle }
   ];
 
   const priorities = [
     { value: 'low', label: 'Low', color: 'bg-green-100 text-green-800' },
-    { value: 'medium', label: 'Medium', color: 'bg-yellow-100 text-yellow-800' },
-    { value: 'high', label: 'High', color: 'bg-red-100 text-red-800' }
+    { value: 'normal', label: 'Normal', color: 'bg-blue-100 text-blue-800' },
+    { value: 'high', label: 'High', color: 'bg-orange-100 text-orange-800' },
+    { value: 'urgent', label: 'Urgent', color: 'bg-red-100 text-red-800' }
   ];
 
   const reminderTypes = [
@@ -136,35 +141,31 @@ const ClientCommunication = ({ clientId }) => {
       
       const params = new URLSearchParams(filteredParams);
       
-      const response = await fetch(`/api/clients/${clientId}/notes?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+      const response = await apiClient(`/api/clients/${clientId}/notes?${params}`, {
+        method: 'GET'
       });
       
-      if (response.ok) {
-        const data = await response.json();
-        setNotes(data.data || []);
+      if (response.success) {
+        setNotes(response.data.notes || []);
       }
     } catch (error) {
       console.error('Error fetching notes:', error);
+      setNotes([]);
     }
   };
 
   const fetchTimeline = async () => {
     try {
-      const response = await fetch(`/api/clients/${clientId}/timeline?limit=50`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+      const response = await apiClient(`/api/clients/${clientId}/timeline?limit=50`, {
+        method: 'GET'
       });
       
-      if (response.ok) {
-        const data = await response.json();
-        setTimeline(data.data || []);
+      if (response.success) {
+        setTimeline(response.data || []);
       }
     } catch (error) {
       console.error('Error fetching timeline:', error);
+      setTimeline([]);
     }
   };
 
@@ -176,46 +177,41 @@ const ClientCommunication = ({ clientId }) => {
         ...reminderFilters
       });
       
-      const response = await fetch(`/api/clients/${clientId}/reminders?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+      const response = await apiClient(`/api/clients/${clientId}/reminders?${params}`, {
+        method: 'GET'
       });
       
-      if (response.ok) {
-        const data = await response.json();
-        setReminders(data.data || []);
+      if (response.success) {
+        setReminders(response.data || []);
       }
     } catch (error) {
       console.error('Error fetching reminders:', error);
+      setReminders([]);
     }
   };
 
   const fetchStats = async () => {
     try {
-      const response = await fetch(`/api/clients/${clientId}/communication-stats`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+      const response = await apiClient(`/api/clients/${clientId}/communication-stats`, {
+        method: 'GET'
       });
       
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data.data || {});
+      if (response.success) {
+        setStats(response.data || {});
       }
     } catch (error) {
       console.error('Error fetching communication stats:', error);
+      setStats({});
     }
   };
 
   const handleCreateNote = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`/api/clients/${clientId}/notes`, {
+      const response = await apiClient(`/api/clients/${clientId}/notes`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           ...noteForm,
@@ -223,15 +219,14 @@ const ClientCommunication = ({ clientId }) => {
         })
       });
 
-      if (response.ok) {
+      if (response.success) {
         setIsAddingNote(false);
         setNoteForm({
           title: '',
           content: '',
           note_type: 'general',
-          priority: 'medium',
-          tags: [],
-          is_private: false
+          priority: 'normal',
+          tags: []
         });
         await fetchNotes();
         await fetchTimeline();
@@ -242,25 +237,101 @@ const ClientCommunication = ({ clientId }) => {
     }
   };
 
+  const handleUpdateNote = async (e) => {
+    e.preventDefault();
+    if (!editingNote) return;
+    
+    try {
+      const response = await apiClient(`/api/clients/${clientId}/notes/${editingNote.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ...noteForm,
+          tags: noteForm.tags.filter(tag => tag.trim())
+        })
+      });
+
+      if (response.success) {
+        setIsAddingNote(false);
+        setEditingNote(null);
+        setNoteForm({
+          title: '',
+          content: '',
+          note_type: 'general',
+          priority: 'normal',
+          tags: []
+        });
+        await fetchNotes();
+        await fetchTimeline();
+        await fetchStats();
+      }
+    } catch (error) {
+      console.error('Error updating note:', error);
+    }
+  };
+
+  const handleDeleteNote = async (noteId) => {
+    if (!confirm('Are you sure you want to delete this note?')) return;
+    
+    try {
+      const response = await apiClient(`/api/clients/${clientId}/notes/${noteId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.success) {
+        await fetchNotes();
+        await fetchTimeline();
+        await fetchStats();
+      }
+    } catch (error) {
+      console.error('Error deleting note:', error);
+    }
+  };
+
+  const handleEditNote = (note) => {
+    setEditingNote(note);
+    setNoteForm({
+      title: note.title,
+      content: note.content,
+      note_type: note.note_type,
+      priority: note.priority,
+      tags: note.tags || []
+    });
+    setIsAddingNote(true);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingNote(null);
+    setNoteForm({
+      title: '',
+      content: '',
+      note_type: 'general',
+      priority: 'normal',
+      tags: []
+    });
+    setIsAddingNote(false);
+  };
+
   const handleCreateReminder = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`/api/clients/${clientId}/reminders`, {
+      const response = await apiClient(`/api/clients/${clientId}/reminders`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(reminderForm)
       });
 
-      if (response.ok) {
+      if (response.success) {
         setIsAddingReminder(false);
         setReminderForm({
           title: '',
           description: '',
           reminder_date: '',
-          priority: 'medium',
+          priority: 'normal',
           reminder_type: 'general'
         });
         await fetchReminders();
@@ -418,9 +489,9 @@ const ClientCommunication = ({ clientId }) => {
                   </DialogTrigger>
                   <DialogContent className="max-w-md">
                     <DialogHeader>
-                      <DialogTitle>Add New Note</DialogTitle>
+                      <DialogTitle>{editingNote ? 'Edit Note' : 'Add New Note'}</DialogTitle>
                     </DialogHeader>
-                    <form onSubmit={handleCreateNote} className="space-y-4">
+                    <form onSubmit={editingNote ? handleUpdateNote : handleCreateNote} className="space-y-4">
                       <div>
                         <Label htmlFor="note-title">Title</Label>
                         <Input
@@ -449,7 +520,7 @@ const ClientCommunication = ({ clientId }) => {
                             <SelectTrigger className="bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-lg z-50">
+                            <SelectContent className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-lg z-[150]">
                               {noteTypes.map(type => (
                                 <SelectItem key={type.value} value={type.value} className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">{type.label}</SelectItem>
                               ))}
@@ -463,7 +534,7 @@ const ClientCommunication = ({ clientId }) => {
                             <SelectTrigger className="bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-lg z-50">
+                            <SelectContent className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-lg z-[150]">
                               {priorities.map(priority => (
                                 <SelectItem key={priority.value} value={priority.value} className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white cursor-pointer">{priority.label}</SelectItem>
                               ))}
@@ -481,15 +552,20 @@ const ClientCommunication = ({ clientId }) => {
                             ...prev, 
                             tags: e.target.value.split(',').map(tag => tag.trim()) 
                           }))}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                            }
+                          }}
                           placeholder="urgent, follow-up, contract"
                         />
                       </div>
                       
                       <div className="flex justify-end space-x-2">
-                        <Button type="button" variant="outline" onClick={() => setIsAddingNote(false)}>
+                        <Button type="button" variant="outline" onClick={handleCancelEdit}>
                           Cancel
                         </Button>
-                        <Button type="submit">Add Note</Button>
+                        <Button type="submit">{editingNote ? 'Update Note' : 'Add Note'}</Button>
                       </div>
                     </form>
                   </DialogContent>
@@ -497,7 +573,7 @@ const ClientCommunication = ({ clientId }) => {
               </div>
 
               <div className="space-y-3">
-                {notes.length === 0 ? (
+                {!Array.isArray(notes) || notes.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     No notes found. Create your first note to start tracking client communications.
                   </div>
@@ -536,10 +612,10 @@ const ClientCommunication = ({ clientId }) => {
                             </div>
                           </div>
                           <div className="flex items-center space-x-1">
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" onClick={() => handleEditNote(note)}>
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" onClick={() => handleDeleteNote(note.id)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>

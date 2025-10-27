@@ -2,6 +2,281 @@
 
 All notable changes to the PayRush SaaS application will be documented in this file.
 
+## [1.9.7] - 2025-10-27
+
+### Fixed
+#### Database Schema Alignment & Note Type Validation
+
+- **🗄️ Database Column Mismatch - `is_private`**
+  - **Error**: `Could not find the 'is_private' column of 'client_notes' in the schema cache`
+  - **Root Cause**: Client form was sending `is_private` field, but database schema doesn't include this column
+  - **Impact**: Unable to create or update notes due to PostgreSQL/Supabase schema validation error
+  - **Solution**: Removed `is_private` field from all client-side code
+    - Removed from initial `noteForm` state
+    - Removed from `handleCreateNote` reset
+    - Removed from `handleUpdateNote` reset
+    - Removed from `handleEditNote` load
+    - Removed from `handleCancelEdit` reset
+  - **Files Modified**: `ClientCommunication.js`
+
+- **📝 Note Type Validation Error**
+  - **Error**: "Invalid note type" when creating new notes
+  - **Root Cause**: Client-side `noteTypes` array didn't match server validation
+    - **Client had**: `general`, `meeting`, `call`, `email`, `follow_up`, `important`
+    - **Server expects**: `general`, `communication`, `follow_up`, `meeting`, `call`, `email`, `task`, `reminder`
+    - **Invalid type**: `important` doesn't exist in database CHECK constraint or server validation
+  - **Impact**: Users unable to create new notes, all note creation attempts failed validation
+  - **Solution**: Updated `noteTypes` array to match server `NOTE_TYPES` constant
+    - Added: `communication` (💬 Communication)
+    - Added: `task` (✅ Task) 
+    - Added: `reminder` (⏰ Reminder)
+    - Removed: `important` (invalid type)
+    - Added `CheckSquare` icon import from lucide-react for task type
+  - **Database Schema**: CHECK constraint in `client_notes` table enforces valid note types
+  - **Server Validation**: `communicationService.js` validates against `NOTE_TYPES` keys
+  - **Result**: All note types now align across client, server, and database layers
+
+- **🔄 Complete Data Flow Validation**
+  - **Client Layer**: Form sends only valid fields that exist in database
+  - **Server Layer**: Validates note_type against NOTE_TYPES constant
+  - **Database Layer**: CHECK constraint enforces valid enum values
+  - **Alignment**: All three layers now perfectly synchronized
+
+## [1.9.6] - 2025-10-27
+
+### Fixed
+#### Select Component Z-Index & Note Edit/Delete Functionality
+
+- **🎛️ Dropdown Select Not Working in Dialogs**
+  - **Problem**: Type and Priority dropdowns in "Add Note" modal not responding to clicks
+  - **Root Cause**: Select component z-index (`z-50`) was below Dialog overlay/content (`z-[101]`)
+  - **Solution**: Elevated SelectContent z-index to `z-[150]` in Add Note form
+  - **Result**: Dropdowns now appear above modal overlay and are fully clickable
+  - **Files Modified**: `ClientCommunication.js` - Both Type and Priority Select components
+
+- **✏️ Edit Note Functionality Implemented**
+  - **Problem**: Edit button had no onClick handler, clicking did nothing
+  - **Solution**: Added complete edit workflow
+    - Added `editingNote` state to track note being edited
+    - Implemented `handleEditNote(note)` - Loads note data into form and opens dialog
+    - Implemented `handleUpdateNote()` - Sends PUT request to `/api/clients/:id/notes/:noteId`
+    - Updated dialog title: "Add New Note" ↔ "Edit Note" (dynamic based on mode)
+    - Updated submit button text: "Add Note" ↔ "Update Note" (dynamic based on mode)
+    - Added `handleCancelEdit()` - Clears editing state and resets form
+  - **API Endpoint**: `PUT /api/clients/:id/notes/:noteId` (already existed in server)
+  - **Result**: Users can now click edit button, modify note details, and save changes
+
+- **🗑️ Delete Note Functionality Implemented**
+  - **Problem**: Delete button had no onClick handler, clicking did nothing
+  - **Solution**: Added `handleDeleteNote(noteId)` with confirmation dialog
+    - Shows browser confirmation before deletion
+    - Sends DELETE request to `/api/clients/:id/notes/:noteId`
+    - Refreshes notes list, timeline, and stats after successful deletion
+  - **API Endpoint**: `DELETE /api/clients/:id/notes/:noteId` (already existed in server)
+  - **Result**: Users can now delete notes with confirmation prompt
+
+- **🔄 State Management Enhancement**
+  - Form now properly handles both create and edit modes
+  - Cancel button properly resets state in both modes
+  - Dialog closes and refreshes all related data after successful operations
+  - Added proper cleanup to prevent state leakage between operations
+
+## [1.9.5] - 2025-10-27
+
+### Fixed
+#### Client Communication API Integration & UI Component Fixes
+
+- **🎯 Priority Level Validation Error**
+  - **Error**: "Invalid priority level" when creating notes or reminders
+  - **Root Cause**: Client-server priority value mismatch
+    - **Client was sending**: `low`, `medium`, `high`
+    - **Server expected**: `low`, `normal`, `high`, `urgent`
+  - **Impact**: Users unable to create notes or reminders due to validation failure
+  - **Solution**: Updated client-side priority values to match server expectations
+    - Changed default priority from `medium` to `normal`
+    - Updated priorities array: `['low', 'normal', 'high', 'urgent']`
+    - Updated initial form states for both notes and reminders
+    - Updated form reset states after successful submission
+  - **UI Updates**:
+    - Low: Green badge
+    - Normal: Blue badge (was "Medium" with Yellow)
+    - High: Orange badge
+    - Urgent: Red badge (new option)
+
+- **🔧 Critical API Integration Issues**
+  - **Problem**: ClientCommunication component making API calls to Next.js (localhost:3000) instead of Express server (localhost:5000)
+  - **Root Cause**: Component using direct `fetch()` calls without proper API base URL configuration
+  - **Solution**: Migrated all API calls to use centralized `apiClient` from `@/lib/apiConfig`
+  - **Impact**: All communication endpoints now properly route to Express server with JWT authentication
+  - **Endpoints Fixed**:
+    - `GET /api/clients/:id/notes` - Fetch client notes with filtering
+    - `POST /api/clients/:id/notes` - Create new notes
+    - `GET /api/clients/:id/timeline` - Activity timeline
+    - `GET /api/clients/:id/reminders` - Client reminders
+    - `GET /api/clients/:id/communication-stats` - Communication statistics
+
+- **📊 API Response Structure Handling**
+  - **Error**: `notes.map is not a function` - Runtime TypeError when navigating to Communications tab
+  - **Root Cause**: Incorrect data extraction from API response structure
+  - **API Response Formats**:
+    - Notes: `{ success: true, data: { notes: [], total, hasMore } }` - Need to access `response.data.notes`
+    - Timeline: `{ success: true, data: [] }` - Direct array access `response.data`
+    - Reminders: `{ success: true, data: [] }` - Direct array access `response.data`
+    - Stats: `{ success: true, data: {} }` - Direct object access `response.data`
+  - **Solution**: Updated all fetch functions to correctly extract data based on response structure
+  - **Safety Enhancement**: Added `Array.isArray()` check before mapping to prevent runtime errors
+  - **Error Handling**: Added fallback empty arrays/objects in catch blocks to maintain UI stability
+
+- **🗄️ Database Relationship Error Resolution**
+  - **Error**: "Could not find a relationship between 'client_notes' and 'assigned_to'"
+  - **Root Cause**: `communicationService.js` attempting to join `assigned_to` column with non-existent relationship
+  - **Solution**: Removed invalid join from Supabase query in `getClientNotes()` method
+  - **Technical Details**: `assigned_to` column references `auth.users(id)` but Supabase couldn't resolve the relationship
+  - **Temporary Fix**: Removed join clause `assigned_user:assigned_to(id, email)` from select query
+
+- **🎨 Dropdown Visibility in Modal Dialogs**
+  - **Problem**: Select dropdowns (Type, Priority) opening behind modal dialog overlay
+  - **Root Cause**: Select component z-index (z-50) lower than Dialog content (z-[101])
+  - **Solution**: Elevated Select dropdown z-index to `z-[150]` to appear above all dialogs
+  - **Enhanced Styling**:
+    - Added explicit background colors: `bg-white dark:bg-slate-800`
+    - Added border definition: `border-gray-200 dark:border-gray-600`
+    - Improved shadow for better depth perception: `shadow-lg`
+    - Enhanced hover states: `hover:bg-gray-100 dark:hover:bg-slate-700`
+    - Changed cursor to `pointer` for better UX indication
+
+- **⌨️ Tags Input Enhancement**
+  - **Problem**: Pressing Enter in tags field was submitting the entire form
+  - **Solution**: Added `onKeyDown` handler to prevent form submission on Enter key
+  - **Implementation**: `e.preventDefault()` when Enter key is pressed in tags input
+  - **User Experience**: Users can now type comma-separated tags without accidentally submitting the form
+
+### Technical Implementation
+- **API Client Migration**:
+  - Updated `fetchNotes()` to use `apiClient('/api/clients/:id/notes')`
+  - Updated `fetchTimeline()` to use `apiClient('/api/clients/:id/timeline')`
+  - Updated `fetchReminders()` to use `apiClient('/api/clients/:id/reminders')`
+  - Updated `fetchStats()` to use `apiClient('/api/clients/:id/communication-stats')`
+  - Updated `handleCreateNote()` to use `apiClient()` with POST method
+  - Updated `handleCreateReminder()` to use `apiClient()` with POST method
+  - Removed manual `localStorage.getItem('token')` calls (handled by `apiClient`)
+
+- **Component Updates**:
+  - Modified `ClientCommunication.js` to import and use `apiClient`
+  - Updated all response handling from `response.ok` to `response.success`
+  - Changed data access from `data.data` to `response.data`
+  - Added proper error handling for all API calls
+
+- **UI Component Enhancements**:
+  - Updated `select.jsx` with z-index hierarchy: Dialog (z-[101]) < Select (z-[150])
+  - Enhanced SelectContent with explicit color schemes for both light and dark modes
+  - Improved SelectItem with better hover states and cursor feedback
+
+### Database Schema Notes
+- **Known Issue**: `assigned_to` column in `client_notes` table has relationship issues
+- **Workaround**: Removed join clause from queries until relationship is properly configured
+- **Future Fix**: Need to either:
+  1. Update migration to reference `profiles(id)` instead of `auth.users(id)`, OR
+  2. Remove `assigned_to` column if not needed, OR
+  3. Configure proper foreign key relationship in Supabase
+
+### User Experience Improvements
+- ✅ Notes creation now works correctly with proper API routing
+- ✅ Dropdowns are fully visible and clickable within modal dialogs
+- ✅ Tags input no longer accidentally submits the form
+- ✅ All communication features now properly communicate with server
+- ✅ Consistent authentication across all API calls
+
+### Breaking Changes
+- None - All changes are backward compatible fixes
+
+## [1.9.4] - 2025-10-27
+
+### Fixed
+#### Modal Dialog Visibility Enhancement - Communication Tab
+- **🎨 Dialog Component Visibility Improvements**
+  - **Issue**: Add New Note modal in Communication tab had poor visibility and appeared too faded
+  - **Root Cause**: Dialog overlay had insufficient opacity (80%) and low z-index (50) causing it to blend with background content
+  - **Solution**: Enhanced dialog component with professional modal behavior
+    - Increased overlay opacity from `bg-black/80` to `bg-black/90` for better contrast
+    - Added `backdrop-blur-sm` for modern glassmorphic effect
+    - Elevated z-index from `z-50` to `z-[100]` (overlay) and `z-[101]` (content) to ensure modal appears above all page content
+    - Enhanced shadow from `shadow-lg` to `shadow-2xl` for better depth perception
+    - Added explicit background colors: `bg-white dark:bg-slate-800` for content visibility
+    - Added border styling: `border-gray-200 dark:border-gray-700` for clear modal boundaries
+    - Enhanced close button contrast with explicit text colors for light and dark modes
+
+- **✨ Professional User Experience Enhancements**
+  - **DialogTitle**: Added explicit text colors (`text-gray-900 dark:text-white`) for maximum readability
+  - **DialogDescription**: Improved text contrast with `text-gray-600 dark:text-gray-400`
+  - **Close Button**: Enhanced visibility with color transitions on hover
+  - **Consistent Behavior**: Modal now matches industry-standard modal patterns (high z-index, dark overlay, clear visual separation)
+
+### Technical Implementation
+- **Component Updates**: Modified `dialog.jsx` shadcn/ui component
+- **Z-Index Strategy**: Implemented proper stacking context with `z-[100]` and `z-[101]` values
+- **Dark Mode Support**: Full dark mode compatibility with proper color contrast
+- **Accessibility**: Maintained all existing accessibility features (keyboard navigation, screen reader support)
+- **Cross-Component Impact**: Fix applies to all Dialog instances across the application (notes, reminders, forms)
+
+### User Experience Impact
+- **Improved Focus**: Users can now clearly see and interact with modal dialogs without distraction
+- **Professional Appearance**: Modal behavior now matches enterprise-grade applications
+- **Better Usability**: Clear visual separation between modal content and background improves form completion rates
+- **Consistent Experience**: All modal dialogs throughout PayRush now have uniform, professional appearance
+
+## [1.9.3] - 2025-10-27
+
+### Fixed
+#### Development Environment Setup - Windows Profile Migration
+- **🔧 PowerShell Execution Policy Configuration**
+  - **Issue**: PowerShell execution policy preventing script execution (npm, pnpm, and other node scripts)
+  - **Resolution**: Set PowerShell execution policy to `RemoteSigned` using `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`
+  - **Impact**: Enabled npm and node scripts to execute properly on new development profile
+
+- **📦 Package Manager Installation & Configuration**
+  - **pnpm Installation**: Successfully installed pnpm globally via npm (`npm install -g pnpm`)
+  - **PATH Configuration**: Added npm global packages directory to Windows user PATH permanently
+    - Added: `C:\Users\wmweemba.MFINMIGRATION\AppData\Roaming\npm`
+  - **Migration to npm**: Switched from pnpm to npm due to Windows file lock issues with existing pnpm installations
+  - **Server Dependencies**: Installed server dependencies with `npm install` (568 packages installed)
+  - **Client Dependencies**: Cleaned and reinstalled client dependencies with npm (436 packages installed)
+
+- **🗂️ File Lock & Permission Issues Resolution**
+  - **Problem**: Windows Defender/Antivirus locking `node_modules` files preventing deletion and reinstallation
+  - **Solution**: Used PowerShell `robocopy` technique to force-clear locked directories
+    - Created empty temporary directory
+    - Mirrored empty directory to `node_modules` to bypass file locks
+    - Successfully removed locked pnpm installation artifacts
+  - **Cleanup Process**:
+    - Removed `.pnpm` directory structure from client `node_modules`
+    - Deleted `pnpm-lock.yaml` to prevent package manager conflicts
+    - Removed `.next` build cache for clean rebuild
+
+- **🚀 Successful Application Startup**
+  - **Server Status**: ✅ Running on http://localhost:5000
+    - Using nodemon for development
+    - Environment: development
+    - Health check available at /health
+    - API docs accessible at /api
+  - **Client Status**: ✅ Running on http://localhost:3000
+    - Next.js 15.5.4 with Turbopack
+    - Ready in 7.2s with environment loaded from .env.local
+    - Network accessible on http://172.19.2.186:3000
+
+### Technical Details
+- **Environment**: Windows with new user profile (wmweemba.MFINMIGRATION)
+- **Node.js Version**: v22.15.1
+- **Package Manager**: Transitioned from pnpm to npm for compatibility
+- **PowerShell**: Windows PowerShell v5.1
+- **Development Setup**: Both server and client running successfully in separate terminals
+
+### Developer Notes
+- **Future Setup**: This changelog entry documents the setup process for developers setting up PayRush on new Windows profiles
+- **Package Manager Recommendation**: npm recommended over pnpm on Windows due to file lock issues
+- **Security Note**: PowerShell execution policy changes are user-scoped and safe for development environments
+- **Warning**: Multiple lockfiles detected (root `pnpm-lock.yaml` and client `package-lock.json`) - consider removing root lockfile if using npm exclusively
+
 ## [1.9.2] - 2025-10-14
 
 ### Fixed

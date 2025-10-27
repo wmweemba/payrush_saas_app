@@ -58,8 +58,7 @@ class CommunicationService {
       let query = supabase
         .from('client_notes')
         .select(`
-          *,
-          assigned_user:assigned_to(id, email)
+          *
         `)
         .eq('client_id', clientId)
         .eq('user_id', userId)

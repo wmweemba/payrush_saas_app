@@ -162,7 +162,7 @@ router.get('/search/quick/:preset', async (req, res) => {
         const today = new Date().toISOString().split('T')[0];
         searchParams = {
           dateTo: today,
-          statuses: ['Pending', 'Sent'],
+          statuses: ['Pending', 'pending', 'Sent', 'sent'],
           sortBy: 'due_date',
           sortOrder: 'asc'
         };
@@ -170,15 +170,7 @@ router.get('/search/quick/:preset', async (req, res) => {
 
       case 'draft':
         searchParams = {
-          statuses: ['Draft'],
-          sortBy: 'created_at',
-          sortOrder: 'desc'
-        };
-        break;
-
-      case 'paid':
-        searchParams = {
-          statuses: ['Paid'],
+          statuses: ['Pending', 'pending', 'Draft', 'draft'], // Try multiple formats for compatibility
           sortBy: 'created_at',
           sortOrder: 'desc'
         };
@@ -186,7 +178,15 @@ router.get('/search/quick/:preset', async (req, res) => {
 
       case 'pending':
         searchParams = {
-          statuses: ['Pending'],
+          statuses: ['Sent', 'sent'], // Pending means sent but not paid
+          sortBy: 'due_date',
+          sortOrder: 'asc'
+        };
+        break;
+
+      case 'paid':
+        searchParams = {
+          statuses: ['Paid', 'paid'],
           sortBy: 'created_at',
           sortOrder: 'desc'
         };

@@ -2,6 +2,67 @@
 
 All notable changes to the PayRush SaaS application will be documented in this file.
 
+## [1.9.10] - 2025-10-28
+
+### Fixed
+#### Bulk Invoice Status Update & Database Constraint Issues
+
+- **🔧 Bulk Status Update Constraint Violations**
+  - **Problem**: Bulk status updates were failing with database constraint violation errors
+  - **Root Cause**: 
+    - Multiple status-related columns (`status` and `approval_status`) with inconsistent values
+    - Database constraint `invoices_status_check` expected lowercase values instead of capitalized ones
+    - Migration 001 intended to use capitalized values but was never properly applied
+    - Migration 012 approval workflow trigger was setting incompatible status combinations
+  - **Error Details**: 
+    - PostgreSQL error code 23514: "new row for relation 'invoices' violates check constraint 'invoices_status_check'"
+    - Failing on attempts to set `status = 'Sent'` with `approval_status = 'draft'`
+    - Status 'cancelled' was not allowed by the original constraint
+  - **Solution**: 
+    - Updated bulk service to use lowercase status values that match actual database constraint
+    - Added mapping for both `status` and `approval_status` columns to maintain consistency
+    - Implemented workaround for 'cancelled' status by mapping to 'draft' with approval_status tracking
+    - Added individual invoice processing to isolate failures and provide better error reporting
+  - **Status Mapping**: 
+    - `pending` → `status: 'draft'`, `approval_status: 'draft'`
+    - `sent` → `status: 'sent'`, `approval_status: 'draft'`
+    - `paid` → `status: 'paid'`, `approval_status: 'draft'`
+    - `cancelled` → `status: 'draft'`, `approval_status: 'cancelled'`
+  - **Files Changed**: 
+    - `server/services/bulkInvoiceService.js` - Updated status mapping and processing logic
+    - Created `supabase/migrations/016_fix_approval_workflow_trigger.sql` for future trigger fix
+
+#### Invoice Filtering Clear All Button
+
+- **🔧 Clear All Button Permanently Disabled**
+  - **Problem**: "Clear All" button remained greyed out even when filters were active
+  - **Root Cause**: `getActiveFilterCount()` function wasn't counting active quick filters
+  - **Solution**: Updated function to include `activeQuickFilter` in filter count calculation
+  - **User Impact**: Clear All button now properly enables when any filters are applied
+  - **Files Changed**: `client/src/components/invoices/InvoiceSearchInterface.js`
+
+#### Analytics Dashboard Paid Rate Calculation
+
+- **🔧 Paid Rate Showing 0.0% Despite Paid Invoices**
+  - **Problem**: Analytics dashboard showed "Paid Rate: 0.0%" even when invoices were marked as paid
+  - **Root Cause**: 
+    - Frontend was looking for `stats.byStatus?.Paid` (capitalized)
+    - Backend was returning `stats.byStatus.paid` (lowercase) from actual database values
+    - Status display mapping was inconsistent between frontend and backend
+  - **Solution**: 
+    - Updated Paid Rate calculation to use lowercase `stats.byStatus?.paid`
+    - Added `getStatusDisplay()` function to convert database values to proper display format
+    - Updated `getStatusColor()` to handle both lowercase and capitalized status values
+    - Maintained proper capitalization for UI display while using correct database values for calculations
+  - **User Impact**: Paid Rate now correctly shows "33.3%" when 1 of 3 invoices is paid
+  - **Files Changed**: `client/src/components/invoices/InvoiceSearchStats.js`
+
+### Technical Notes
+- **Database Status Values**: Confirmed database constraint expects lowercase values (`'draft'`, `'sent'`, `'paid'`, `'overdue'`)
+- **Migration 001**: Intended to update constraint to capitalized values but was never properly applied
+- **Dual Status System**: System uses both `status` (main invoice status) and `approval_status` (workflow tracking)
+- **Future Work**: Need to apply migration 016 to fix approval workflow trigger properly
+
 ## [1.9.9] - 2025-10-28
 
 ### Added

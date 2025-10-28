@@ -69,6 +69,7 @@ const InvoiceSearchInterface = ({
   // Search state
   const [searchQuery, setSearchQuery] = useState(currentFilters.query || '');
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [activeQuickFilter, setActiveQuickFilter] = useState(currentFilters.preset || 'all');
 
   // Filter state
   const [filters, setFilters] = useState({
@@ -164,6 +165,8 @@ const InvoiceSearchInterface = ({
 
   // Handle quick filter selection
   const handleQuickFilter = async (preset) => {
+    setActiveQuickFilter(preset);
+    
     if (preset === 'all') {
       handleClearFilters();
       return;
@@ -181,6 +184,7 @@ const InvoiceSearchInterface = ({
   // Handle clear filters
   const handleClearFilters = () => {
     setSearchQuery('');
+    setActiveQuickFilter('all');
     setFilters({
       statuses: [],
       dateFrom: '',
@@ -212,6 +216,8 @@ const InvoiceSearchInterface = ({
     if (filters.dateFrom || filters.dateTo) count++;
     if (filters.currency) count++;
     if (filters.amountMin || filters.amountMax) count++;
+    // Include active quick filter (but not 'all' since that's the default)
+    if (activeQuickFilter && activeQuickFilter !== 'all') count++;
     return count;
   };
 
@@ -243,18 +249,25 @@ const InvoiceSearchInterface = ({
       <div>
         <Label className="text-sm font-medium mb-3 block text-gray-700 dark:text-gray-300">Quick Filters</Label>
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
-          {quickFilters.map((filter) => (
-            <Button
-              key={filter.value}
-              variant="outline"
-              size="sm"
-              onClick={() => handleQuickFilter(filter.value)}
-              className="justify-start text-xs h-8 px-2 bg-white dark:bg-slate-700 hover:bg-gray-50 dark:hover:bg-slate-600 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
-            >
-              <span className="mr-1">{filter.icon}</span>
-              {filter.label}
-            </Button>
-          ))}
+          {quickFilters.map((filter) => {
+            const isActive = activeQuickFilter === filter.value;
+            return (
+              <Button
+                key={filter.value}
+                variant={isActive ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleQuickFilter(filter.value)}
+                className={`justify-start text-xs h-8 px-2 transition-all ${
+                  isActive 
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
+                    : 'bg-white dark:bg-slate-700 hover:bg-gray-50 dark:hover:bg-slate-600 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300'
+                }`}
+              >
+                <span className="mr-1">{filter.icon}</span>
+                {filter.label}
+              </Button>
+            );
+          })}
         </div>
       </div>
 

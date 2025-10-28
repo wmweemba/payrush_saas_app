@@ -85,16 +85,31 @@ const InvoiceSearchStats = ({ searchParams = {}, refreshTrigger = 0 }) => {
     average: stats.avgAmount[currency] || 0
   })).sort((a, b) => b.total - a.total);
 
-  // Status colors
+  // Status colors - handle both lowercase (from DB) and capitalized (display) values
   const getStatusColor = (status) => {
-    switch (status) {
-      case 'Paid': return 'bg-green-500';
-      case 'Sent': return 'bg-blue-500';
-      case 'Pending': return 'bg-yellow-500';
-      case 'Draft': return 'bg-gray-500';
-      case 'Overdue': return 'bg-red-500';
-      case 'Cancelled': return 'bg-gray-400';
+    const statusLower = status.toLowerCase();
+    switch (statusLower) {
+      case 'paid': return 'bg-green-500';
+      case 'sent': return 'bg-blue-500';
+      case 'pending': 
+      case 'draft': return 'bg-yellow-500';
+      case 'overdue': return 'bg-red-500';
+      case 'cancelled': return 'bg-gray-400';
       default: return 'bg-gray-500';
+    }
+  };
+
+  // Convert status to display format
+  const getStatusDisplay = (status) => {
+    const statusLower = status.toLowerCase();
+    switch (statusLower) {
+      case 'paid': return 'Paid';
+      case 'sent': return 'Sent';
+      case 'draft': return 'Draft';
+      case 'pending': return 'Pending';
+      case 'overdue': return 'Overdue';
+      case 'cancelled': return 'Cancelled';
+      default: return status.charAt(0).toUpperCase() + status.slice(1);
     }
   };
 
@@ -187,12 +202,12 @@ const InvoiceSearchStats = ({ searchParams = {}, refreshTrigger = 0 }) => {
                 </p>
                 <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {totalInvoices > 0 
-                    ? ((stats.byStatus?.Paid || 0) / totalInvoices * 100).toFixed(1)
+                    ? ((stats.byStatus?.paid || 0) / totalInvoices * 100).toFixed(1)
                     : 0
                   }%
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {stats.byStatus?.Paid || 0} of {totalInvoices} paid
+                  {stats.byStatus?.paid || 0} of {totalInvoices} paid
                 </p>
               </div>
               <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-full">
@@ -218,7 +233,7 @@ const InvoiceSearchStats = ({ searchParams = {}, refreshTrigger = 0 }) => {
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center space-x-2">
                     <div className={`w-3 h-3 rounded-full ${getStatusColor(status)}`}></div>
-                    <span className="font-medium text-gray-900 dark:text-white">{status}</span>
+                    <span className="font-medium text-gray-900 dark:text-white">{getStatusDisplay(status)}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <span className="text-gray-600 dark:text-gray-400">{count}</span>

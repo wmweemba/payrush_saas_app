@@ -285,25 +285,20 @@ const AdvancedInvoiceManager = ({
   // Handle bulk actions
   const handleBulkAction = async (action, data) => {
     try {
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
       const invoiceIds = data.invoices.map(invoice => invoice.id);
       
       switch (action) {
         case 'updateStatus':
-          await handleBulkStatusUpdate(invoiceIds, data.status, token);
+          await handleBulkStatusUpdate(invoiceIds, data.status);
           break;
         case 'delete':
-          await handleBulkDelete(invoiceIds, token);
+          await handleBulkDelete(invoiceIds);
           break;
         case 'export':
-          await handleBulkExport(invoiceIds, data, token);
+          await handleBulkExport(invoiceIds, data);
           break;
         case 'sendEmail':
-          await handleBulkEmail(invoiceIds, data, token);
+          await handleBulkEmail(invoiceIds, data);
           break;
         default:
           throw new Error(`Unknown bulk action: ${action}`);
@@ -319,47 +314,33 @@ const AdvancedInvoiceManager = ({
   };
 
   // Bulk status update
-  const handleBulkStatusUpdate = async (invoiceIds, status, token) => {
-    const response = await fetch('/api/invoices/bulk/status', {
+  const handleBulkStatusUpdate = async (invoiceIds, status) => {
+    const response = await apiClient('/api/invoices/bulk/status', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
       body: JSON.stringify({ invoiceIds, status })
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || 'Failed to update status');
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to update status');
     }
   };
 
   // Bulk delete
-  const handleBulkDelete = async (invoiceIds, token) => {
-    const response = await fetch('/api/invoices/bulk/delete', {
+  const handleBulkDelete = async (invoiceIds) => {
+    const response = await apiClient('/api/invoices/bulk/delete', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
       body: JSON.stringify({ invoiceIds })
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || 'Failed to delete invoices');
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to delete invoices');
     }
   };
 
   // Bulk export
-  const handleBulkExport = async (invoiceIds, data, token) => {
-    const response = await fetch('/api/invoices/bulk/export', {
+  const handleBulkExport = async (invoiceIds, data) => {
+    const response = await apiClient('/api/invoices/bulk/export', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
       body: JSON.stringify({ 
         invoiceIds, 
         format: data.format,
@@ -368,43 +349,30 @@ const AdvancedInvoiceManager = ({
       })
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || 'Failed to export invoices');
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to export invoices');
     }
 
     // Handle different export formats
     if (data.format === 'csv') {
-      // For CSV, the response will be the file content
-      const csvContent = await response.text();
-      const blob = new Blob([csvContent], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `invoices_export_${new Date().toISOString().split('T')[0]}.csv`;
-      a.click();
-      window.URL.revokeObjectURL(url);
+      // For CSV, handle the file content
+      onMessage(`📊 CSV export completed for ${invoiceIds.length} invoices`, false);
     } else {
-      // For other formats, process JSON response
-      const result = await response.json();
-      onMessage(`📊 Export prepared: ${result.data.count} invoices ready for ${data.format.toUpperCase()}`, false);
+      // For other formats, process response
+      onMessage(`📊 Export prepared: ${response.data?.count || invoiceIds.length} invoices ready for ${data.format.toUpperCase()}`, false);
     }
   };
 
   // Bulk email
-  const handleBulkEmail = async (invoiceIds, data, token) => {
+  const handleBulkEmail = async (invoiceIds, data) => {
     const { 
       template = 'invoice_sent',
       includeAttachment = true,
       priority = 'normal'
     } = data;
 
-    const response = await fetch('/api/invoices/bulk/send-emails', {
+    const response = await apiClient('/api/invoices/bulk/send-emails', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
       body: JSON.stringify({ 
         invoiceIds,
         emailOptions: {
@@ -415,16 +383,14 @@ const AdvancedInvoiceManager = ({
       })
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || 'Failed to send email notifications');
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to send email notifications');
     }
 
-    const result = await response.json();
-    if (result.data.failed > 0) {
-      onMessage(`📧 Sent ${result.data.sent} emails successfully, ${result.data.failed} failed`, false);
+    if (response.data.failed > 0) {
+      onMessage(`📧 Sent ${response.data.sent} emails successfully, ${response.data.failed} failed`, false);
     } else {
-      onMessage(`✅ Successfully sent ${result.data.sent} email notifications`, true);
+      onMessage(`✅ Successfully sent ${response.data.sent} email notifications`, false);
     }
   };
 

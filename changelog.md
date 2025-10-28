@@ -2,6 +2,173 @@
 
 All notable changes to the PayRush SaaS application will be documented in this file.
 
+## [1.9.9] - 2025-10-28
+
+### Added
+#### Simple Invoice Description Field
+
+- **📝 Description Field for Simple Invoices**
+  - **Feature**: Added description/service name input field to Simple Invoice form
+  - **User Need**: Users needed to describe what they're billing for on simple invoices
+  - **Previous State**: Simple invoice only had amount field - no way to specify what the charge was for
+  - **Implementation**: 
+    - Added description text input field above the amount field
+    - Required field with placeholder examples: "Website Design Services, Consulting Fee, Monthly Retainer"
+    - Description automatically creates a single line item when invoice is created
+    - Validation ensures description is not empty before invoice creation
+  - **User Impact**: Users can now provide clear descriptions for simple invoice charges
+
+### Fixed
+#### Public Invoice View - Database Query Error
+
+- **🔧 Invoice Not Found Error on Public Invoice Pages**
+  - **Problem**: Clicking "View Invoice" button resulted in "Invoice Not Found" error
+  - **Root Cause**: 
+    - SQL query was selecting `notes` column which doesn't exist in the invoices table
+    - PostgreSQL error code 42703: "column invoices.notes does not exist"
+    - Initial fix attempted to resolve join issues, but actual problem was simpler
+  - **Error Details**: 
+    - Console error: "Invoice not found" at `loadInvoice` function
+    - HTTP 404 response from `/api/public/invoice/:id` endpoint
+    - Server logs showed: `column invoices.notes does not exist`
+  - **Debugging Process**:
+    - Added comprehensive logging to API endpoint to trace exact Supabase errors
+    - Logged invoice ID, query execution, error codes, and response preparation
+    - Identified specific column name causing PostgreSQL error
+  - **Solution**:
+    - Removed `notes` column from SELECT query in public invoice endpoint
+    - Removed `notes` field from response object
+    - Query now only selects columns that exist in the database schema
+  - **Technical Changes**:
+    - Removed `notes` from invoice query SELECT statement
+    - Removed `notes: invoice.notes` from publicInvoice response object
+    - Added detailed console logging for future debugging (can be removed later)
+    - Query now successfully retrieves invoices without schema errors
+  - **Result**: 
+    - Public invoice pages now load successfully
+    - No more 404 errors when viewing invoices
+    - Invoice details display correctly with line items
+    - Business information displays from profile data
+
+### Improved
+#### Invoice Type Selector Visual Enhancement
+
+- **🎨 Enhanced Invoice Type Toggle Design**
+  - **Problem**: Users couldn't easily tell which invoice type was selected (Simple vs Detailed)
+  - **Previous State**: Subtle tab indicator made selection unclear
+  - **Solution**:
+    - **Bolder TabsList Background**: Changed from subtle to prominent gray background (`bg-gray-100 dark:bg-slate-800`)
+    - **Active Tab Colors**: 
+      - Simple Invoice: Bright blue background (`bg-blue-600`) with white text when selected
+      - Detailed Line Items: Bright purple background (`bg-purple-600`) with white text when selected
+    - **Shadow Effect**: Added shadow to active tab for depth and emphasis
+    - **Smooth Transitions**: Added transition animations for professional feel
+    - **Enhanced Info Cards**: Increased border width to 2px with stronger border colors
+    - **Icon Enhancement**: Made header icons larger (w-5 h-5) and added to section titles
+  - **Result**: 
+    - Selected invoice type is immediately obvious
+    - Clear visual distinction between Simple and Detailed modes
+    - Better color coordination with section info cards (blue for simple, purple for detailed)
+    - Professional, polished appearance
+
+## [1.9.8] - 2025-10-28
+
+### Fixed
+#### Detailed Invoice Line Items Entry - Critical UX Fix
+
+- **📝 Line Items Entry During Invoice Creation**
+  - **Problem**: Users couldn't enter line items when creating a detailed invoice - form only showed "Add line items after creating the invoice" message
+  - **Root Cause**: Original implementation required invoice to exist in database before line items could be added (needed invoice_id)
+  - **User Impact**: Broken workflow forced users to create invoice first, then go back to add line items - poor UX
+  - **Solution**: Implemented pre-creation line items system allowing users to add items before invoice creation
+    - Created `PreCreationLineItems` component for entering line items during form completion
+    - Line items stored in component state (`preCreationLineItems`) until invoice is created
+    - After invoice creation, all pre-entered line items are automatically created via API calls
+    - Real-time total calculation updates as user adds/edits items
+
+- **🐛 Nested Form Error Fix**
+  - **Error**: `<form> cannot contain a nested <form>` - React error causing page reload and data loss
+  - **Root Cause**: `PreCreationLineItems` component had a `<form>` element nested inside the main invoice `<form>`
+  - **Impact**: Clicking "Add Item" triggered page reload, losing all entered data
+  - **Solution**: Replaced nested `<form>` with `<div>` and changed submit button from `type="submit"` to `type="button"` with direct `onClick` handler
+  - **Result**: Line items now add smoothly without page reload or data loss
+
+- **🔧 Template Usage Tracking Error**
+  - **Error**: Console error showing "true" when downloading invoice PDF after creation
+  - **Root Cause**: Invalid Supabase query syntax in `updateTemplateUsage` function
+    - Used `this.supabase.sql` which doesn't exist in Supabase JS client
+    - Caused database error when trying to increment usage_count
+    - Error handler returned `{ success: false }` without proper error message
+    - Client-side error parsing treated `errorData.error: true` as the error message string
+  - **Impact**: Template usage statistics weren't being tracked correctly, console errors appeared
+  - **Solution**: Fixed Supabase query to use proper increment pattern
+    - Fetch current usage_count first
+    - Calculate incremented value: `(template.usage_count || 0) + 1`
+    - Update with calculated value
+    - Added proper error messages for all failure cases
+  - **Result**: Template usage now tracks correctly without console errors
+  
+- **✨ Enhanced Line Items Entry Interface**
+  - **Inline Entry Form**: Compact form with Description, Quantity, Unit Price, and calculated Total
+  - **Add/Edit/Delete**: Full CRUD operations on line items before invoice creation
+  - **Visual Feedback**: Cards displaying each line item with qty × price = total breakdown
+  - **Empty State**: Helpful empty state with call-to-action to add first item
+  - **Validation**: Form validates that detailed invoices have at least one line item before creation
+  - **Real-time Updates**: Invoice total updates automatically as line items are added/removed
+  - **No Page Reloads**: Smooth interaction without triggering form submission or page navigation
+  
+- **🎯 Improved User Experience**
+  - **Complete Before Submit**: Users can see and edit all invoice details before creating
+  - **No Navigation Required**: Single-page workflow without need to navigate back after creation
+  - **Visual Confirmation**: Clear display of all line items and totals before submission
+  - **Success Message**: Confirmation showing "Invoice created successfully with X line item(s)!"
+  - **Warning Indicators**: Amber warning if user tries to create detailed invoice without items
+  - **State Preservation**: All form data maintained during line item entry
+  - **Clean Console**: No more error messages during PDF generation
+
+### Technical Implementation
+
+- **Component Architecture**:
+  - `PreCreationLineItems`: New component handling line items before invoice exists
+  - Integrated into `EnhancedInvoiceForm` Detailed tab
+  - State management with `preCreationLineItems` array
+  - useEffect hooks for real-time total calculation
+  - No nested forms - uses div wrapper with button onClick handlers
+
+- **API Integration**:
+  - Sequential line item creation after invoice creation
+  - Proper sort_order assignment for items
+  - Error handling for individual line item failures
+  - Graceful degradation if some items fail to create
+
+- **Validation Enhancements**:
+  - Required validation: Detailed invoices must have at least one line item
+  - Numeric validation for quantity and unit_price
+  - Real-time calculation of line totals
+  - Form-level validation before submission
+  - Client-side validation prevents empty descriptions
+
+### User Workflow Now
+
+1. ✅ User selects "Detailed Line Items" invoice type
+2. ✅ Clicks "Add Line Item" button
+3. ✅ Fills in Description, Quantity, and Unit Price
+4. ✅ Sees calculated line total in real-time
+5. ✅ Clicks "Add Item" - item appears in list (no page reload!)
+6. ✅ Can edit or delete items before submission
+7. ✅ Sees running total update automatically
+8. ✅ Clicks "Create Invoice" - invoice and all items created atomically
+9. ✅ Receives confirmation with item count
+
+### Business Value
+
+- **Improved Conversion**: Removed friction from detailed invoice creation workflow
+- **Professional UX**: Matches user expectations for invoice creation process
+- **Data Accuracy**: Users can review all details before submission
+- **Time Savings**: Single-step process vs. previous two-step workflow
+- **User Confidence**: Visual confirmation of all data before committing to database
+- **Zero Data Loss**: No more losing entered data due to page reloads
+
 ## [1.9.7] - 2025-10-27
 
 ### Fixed

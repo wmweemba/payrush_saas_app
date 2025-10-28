@@ -16,14 +16,18 @@ const { createApiResponse, createErrorResponse } = require('../utils');
 router.get('/invoice/:invoiceId', async (req, res, next) => {
   try {
     const invoiceId = req.params.invoiceId;
+    console.log('=== PUBLIC INVOICE REQUEST ===');
+    console.log('Invoice ID:', invoiceId);
 
     if (!invoiceId) {
+      console.log('ERROR: No invoice ID provided');
       return res.status(400).json(
         createErrorResponse('Invoice ID is required', 400)
       );
     }
 
     // Get invoice details with line items
+    console.log('Fetching invoice from database...');
     const { data: invoice, error: invoiceError } = await supabase
       .from('invoices')
       .select(`
@@ -37,27 +41,77 @@ router.get('/invoice/:invoiceId', async (req, res, next) => {
         created_at,
         is_line_item_invoice,
         calculated_total,
-        notes,
-        profiles!inner(
-          name,
-          business_name,
-          phone,
-          address,
-          website
-        )
+        user_id
       `)
       .eq('id', invoiceId)
       .single();
 
-    if (invoiceError || !invoice) {
+    console.log('Invoice query result:', { 
+      found: !!invoice, 
+      error: invoiceError ? invoiceError.message : null,
+      errorCode: invoiceError ? invoiceError.code : null,
+      errorDetails: invoiceError ? invoiceError.details : null
+    });
+
+    if (invoiceError) {
+      console.error('Invoice fetch error:', JSON.stringify(invoiceError, null, 2));
+      return res.status(404).json(
+        createErrorResponse(`Invoice not found: ${invoiceError.message}`, 404)
+      );
+    }
+
+    if (!invoice) {
+      console.log('ERROR: Invoice query returned no data');
       return res.status(404).json(
         createErrorResponse('Invoice not found', 404)
       );
     }
 
+    console.log('Invoice found:', {
+      id: invoice.id,
+      customer: invoice.customer_name,
+      user_id: invoice.user_id,
+      is_line_item: invoice.is_line_item_invoice
+    });
+
+    console.log('Invoice found:', {
+      id: invoice.id,
+      customer: invoice.customer_name,
+      user_id: invoice.user_id,
+      is_line_item: invoice.is_line_item_invoice
+    });
+
+    // Get profile/business information separately
+    let businessInfo = {
+      name: null,
+      business_name: null,
+      phone: null,
+      address: null,
+      website: null
+    };
+
+    if (invoice.user_id) {
+      console.log('Fetching profile for user_id:', invoice.user_id);
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('name, business_name, phone, address, website')
+        .eq('id', invoice.user_id)
+        .single();
+
+      if (!profileError && profile) {
+        console.log('Profile found:', profile.business_name || profile.name);
+        businessInfo = profile;
+      } else {
+        console.warn('Profile not found for invoice:', invoiceId, profileError?.message);
+      }
+    } else {
+      console.warn('Invoice has no user_id');
+    }
+
     // Get line items if it's a line item invoice
     let lineItems = [];
     if (invoice.is_line_item_invoice) {
+      console.log('Fetching line items...');
       const { data: items, error: itemsError } = await supabase
         .from('invoice_items')
         .select(`
@@ -74,6 +128,9 @@ router.get('/invoice/:invoiceId', async (req, res, next) => {
 
       if (!itemsError) {
         lineItems = items || [];
+        console.log(`Found ${lineItems.length} line items`);
+      } else {
+        console.warn('Error fetching line items:', itemsError?.message);
       }
     }
 
@@ -82,7 +139,9 @@ router.get('/invoice/:invoiceId', async (req, res, next) => {
       ? (invoice.calculated_total || 0)
       : (invoice.amount || 0);
 
-    // Don't expose sensitive information
+    console.log('Preparing response with final amount:', finalAmount);
+
+    // Don't expose sensitive information (user_id removed)
     const publicInvoice = {
       id: invoice.id,
       customer_name: invoice.customer_name,
@@ -95,20 +154,23 @@ router.get('/invoice/:invoiceId', async (req, res, next) => {
       is_line_item_invoice: invoice.is_line_item_invoice,
       calculated_total: invoice.calculated_total,
       final_amount: finalAmount,
-      notes: invoice.notes,
       line_items: lineItems,
       line_item_count: lineItems.length,
       business: {
-        name: invoice.profiles.name,
-        business_name: invoice.profiles.business_name,
-        phone: invoice.profiles.phone,
-        address: invoice.profiles.address,
-        website: invoice.profiles.website
+        name: businessInfo.name,
+        business_name: businessInfo.business_name,
+        phone: businessInfo.phone,
+        address: businessInfo.address,
+        website: businessInfo.website
       }
     };
 
+    console.log('Successfully returning invoice data');
+    console.log('=== END PUBLIC INVOICE REQUEST ===\n');
     res.json(createApiResponse(true, { invoice: publicInvoice }, 'Invoice retrieved successfully'));
   } catch (error) {
+    console.error('ERROR in public invoice route:', error);
+    console.error('Error stack:', error.stack);
     next(error);
   }
 });

@@ -552,11 +552,11 @@ Template: Modern Professional
    - **Expected:** Success message and invoice appears in list
 
 **✅ Pass Criteria:**
-- [ ] Invoice creation form loads properly
-- [ ] Client selection auto-populates currency
-- [ ] Line items calculate correctly
+- [x] Invoice creation form loads properly
+- [x] Client selection auto-populates currency
+- [x] Line items calculate correctly
 - [ ] Template selection works
-- [ ] Invoice saves and appears in list
+- [x] Invoice saves and appears in list
 
 ---
 
@@ -602,10 +602,10 @@ Template: Classic Business
    - Save invoice
 
 **✅ Pass Criteria:**
-- [ ] USD currency properly applied
-- [ ] Multi-currency calculations correct
-- [ ] Different template selection works
-- [ ] Invoice saves with proper currency formatting
+- [x] USD currency properly applied
+- [x] Multi-currency calculations correct
+- [x] Different template selection works
+- [x] Invoice saves with proper currency formatting
 
 ---
 

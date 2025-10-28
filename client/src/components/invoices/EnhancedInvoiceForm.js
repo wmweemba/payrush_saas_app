@@ -18,7 +18,251 @@ import { getDefaultCurrency, formatCurrency } from "@/lib/currency/currencies";
 import { clientService } from "@/lib/clientService";
 import { getAvailableTemplates } from "@/lib/pdf/templateService";
 import InvoiceLineItemsManager from "./InvoiceLineItemsManager";
-import { Calculator, Receipt, FileText, Users, Palette } from "lucide-react";
+import { Calculator, Receipt, FileText, Users, Palette, Plus, Trash2, Edit } from "lucide-react";
+
+// Pre-Creation Line Items Component (for entering line items before invoice creation)
+const PreCreationLineItems = ({ items, currency, onItemsChange, onTotalChange }) => {
+  const [showForm, setShowForm] = useState(false);
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [formData, setFormData] = useState({
+    description: '',
+    quantity: 1,
+    unit_price: 0
+  });
+
+  useEffect(() => {
+    const total = items.reduce((sum, item) => sum + item.line_total, 0);
+    if (onTotalChange) {
+      onTotalChange(total);
+    }
+  }, [items, onTotalChange]);
+
+  const handleAddItem = () => {
+    setEditingIndex(null);
+    setFormData({ description: '', quantity: 1, unit_price: 0 });
+    setShowForm(true);
+  };
+
+  const handleEditItem = (index) => {
+    setEditingIndex(index);
+    setFormData(items[index]);
+    setShowForm(true);
+  };
+
+  const handleSaveItem = () => {
+    // Validate required fields
+    if (!formData.description.trim()) {
+      return;
+    }
+    
+    const lineTotal = parseFloat(formData.quantity) * parseFloat(formData.unit_price);
+    const itemToSave = {
+      ...formData,
+      quantity: parseFloat(formData.quantity),
+      unit_price: parseFloat(formData.unit_price),
+      line_total: lineTotal
+    };
+
+    if (editingIndex !== null) {
+      // Update existing item
+      const newItems = [...items];
+      newItems[editingIndex] = itemToSave;
+      onItemsChange(newItems);
+    } else {
+      // Add new item
+      onItemsChange([...items, itemToSave]);
+    }
+
+    setShowForm(false);
+    setFormData({ description: '', quantity: 1, unit_price: 0 });
+    setEditingIndex(null);
+  };
+
+  const handleDeleteItem = (index) => {
+    const newItems = items.filter((_, i) => i !== index);
+    onItemsChange(newItems);
+  };
+
+  const handleCancel = () => {
+    setShowForm(false);
+    setFormData({ description: '', quantity: 1, unit_price: 0 });
+    setEditingIndex(null);
+  };
+
+  return (
+    <div className="space-y-3">
+      {/* Add New Item Button */}
+      {!showForm && (
+        <Button
+          type="button"
+          onClick={handleAddItem}
+          variant="outline"
+          className="w-full border-dashed border-2"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add Line Item
+        </Button>
+      )}
+
+      {/* Line Item Form */}
+      {showForm && (
+        <Card className="border-blue-200 dark:border-blue-800">
+          <CardContent className="p-4">
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                {/* Description */}
+                <div className="md:col-span-6">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Description *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="e.g., Website Design"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+                             bg-white dark:bg-slate-800 text-gray-900 dark:text-white 
+                             focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                {/* Quantity */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Qty *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    value={formData.quantity}
+                    onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+                             bg-white dark:bg-slate-800 text-gray-900 dark:text-white 
+                             focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                {/* Unit Price */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Price *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.unit_price}
+                    onChange={(e) => setFormData({ ...formData, unit_price: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+                             bg-white dark:bg-slate-800 text-gray-900 dark:text-white 
+                             focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                {/* Line Total */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Total
+                  </label>
+                  <div className="px-3 py-2 bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-gray-600 rounded-lg">
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      {formatCurrency((parseFloat(formData.quantity) || 0) * (parseFloat(formData.unit_price) || 0), currency)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Form Actions */}
+              <div className="flex justify-end space-x-2">
+                <Button type="button" variant="outline" onClick={handleCancel} size="sm">
+                  Cancel
+                </Button>
+                <Button 
+                  type="button" 
+                  onClick={handleSaveItem} 
+                  size="sm" 
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={!formData.description.trim()}
+                >
+                  {editingIndex !== null ? 'Update' : 'Add'} Item
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Line Items List */}
+      {items.length > 0 && (
+        <div className="space-y-2">
+          {items.map((item, index) => (
+            <Card key={index} className="hover:shadow-sm transition-shadow">
+              <CardContent className="p-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <h4 className="font-medium text-gray-900 dark:text-white">
+                      {item.description}
+                    </h4>
+                    <div className="flex items-center space-x-3 text-sm text-gray-600 dark:text-gray-300 mt-1">
+                      <span>Qty: {item.quantity}</span>
+                      <span>×</span>
+                      <span>{formatCurrency(item.unit_price, currency)}</span>
+                      <span>=</span>
+                      <span className="font-semibold text-gray-900 dark:text-white">
+                        {formatCurrency(item.line_total, currency)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditItem(index)}
+                      disabled={showForm}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteItem(index)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Empty State */}
+      {items.length === 0 && !showForm && (
+        <div className="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+          <Calculator className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+          <p className="text-gray-600 dark:text-gray-300 mb-3">
+            No line items added yet
+          </p>
+          <Button
+            type="button"
+            onClick={handleAddItem}
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add First Item
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
   const [invoiceType, setInvoiceType] = useState('simple'); // 'simple' or 'detailed'
@@ -52,6 +296,9 @@ const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
 
   // Line items total for detailed invoices
   const [lineItemsTotal, setLineItemsTotal] = useState(0);
+  
+  // Pre-creation line items (before invoice exists)
+  const [preCreationLineItems, setPreCreationLineItems] = useState([]);
 
   // Set default due date (30 days from now)
   useEffect(() => {
@@ -181,6 +428,11 @@ const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
     }
 
     if (invoiceType === 'simple') {
+      if (!formData.description.trim()) {
+        setMessage('Description is required for simple invoices');
+        setIsError(true);
+        return false;
+      }
       if (!formData.amount || parseFloat(formData.amount) <= 0) {
         setMessage('Amount must be greater than 0');
         setIsError(true);
@@ -206,6 +458,13 @@ const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
       return;
     }
 
+    // Validate detailed invoice has line items
+    if (invoiceType === 'detailed' && preCreationLineItems.length === 0) {
+      setMessage('Please add at least one line item for detailed invoices');
+      setIsError(true);
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -217,8 +476,8 @@ const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
         customer_email: formData.customer_email.trim() || null,
         currency: formData.currency,
         due_date: formData.due_date,
-        template_id: formData.template_id || null, // Add template selection
-        // For simple invoices, use the amount. For detailed, we'll update it after line items
+        template_id: formData.template_id || null,
+        // For simple invoices, use the amount. For detailed, use line items total
         amount: invoiceType === 'simple' ? parseFloat(formData.amount) : lineItemsTotal,
         is_line_item_invoice: invoiceType === 'detailed',
         status: 'draft'
@@ -247,31 +506,63 @@ const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
       const newInvoiceId = result.data.invoice.id;
       setCreatedInvoiceId(newInvoiceId);
 
-      // For detailed invoices, we need to add the initial line item if creating from simple form
-      if (invoiceType === 'detailed' && formData.description) {
+      // For simple invoices, create a single line item with the description
+      if (invoiceType === 'simple') {
         try {
-          const lineItemResponse = await fetch(`http://localhost:5000/api/invoices/${newInvoiceId}/line-items`, {
+          await fetch(`http://localhost:5000/api/invoices/${newInvoiceId}/line-items`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              description: formData.description,
+              description: formData.description.trim(),
               quantity: 1,
-              unit_price: lineItemsTotal || 0
+              unit_price: parseFloat(formData.amount),
+              sort_order: 0
             })
           });
-
-          if (!lineItemResponse.ok) {
-            console.warn('Failed to create initial line item, but invoice was created');
-          }
+          setMessage('Invoice created successfully!');
         } catch (lineItemError) {
-          console.warn('Error creating initial line item:', lineItemError);
+          console.warn('Error creating line item for simple invoice:', lineItemError);
+          setMessage('Invoice created successfully!');
         }
       }
 
-      setMessage('Invoice created successfully!');
+      // For detailed invoices, create all the line items
+      if (invoiceType === 'detailed' && preCreationLineItems.length > 0) {
+        try {
+          // Create line items in sequence
+          for (let i = 0; i < preCreationLineItems.length; i++) {
+            const item = preCreationLineItems[i];
+            const lineItemResponse = await fetch(`http://localhost:5000/api/invoices/${newInvoiceId}/line-items`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                description: item.description,
+                quantity: item.quantity,
+                unit_price: item.unit_price,
+                sort_order: i
+              })
+            });
+
+            if (!lineItemResponse.ok) {
+              console.warn(`Failed to create line item ${i + 1}`);
+            }
+          }
+          
+          setMessage(`Invoice created successfully with ${preCreationLineItems.length} line item(s)!`);
+        } catch (lineItemError) {
+          console.warn('Error creating line items:', lineItemError);
+          setMessage('Invoice created, but some line items may not have been added');
+        }
+      } else {
+        setMessage('Invoice created successfully!');
+      }
+
       setIsError(false);
 
       // Call success callback after a short delay to show the success message
@@ -512,24 +803,53 @@ const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
                 Invoice Type
               </label>
               <Tabs value={invoiceType} onValueChange={setInvoiceType} className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="simple" className="flex items-center">
+                <TabsList className="grid w-full grid-cols-2 p-1 bg-gray-100 dark:bg-slate-800">
+                  <TabsTrigger 
+                    value="simple" 
+                    className="flex items-center justify-center data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200"
+                  >
                     <Receipt className="w-4 h-4 mr-2" />
                     Simple Invoice
                   </TabsTrigger>
-                  <TabsTrigger value="detailed" className="flex items-center">
+                  <TabsTrigger 
+                    value="detailed" 
+                    className="flex items-center justify-center data-[state=active]:bg-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200"
+                  >
                     <Calculator className="w-4 h-4 mr-2" />
                     Detailed Line Items
                   </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="simple" className="mt-4 space-y-4">
-                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                    <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-2">
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border-2 border-blue-300 dark:border-blue-700">
+                    <h4 className="font-semibold text-blue-900 dark:text-blue-300 mb-2 flex items-center">
+                      <Receipt className="w-5 h-5 mr-2" />
                       Simple Invoice
                     </h4>
                     <p className="text-sm text-blue-700 dark:text-blue-300">
                       Perfect for single services or products. Enter one total amount.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Description / Service Name *
+                    </label>
+                    <input
+                      type="text"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleInputChange}
+                      disabled={isSubmitting}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+                               bg-white dark:bg-slate-800 text-gray-900 dark:text-white 
+                               focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                               disabled:opacity-50 disabled:cursor-not-allowed"
+                      placeholder="e.g., Website Design Services, Consulting Fee, Monthly Retainer"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Brief description of what you're billing for
                     </p>
                   </div>
 
@@ -549,14 +869,23 @@ const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
                 </TabsContent>
 
                 <TabsContent value="detailed" className="mt-4 space-y-4">
-                  <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
-                    <h4 className="font-medium text-purple-900 dark:text-purple-300 mb-2">
+                  <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border-2 border-purple-300 dark:border-purple-700">
+                    <h4 className="font-semibold text-purple-900 dark:text-purple-300 mb-2 flex items-center">
+                      <Calculator className="w-5 h-5 mr-2" />
                       Detailed Line Items
                     </h4>
                     <p className="text-sm text-purple-700 dark:text-purple-300">
                       Add multiple items with quantities and individual prices. Perfect for detailed billing.
                     </p>
                   </div>
+
+                  {/* Line Items Entry Component */}
+                  <PreCreationLineItems
+                    items={preCreationLineItems}
+                    currency={formData.currency}
+                    onItemsChange={setPreCreationLineItems}
+                    onTotalChange={setLineItemsTotal}
+                  />
 
                   {/* Preview of line items total */}
                   <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
@@ -568,9 +897,11 @@ const EnhancedInvoiceForm = ({ onSuccess, onCancel, initialData = null }) => {
                         {formatCurrency(lineItemsTotal, formData.currency)}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Add line items after creating the invoice
-                    </p>
+                    {preCreationLineItems.length === 0 && (
+                      <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                        ⚠️ Please add at least one line item before creating the invoice
+                      </p>
+                    )}
                   </div>
                 </TabsContent>
               </Tabs>

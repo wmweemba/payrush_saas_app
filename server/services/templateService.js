@@ -525,24 +525,42 @@ class TemplateService {
    */
   async updateTemplateUsage(templateId, userId) {
     try {
-      const { error } = await this.supabase
+      // First, get the current usage_count
+      const { data: template, error: fetchError } = await this.supabase
+        .from('invoice_templates')
+        .select('usage_count')
+        .eq('id', templateId)
+        .eq('user_id', userId)
+        .single();
+
+      if (fetchError) {
+        console.error('Database error fetching template in updateTemplateUsage:', fetchError);
+        return { success: false, error: 'Failed to fetch template' };
+      }
+
+      if (!template) {
+        return { success: false, error: 'Template not found' };
+      }
+
+      // Update with incremented usage_count
+      const { error: updateError } = await this.supabase
         .from('invoice_templates')
         .update({ 
-          usage_count: this.supabase.sql`usage_count + 1`,
+          usage_count: (template.usage_count || 0) + 1,
           last_used_at: new Date().toISOString()
         })
         .eq('id', templateId)
         .eq('user_id', userId);
 
-      if (error) {
-        console.error('Database error in updateTemplateUsage:', error);
-        // Don't fail the request for usage stats
+      if (updateError) {
+        console.error('Database error in updateTemplateUsage:', updateError);
+        return { success: false, error: 'Failed to update template usage' };
       }
 
       return { success: true };
     } catch (error) {
       console.error('Error in updateTemplateUsage:', error);
-      return { success: false };
+      return { success: false, error: 'Failed to update template usage' };
     }
   }
 

@@ -200,9 +200,41 @@ const AdvancedInvoiceManager = ({
   // Download PDF
   const handleDownloadPDF = async (invoice) => {
     try {
+      // Fetch full invoice data with line items for PDF generation
+      const { data: fullInvoice, error } = await supabase
+        .from('invoices')
+        .select(`
+          *,
+          invoice_items (
+            id,
+            description,
+            quantity,
+            unit_price,
+            line_total,
+            sort_order
+          )
+        `)
+        .eq('id', invoice.id)
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) {
+        throw new Error(`Failed to fetch invoice data: ${error.message}`);
+      }
+
+      // Transform invoice_items to line_items for PDF compatibility
+      if (fullInvoice.invoice_items && fullInvoice.invoice_items.length > 0) {
+        fullInvoice.line_items = fullInvoice.invoice_items.map(item => ({
+          description: item.description,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          total: item.line_total
+        }));
+      }
+
       // Use the template selected for this invoice
-      const templateId = invoice.template_id || null;
-      const result = await downloadInvoicePDF(invoice, profile, templateId);
+      const templateId = fullInvoice.template_id || null;
+      const result = await downloadInvoicePDF(fullInvoice, profile, templateId);
       if (result.success) {
         onMessage(`✅ Invoice PDF downloaded successfully: ${result.filename}`, false);
       } else {
@@ -339,6 +371,13 @@ const AdvancedInvoiceManager = ({
 
   // Bulk export
   const handleBulkExport = async (invoiceIds, data) => {
+    if (data.format === 'pdf') {
+      // For PDF export, use client-side PDF generation like individual downloads
+      await handleBulkPDFExport(invoiceIds, data);
+      return;
+    }
+
+    // For other formats (CSV, Excel), use server-side generation
     const response = await apiClient('/api/invoices/bulk/export', {
       method: 'POST',
       body: JSON.stringify({ 
@@ -353,13 +392,130 @@ const AdvancedInvoiceManager = ({
       throw new Error(response.error || 'Failed to export invoices');
     }
 
-    // Handle different export formats
-    if (data.format === 'csv') {
-      // For CSV, handle the file content
+    // Handle CSV and Excel formats
+    if (data.format === 'csv' && response.isCsv) {
+      // Create CSV download
+      const blob = new Blob([response.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `invoice_export_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
       onMessage(`📊 CSV export completed for ${invoiceIds.length} invoices`, false);
+    } else if (data.format === 'excel' && response.isExcel) {
+      // Create Excel download
+      const url = window.URL.createObjectURL(response.data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `invoice_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      onMessage(`📊 Excel export completed for ${invoiceIds.length} invoices`, false);
     } else {
       // For other formats, process response
       onMessage(`📊 Export prepared: ${response.data?.count || invoiceIds.length} invoices ready for ${data.format.toUpperCase()}`, false);
+    }
+  };
+
+  // Handle bulk PDF export using client-side PDF generation
+  const handleBulkPDFExport = async (invoiceIds, data) => {
+    try {
+      onMessage(`📊 Generating PDFs for ${invoiceIds.length} invoices...`, false);
+      
+      // First, fetch the invoice data for all selected invoices with line items
+      const invoicePromises = invoiceIds.map(async (invoiceId) => {
+        try {
+          // Fetch invoice with line items
+          const { data: invoice, error } = await supabase
+            .from('invoices')
+            .select(`
+              *,
+              invoice_items (
+                id,
+                description,
+                quantity,
+                unit_price,
+                line_total,
+                sort_order
+              )
+            `)
+            .eq('id', invoiceId)
+            .eq('user_id', user.id)
+            .single();
+          
+          if (error) {
+            console.warn(`Failed to fetch invoice ${invoiceId}:`, error);
+            return null;
+          }
+          
+          // Transform invoice_items to line_items for PDF compatibility
+          if (invoice.invoice_items && invoice.invoice_items.length > 0) {
+            invoice.line_items = invoice.invoice_items.map(item => ({
+              description: item.description,
+              quantity: item.quantity,
+              unit_price: item.unit_price,
+              total: item.line_total
+            }));
+          }
+          
+          return invoice;
+        } catch (error) {
+          console.warn(`Error fetching invoice ${invoiceId}:`, error);
+          return null;
+        }
+      });
+
+      const invoices = (await Promise.all(invoicePromises)).filter(Boolean);
+      
+      if (invoices.length === 0) {
+        throw new Error('Failed to fetch invoice data');
+      }
+
+      // Generate PDFs for all invoices
+      const pdfPromises = invoices.map(async (invoice, index) => {
+        try {
+          const templateId = invoice.template_id || null;
+          const result = await downloadInvoicePDF(invoice, profile, templateId);
+          
+          if (result.success) {
+            return {
+              success: true,
+              filename: result.filename,
+              invoice: invoice
+            };
+          } else {
+            throw new Error(result.error || 'Failed to generate PDF');
+          }
+        } catch (error) {
+          console.warn(`Failed to generate PDF for invoice ${invoice.id}:`, error);
+          return {
+            success: false,
+            error: error.message,
+            invoice: invoice
+          };
+        }
+      });
+
+      const results = await Promise.all(pdfPromises);
+      const successful = results.filter(r => r.success);
+      const failed = results.filter(r => !r.success);
+
+      if (successful.length > 0) {
+        onMessage(`📊 Generated ${successful.length} PDF(s) successfully${failed.length > 0 ? `, ${failed.length} failed` : ''}`, false);
+      } else {
+        throw new Error('Failed to generate any PDFs');
+      }
+
+    } catch (error) {
+      console.error('Bulk PDF export error:', error);
+      throw new Error(`Bulk PDF export failed: ${error.message}`);
     }
   };
 

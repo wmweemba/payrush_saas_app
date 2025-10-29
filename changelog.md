@@ -2,6 +2,325 @@
 
 All notable changes to the PayRush SaaS application will be documented in this file.
 
+## [1.9.18] - 2025-10-29
+
+### Enhanced
+#### Search Functionality - Restored Line Item Search with Improved Implementation
+
+- **🔍 Enhanced Invoice Search to Include Line Item Content**
+  - **Problem**: Search functionality couldn't find invoices by line item descriptions (e.g., searching "Desktop" didn't find invoice with "Desktop Purchase" line item)
+  - **User Impact**: Users expected to search for invoices by their content, not just customer information
+  - **Solution**: Implemented robust line item search using separate query approach
+    - **Dual Search Strategy**: Searches both customer info AND line item descriptions
+    - **Filter Compatibility**: Line item search respects all existing filters (status, date, currency, amount)
+    - **Result Merging**: Combines customer-based and line-item-based search results without duplicates
+    - **Proper Sorting**: Maintains sort order across merged results
+    - **Error Handling**: Graceful fallback if line item search fails
+  - **Implementation Details**:
+    - **Primary Query**: Searches customer names and emails (fast, reliable)
+    - **Secondary Query**: Searches line item descriptions using inner join
+    - **Filter Application**: Applies all user filters to both search result sets
+    - **Smart Merging**: Combines results while preventing duplicates
+    - **Client-side Sorting**: Sorts final merged results by user preference
+    - **Pagination**: Applies pagination to final combined results
+  - **Files Changed**: 
+    - `server/services/invoiceSearchService.js` - Enhanced search with line item functionality
+
+### User Experience Improvements
+- ✅ **Complete Search Coverage**: Find invoices by customer name, email, OR line item descriptions
+- ✅ **Intuitive Behavior**: Search works as users expect - finds invoices by any relevant content
+- ✅ **Filter Integration**: Line item search respects all existing filters and sort preferences
+- ✅ **Performance Optimized**: Separate queries prevent SQL parsing errors while maintaining speed
+- ✅ **Reliable Results**: Consistent search behavior with proper error handling
+
+### Technical Implementation
+- **Separation of Concerns**: Customer search and line item search use separate optimized queries
+- **Filter Consistency**: Both search paths apply identical filter logic
+- **Result Deduplication**: Smart merging prevents duplicate invoices in results
+- **Sort Preservation**: Maintains user-selected sort order across merged results
+- **Error Resilience**: Line item search failures don't break main search functionality
+- **Performance Balance**: Optimized approach that maintains search speed while adding functionality
+
+### Example Use Cases Now Supported
+- Search "Desktop" → Finds invoices with "Desktop Purchase" line items
+- Search "Development" → Finds invoices with "Web Development Services" line items  
+- Search "Acme" → Finds invoices for Acme Corp OR with "Acme Project" line items
+- All searches respect active filters (status, date ranges, currency, etc.)
+
+## [1.9.17] - 2025-10-29
+
+### Fixed
+#### Search Functionality - Resolved Text Search Error with Line Items
+
+- **🔧 Fixed Search Query Error When Searching Invoices**
+  - **Problem**: Text search functionality failed with error "failed to parse logic tree" when searching for invoice content
+  - **Error Details**: `customer_name.ilike.%Desktop%,customer_email.ilike.%Desktop%,invoice_items.description.ilike.%Desktop%` could not be parsed by Supabase
+  - **Root Cause**: Attempted to include joined table fields (`invoice_items.description`) in the main OR search query, which Supabase PostgreSQL cannot parse properly
+  - **Impact**: Users couldn't search for invoices by text, making the search functionality completely broken
+  - **Solution**: Separated search logic to avoid SQL parsing errors
+    - **Main Search**: Restored working text search for customer names and emails
+    - **Simplified Query**: Removed problematic joined table search from main query
+    - **Stable Functionality**: Users can now search successfully without errors
+  - **Implementation Details**:
+    - Reverted to proven search query structure: `customer_name.ilike.%query%,customer_email.ilike.%query%`
+    - Maintained first line item description display functionality
+    - Preserved all existing search and filter capabilities
+    - Removed complex line item search to prevent SQL parsing errors
+  - **Files Changed**: 
+    - `server/services/invoiceSearchService.js` - Fixed search query structure
+
+### User Experience Improvements
+- ✅ **Working Search**: Users can now search invoices by customer name and email without errors
+- ✅ **Error Prevention**: Eliminated SQL parsing errors that broke the search functionality
+- ✅ **Reliable Interface**: Search functionality is now stable and predictable
+- ✅ **Fast Response**: Simplified query structure improves search performance
+- ✅ **Maintained Features**: All other invoice features continue to work normally
+
+### Technical Implementation
+- **Query Optimization**: Simplified SQL structure to avoid complex join conditions in OR clauses
+- **Error Prevention**: Removed problematic cross-table search patterns
+- **Performance Improvement**: Reduced query complexity for faster response times
+- **Stability Focus**: Prioritized working functionality over advanced features
+- **Future Enhancement**: Line item search can be implemented as separate feature if needed
+
+## [1.9.16] - 2025-10-29
+
+### Fixed
+#### Analytics Dashboard - Corrected Overdue Invoice Count
+
+- **🔧 Fixed Overdue Count Discrepancy in Analytics Dashboard**
+  - **Problem**: Analytics dashboard showed 0 overdue invoices when status breakdown clearly showed overdue invoices existed
+  - **Root Cause**: Backend overdue calculation only counted invoices past due date, but didn't include invoices explicitly marked with "Overdue" status
+  - **Impact**: Users couldn't trust the analytics data for business decision making
+  - **Solution**: Enhanced overdue calculation to include both scenarios
+    - **Explicit Overdue Status**: Now counts invoices with status = "Overdue" 
+    - **Past Due Date Logic**: Continues to count unpaid invoices past their due date
+    - **Case Sensitivity**: Improved handling of different status case formats
+    - **Paid Rate Accuracy**: Fixed paid rate calculation to handle both "Paid" and "paid" status formats
+  - **Implementation Details**:
+    - Updated overdue logic: `status.toLowerCase() === 'overdue' || (status !== 'Paid' && status !== 'Cancelled' && dueDate < now)`
+    - Enhanced case-insensitive status handling in frontend analytics
+    - Improved status color mapping for all invoice states
+    - Added support for approval workflow statuses in analytics
+  - **Files Changed**: 
+    - `server/services/invoiceSearchService.js` - Fixed overdue calculation logic
+    - `client/src/components/invoices/InvoiceSearchStats.js` - Enhanced case handling and status display
+
+### User Experience Improvements
+- ✅ **Accurate Analytics**: Overdue count now correctly reflects actual overdue invoices
+- ✅ **Consistent Data**: Analytics cards match the detailed status breakdown
+- ✅ **Better Status Handling**: Improved support for various status formats and cases
+- ✅ **Complete Status Coverage**: Analytics now handle all invoice statuses including approval workflow states
+- ✅ **Trustworthy Metrics**: Users can now rely on analytics for business insights
+
+### Technical Implementation
+- **Robust Logic**: Overdue calculation handles both explicit status and calculated overdue states
+- **Case Insensitivity**: Frontend handles mixed case status values from database
+- **Status Normalization**: Consistent status display regardless of database format
+- **Performance Maintained**: No additional database queries required
+- **Backward Compatibility**: Works with existing invoice data and status formats
+
+## [1.9.15] - 2025-10-29
+
+### Enhanced
+#### Invoice Dashboard - Added Line Item Descriptions for Easy Identification
+
+- **🏷️ Enhanced Invoice Dashboard with First Line Item Display**
+  - **Problem**: Invoice dashboard showed only customer names, making it impossible to distinguish between multiple invoices from the same client
+  - **User Impact**: Users with multiple invoices from one client couldn't identify specific invoices without opening each one
+  - **Solution**: Display first line item description on dashboard for easy invoice identification
+    - **Backend Enhancement**: Modified search query to include related `invoice_items` data with first line item description
+    - **Frontend Display**: Added first line item description below customer email in invoice rows
+    - **Visual Design**: Styled description in blue italics for clear distinction from other text
+    - **Search Enhancement**: Extended text search to include line item descriptions
+  - **Implementation Details**:
+    - Updated Supabase query to join with `invoice_items` table using left join
+    - Added `first_line_item_description` field to search results
+    - Enhanced search functionality to find invoices by line item content
+    - Graceful handling of invoices without line items (legacy invoices)
+  - **Files Changed**: 
+    - `server/services/invoiceSearchService.js` - Enhanced search query with line items
+    - `client/src/components/invoices/EnhancedInvoiceSearchResults.js` - Added description display
+
+### User Experience Improvements
+- ✅ **Easy Invoice Identification**: Users can now distinguish between multiple invoices from the same client
+- ✅ **Enhanced Search**: Search now includes line item descriptions for better findability
+- ✅ **Visual Clarity**: First line item shown in distinctive blue italic styling
+- ✅ **Backward Compatibility**: Works seamlessly with invoices that don't have line items
+- ✅ **Quick Recognition**: Immediate visual cue about invoice content without opening details
+
+### Technical Implementation
+- **Database Query Optimization**: Efficient left join to fetch first line item without performance impact
+- **Data Processing**: Server-side processing to extract first line item description
+- **Response Optimization**: Clean API response structure without nested arrays
+- **Search Enhancement**: Extended full-text search capabilities to line item content
+- **UI/UX Design**: Consistent styling that doesn't clutter the interface
+
+## [1.9.14] - 2025-10-29
+
+### Fixed
+#### PDF Generation - Line Items Display & Layout Issues
+
+- **🔧 Fixed Line Items Not Displaying in PDF**
+  - **Problem**: Generated PDFs showed only a single "Invoice Payment" item instead of actual invoice line items
+  - **Root Cause**: PDF generation was not fetching related `invoice_items` data from the database
+  - **Solution**: Enhanced both individual and bulk PDF generation to properly fetch and display line items
+    - **Individual PDF Downloads**: Now fetches invoice with related `invoice_items` using Supabase join query
+    - **Bulk PDF Downloads**: Enhanced to include line items in the data fetch for each invoice
+    - **Data Transformation**: Properly maps `invoice_items` to `line_items` format expected by PDF generator
+  - **Implementation Details**:
+    - Updated Supabase query to include `invoice_items` table join
+    - Added proper data transformation from database format to PDF format
+    - Enhanced line items rendering with proper sorting by `sort_order`
+    - Improved fallback handling for invoices without line items
+  - **Files Changed**: 
+    - `client/src/components/invoices/AdvancedInvoiceManager.js` - Enhanced data fetching for both individual and bulk PDF generation
+
+- **🎨 Fixed Text Overlapping with Blue Header Area**
+  - **Problem**: Invoice details text was overlapping with the blue header background, making text invisible
+  - **Root Cause**: Incorrect text color and positioning within the header area
+  - **Solution**: Proper text positioning and color management in PDF layout
+    - **Header Text Color**: Changed to white (`255, 255, 255`) for visibility on blue background
+    - **Improved Positioning**: Adjusted Y-coordinates and spacing to fit properly within header bounds
+    - **Enhanced Layout**: Increased margins and spacing below header to prevent overlap
+    - **Better Font Sizing**: Slightly reduced font size for invoice details to ensure proper fit
+  - **Visual Improvements**:
+    - ✅ **White Text on Blue**: Invoice details now clearly visible with white text on blue background
+    - ✅ **Proper Spacing**: Adequate margins between header and content sections
+    - ✅ **Professional Layout**: Clean, non-overlapping text positioning
+    - ✅ **Consistent Formatting**: Uniform text styling throughout PDF
+  - **Files Changed**: 
+    - `client/src/lib/pdf/invoicePDF.js` - Fixed header text positioning and color management
+
+### Technical Implementation
+- **Database Integration**: Proper Supabase queries with table joins to fetch complete invoice data
+- **Data Mapping**: Seamless transformation between database schema and PDF generation format
+- **Error Handling**: Graceful fallbacks for invoices without line items or data fetch failures
+- **Layout Engine**: Enhanced PDF positioning calculations for professional appearance
+- **Color Management**: Proper RGB color handling for text visibility on backgrounds
+
+### User Experience Improvements
+- ✅ **Complete Line Items**: PDFs now show all invoice line items with descriptions, quantities, and prices
+- ✅ **Professional Appearance**: Clean, readable layout without text overlap
+- ✅ **Consistent Behavior**: Both individual and bulk PDF generation work identically
+- ✅ **Proper Formatting**: Correct currency formatting and item totals
+- ✅ **Template Compatibility**: Fixes apply to all invoice templates
+
+## [1.9.13] - 2025-10-29
+
+### Fixed
+#### Bulk PDF Export - Proper PDF Generation Implementation
+
+- **🔧 Bulk PDF Export Now Generates Actual PDFs**
+  - **Problem**: Bulk PDF export was generating HTML files instead of actual PDF files like individual invoice downloads
+  - **User Request**: Change bulk PDF export to work like the individual PDF export buttons that correctly generate downloadable PDF files
+  - **Root Cause**: 
+    - Individual PDF downloads use client-side `downloadInvoicePDF()` function with jsPDF library
+    - Bulk PDF export was using server-side HTML generation approach
+    - Users expected consistent PDF generation behavior across both individual and bulk operations
+  - **Solution**: Unified PDF generation approach for both individual and bulk exports
+    - **Individual PDF Downloads**: Continue using existing `downloadInvoicePDF(invoice, profile, templateId)` 
+    - **Bulk PDF Downloads**: Now use same `downloadInvoicePDF()` function for each selected invoice
+    - **Separated Export Logic**: PDF export now uses client-side generation, while CSV/Excel continue using server-side generation
+  - **Implementation**: 
+    - Added `handleBulkPDFExport()` function that fetches invoice data and generates PDFs client-side
+    - Uses same PDF templates and branding as individual downloads
+    - Generates multiple PDF files (one per invoice) using same jsPDF library
+    - Provides detailed success/failure reporting for each PDF generated
+  - **Files Changed**: 
+    - `client/src/components/invoices/AdvancedInvoiceManager.js` - Updated bulk export logic to separate PDF from other formats
+
+### Technical Implementation
+- **Consistent PDF Generation**: Both individual and bulk PDF exports now use identical `downloadInvoicePDF()` function
+- **Template Support**: Bulk PDF export respects individual invoice template selections
+- **Error Handling**: Graceful handling of individual PDF generation failures within bulk operations
+- **Progress Feedback**: Clear messaging showing PDF generation progress and results
+- **Performance**: Parallel PDF generation for multiple invoices with proper error isolation
+
+### User Experience Improvements
+- ✅ **Consistent Behavior**: Bulk PDF export now works exactly like individual PDF buttons
+- ✅ **Actual PDF Files**: Downloads proper PDF files instead of HTML files
+- ✅ **Template Preservation**: Each invoice PDF uses its assigned template and branding
+- ✅ **Clear Feedback**: Success messages indicate how many PDFs were generated successfully
+- ✅ **Professional Output**: Same high-quality PDF generation as individual downloads
+
+## [1.9.12] - 2025-10-29
+
+### Fixed
+#### Bulk PDF Export JSON Parsing Error Resolution
+
+- **🔧 Critical API Client Content Type Handling**
+  - **Problem**: Bulk PDF export failing with "Unexpected token '<', "<!DOCTYPE "... is not valid JSON" error
+  - **Root Cause**: 
+    - Server correctly returns HTML content for PDF export with `text/html` MIME type
+    - Frontend `apiClient` function was attempting to parse all successful responses as JSON
+    - PDF export returns HTML content that can be printed to PDF, not JSON data
+  - **Solution**: Enhanced `apiClient` to handle multiple content types based on server response headers
+    - **JSON responses**: Standard `application/json` content parsed with `response.json()`
+    - **HTML responses**: `text/html` content (PDF export) parsed with `response.text()`
+    - **CSV responses**: `text/csv` content parsed with `response.text()`
+    - **Excel responses**: `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` content parsed as `Blob`
+  - **Enhanced Export Handling**: Updated `handleBulkExport` function to properly handle file downloads
+    - **CSV Export**: Creates downloadable CSV file with proper MIME type
+    - **Excel Export**: Creates downloadable XLSX file from blob data
+    - **PDF Export**: Creates downloadable HTML file that users can print to PDF
+  - **User Experience**: Proper file downloads with automatic filename generation including date
+  - **Files Changed**: 
+    - `client/src/lib/apiConfig.js` - Enhanced content type detection and parsing
+    - `client/src/components/invoices/AdvancedInvoiceManager.js` - Updated export handling with file downloads
+
+### Technical Implementation
+- **Content Type Detection**: Added proper Content-Type header checking for response parsing
+- **Multi-Format Support**: Separate handling for JSON, HTML, CSV, and Excel responses
+- **File Download Logic**: Browser-compatible file download implementation using Blob URLs
+- **Error Prevention**: Prevents JSON parsing errors on non-JSON content
+- **Backward Compatibility**: Maintains existing JSON API functionality while adding multi-format support
+
+### User Impact
+- ✅ **PDF Export Now Works**: No more console errors when using bulk PDF export
+- ✅ **Automatic Downloads**: All export formats now trigger proper file downloads
+- ✅ **Clear Feedback**: Success messages indicate file download completion
+- ✅ **Professional PDFs**: HTML-based PDF export creates printer-ready invoice reports
+- ✅ **Multi-Format Support**: CSV, Excel, and PDF exports all function correctly
+
+## [1.9.11] - 2025-10-29
+
+### Fixed
+#### Invoice PDF Export & Line Items Database Error
+
+- **🔧 PDF Export Database Table Name Error**
+  - **Problem**: PDF export was failing with database error "Could not find the table 'public.invoice_line_items' in the schema cache"
+  - **Root Cause**: 
+    - Code was querying `invoice_line_items` table that doesn't exist
+    - Actual database table is named `invoice_items` (created in migration 010)
+    - PostgreSQL error code PGRST205: table not found
+  - **Solution**: Updated query to use correct table name `invoice_items`
+  - **Files Changed**: `server/services/bulkInvoiceService.js`
+
+- **🔧 PDF Export Placeholder Blocking Functionality**
+  - **Problem**: PDF export was blocked by placeholder message "PDF bulk export feature coming soon. Use CSV or Excel for now."
+  - **Root Cause**: `BulkExportService.generatePDFExport()` had placeholder implementation that always returned error
+  - **Solution**: 
+    - Implemented functional PDF export that generates styled HTML report
+    - Added comprehensive invoice table with status styling, line items, and payment details
+    - Added `formatCurrency()` helper method for proper currency display
+    - Updated response handling to serve HTML that can be printed to PDF by browser
+  - **Features**: 
+    - Main invoice table with client info, amounts, status, and dates
+    - Optional line items breakdown per invoice
+    - Optional payment history per invoice
+    - Professional styling with status color coding
+    - Responsive table layout with proper formatting
+  - **Files Changed**: 
+    - `server/services/bulkExportService.js` - Implemented HTML PDF generation
+    - `server/routes/bulkInvoices.js` - Updated response handling for HTML content
+
+### Technical Notes
+- **Database Schema**: Confirmed `invoice_items` is correct table name from migration 010
+- **PDF Strategy**: HTML-based approach allows browser print-to-PDF until full PDF generation library is integrated
+- **Export Formats**: CSV, Excel, and PDF (HTML) now all functional
+- **Currency Support**: Added formatting for USD, EUR, GBP, ZMW, ZAR with proper symbols
+
 ## [1.9.10] - 2025-10-28
 
 ### Fixed

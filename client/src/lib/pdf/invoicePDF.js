@@ -130,26 +130,26 @@ export const generateDatabaseTemplatedPDF = async (invoice, profileData = {}, te
   }
   
   // Invoice title with template colors
-  pdf.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
+  pdf.setTextColor(255, 255, 255);  // White text on blue background
   pdf.setFontSize(templateConfig.fonts.heading.size + 8);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('INVOICE', pageWidth - templateConfig.layout.marginX, 25, { align: 'right' });
+  pdf.text('INVOICE', pageWidth - templateConfig.layout.marginX, 20, { align: 'right' });
   
-  // Invoice Details Box
-  pdf.setTextColor(secondaryRgb.r, secondaryRgb.g, secondaryRgb.b);
-  pdf.setFontSize(templateConfig.fonts.body.size);
+  // Invoice Details Box (positioned on blue background with proper spacing)
+  pdf.setTextColor(255, 255, 255);  // White text for visibility
+  pdf.setFontSize(templateConfig.fonts.body.size - 1);  // Slightly smaller for better fit
   pdf.setFont('helvetica', templateConfig.fonts.body.weight);
   
-  const invoiceDetailsX = pageWidth - 70;
-  const invoiceDetailsY = 35;
+  const invoiceDetailsX = pageWidth - 65;
+  const invoiceDetailsY = 28;  // Adjusted to fit within header
   
   pdf.text(`Invoice ID: #${invoice.id?.slice(0, 8) || 'N/A'}`, invoiceDetailsX, invoiceDetailsY);
-  pdf.text(`Date: ${new Date(invoice.created_at || new Date()).toLocaleDateString()}`, invoiceDetailsX, invoiceDetailsY + 5);
-  pdf.text(`Due Date: ${new Date(invoice.due_date).toLocaleDateString()}`, invoiceDetailsX, invoiceDetailsY + 10);
-  pdf.text(`Status: ${(invoice.status || 'draft').toUpperCase()}`, invoiceDetailsX, invoiceDetailsY + 15);
+  pdf.text(`Date: ${new Date(invoice.created_at || new Date()).toLocaleDateString()}`, invoiceDetailsX, invoiceDetailsY + 4);
+  pdf.text(`Due Date: ${new Date(invoice.due_date).toLocaleDateString()}`, invoiceDetailsX, invoiceDetailsY + 8);
+  pdf.text(`Status: ${(invoice.status || 'draft').toUpperCase()}`, invoiceDetailsX, invoiceDetailsY + 12);
   
-  // Business Details Section
-  let currentY = templateConfig.layout.headerHeight + 20;
+  // Business Details Section (start well below the blue header)
+  let currentY = templateConfig.layout.headerHeight + 15;  // Increased margin from header
   
   pdf.setTextColor(textRgb.r, textRgb.g, textRgb.b);
   pdf.setFontSize(templateConfig.fonts.subheading.size);
@@ -181,8 +181,8 @@ export const generateDatabaseTemplatedPDF = async (invoice, profileData = {}, te
     pdf.text(`Website: ${businessWebsite}`, templateConfig.layout.marginX, currentY);
   }
   
-  // Customer Details Section
-  const customerY = templateConfig.layout.headerHeight + 20;
+  // Customer Details Section (also start below header)
+  const customerY = templateConfig.layout.headerHeight + 15;  // Increased margin from header
   
   pdf.setFontSize(templateConfig.fonts.subheading.size);
   pdf.setFont('helvetica', templateConfig.fonts.subheading.weight);
@@ -196,8 +196,8 @@ export const generateDatabaseTemplatedPDF = async (invoice, profileData = {}, te
     pdf.text(invoice.customer_email, pageWidth - 70, customerY + 13);
   }
   
-  // Invoice Items Table
-  currentY = Math.max(currentY, customerY + 30, 120);
+  // Invoice Items Table (ensure adequate spacing)
+  currentY = Math.max(currentY, customerY + 35, 125);  // Increased minimum Y position
   const tableStartY = currentY;
   
   // Table Header with template accent color
@@ -222,26 +222,47 @@ export const generateDatabaseTemplatedPDF = async (invoice, profileData = {}, te
   currentY = tableStartY + 15;
   
   if (invoice.line_items && invoice.line_items.length > 0) {
-    invoice.line_items.forEach((item, index) => {
+    // Sort line items by sort_order if available
+    const sortedItems = invoice.line_items.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    
+    sortedItems.forEach((item, index) => {
       pdf.setFont('helvetica', 'normal');
-      pdf.text(item.description || 'Item', templateConfig.layout.marginX + 5, currentY);
+      pdf.setTextColor(textRgb.r, textRgb.g, textRgb.b);
+      
+      // Description (wrap long text if needed)
+      const description = item.description || 'Item';
+      pdf.text(description, templateConfig.layout.marginX + 5, currentY);
+      
+      // Quantity
       pdf.text((item.quantity || 1).toString(), pageWidth - 80, currentY, { align: 'center' });
+      
+      // Unit Price
       pdf.text(formatCurrency(item.unit_price || 0, invoice.currency), pageWidth - 50, currentY, { align: 'center' });
-      pdf.text(formatCurrency(item.total || (item.quantity * item.unit_price), invoice.currency), pageWidth - templateConfig.layout.marginX, currentY, { align: 'right' });
+      
+      // Line Total
+      const lineTotal = item.total || (item.quantity * item.unit_price) || 0;
+      pdf.text(formatCurrency(lineTotal, invoice.currency), pageWidth - templateConfig.layout.marginX, currentY, { align: 'right' });
       
       // Row border
+      pdf.setDrawColor(secondaryRgb.r, secondaryRgb.g, secondaryRgb.b);
+      pdf.setLineWidth(0.1);
       pdf.rect(templateConfig.layout.marginX, currentY - 5, pageWidth - (templateConfig.layout.marginX * 2), 10);
       currentY += 10;
     });
   } else {
-    // Single invoice amount (fallback)
+    // Single invoice amount (fallback for invoices without line items)
     pdf.setFont('helvetica', 'normal');
-    pdf.text('Invoice Payment', templateConfig.layout.marginX + 5, currentY);
+    pdf.setTextColor(textRgb.r, textRgb.g, textRgb.b);
+    
+    const description = invoice.description || 'Invoice Payment';
+    pdf.text(description, templateConfig.layout.marginX + 5, currentY);
     pdf.text('1', pageWidth - 80, currentY, { align: 'center' });
     pdf.text(formatCurrency(invoice.amount, invoice.currency), pageWidth - 50, currentY, { align: 'center' });
     pdf.text(formatCurrency(invoice.amount, invoice.currency), pageWidth - templateConfig.layout.marginX, currentY, { align: 'right' });
     
     // Row border
+    pdf.setDrawColor(secondaryRgb.r, secondaryRgb.g, secondaryRgb.b);
+    pdf.setLineWidth(0.1);
     pdf.rect(templateConfig.layout.marginX, currentY - 5, pageWidth - (templateConfig.layout.marginX * 2), 10);
     currentY += 10;
   }

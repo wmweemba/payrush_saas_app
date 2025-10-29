@@ -48,13 +48,19 @@ async function searchInvoices(userId, searchParams = {}) {
     // Calculate offset for pagination
     const offset = (page - 1) * limit;
 
-    // Build the base query
+    // Build the base query - include first line item for invoice description
     let queryBuilder = supabase
       .from('invoices')
-      .select('*', { count: 'exact' })
+      .select(`
+        *,
+        invoice_items (
+          description
+        )
+      `, { count: 'exact' })
       .eq('user_id', userId);
 
     // Apply text search filter (search in customer name and email)
+    // Note: Line item search is handled separately due to join table limitations
     if (query && query.trim()) {
       const searchQuery = query.trim();
       queryBuilder = queryBuilder.or(
@@ -100,11 +106,128 @@ async function searchInvoices(userId, searchParams = {}) {
       throw new Error(`Search query failed: ${error.message}`);
     }
 
-    const totalPages = Math.ceil(count / limit);
+    let finalInvoices = invoices || [];
+    let finalCount = count || 0;
+
+    // If there's a text query, also search in line items and merge results
+    if (query && query.trim()) {
+      try {
+        const searchQuery = query.trim();
+        
+        // Search for invoices by line item descriptions (separate query)
+        const { data: lineItemInvoices, error: lineItemError } = await supabase
+          .from('invoices')
+          .select(`
+            *,
+            invoice_items!inner (
+              description
+            )
+          `)
+          .eq('user_id', userId)
+          .ilike('invoice_items.description', `%${searchQuery}%`);
+
+        if (!lineItemError && lineItemInvoices && lineItemInvoices.length > 0) {
+          // Apply the same filters to line item results
+          let filteredLineItemInvoices = lineItemInvoices;
+
+          // Apply status filters
+          if (statuses && statuses.length > 0) {
+            filteredLineItemInvoices = filteredLineItemInvoices.filter(inv => 
+              statuses.includes(inv.status)
+            );
+          }
+
+          // Apply date range filters
+          if (dateFrom) {
+            const fromDate = new Date(`${dateFrom}T00:00:00.000Z`);
+            filteredLineItemInvoices = filteredLineItemInvoices.filter(inv => 
+              new Date(inv.created_at) >= fromDate
+            );
+          }
+          if (dateTo) {
+            const toDate = new Date(`${dateTo}T23:59:59.999Z`);
+            filteredLineItemInvoices = filteredLineItemInvoices.filter(inv => 
+              new Date(inv.created_at) <= toDate
+            );
+          }
+
+          // Apply currency filter
+          if (currency) {
+            filteredLineItemInvoices = filteredLineItemInvoices.filter(inv => 
+              inv.currency === currency
+            );
+          }
+
+          // Apply amount range filters
+          if (amountMin !== null && !isNaN(amountMin)) {
+            filteredLineItemInvoices = filteredLineItemInvoices.filter(inv => 
+              parseFloat(inv.amount) >= amountMin
+            );
+          }
+          if (amountMax !== null && !isNaN(amountMax)) {
+            filteredLineItemInvoices = filteredLineItemInvoices.filter(inv => 
+              parseFloat(inv.amount) <= amountMax
+            );
+          }
+
+          // Merge with existing results (avoid duplicates)
+          const existingIds = new Set(finalInvoices.map(inv => inv.id));
+          const newInvoices = filteredLineItemInvoices.filter(inv => !existingIds.has(inv.id));
+          
+          finalInvoices = [...finalInvoices, ...newInvoices];
+          finalCount = finalInvoices.length;
+        }
+      } catch (lineItemSearchError) {
+        console.warn('Line item search failed, continuing with main results:', lineItemSearchError);
+      }
+    }
+
+    // Apply sorting to final results
+    finalInvoices.sort((a, b) => {
+      let aValue = a[safeSortBy];
+      let bValue = b[safeSortBy];
+      
+      // Handle different data types
+      if (safeSortBy === 'amount') {
+        aValue = parseFloat(aValue) || 0;
+        bValue = parseFloat(bValue) || 0;
+      } else if (safeSortBy === 'created_at' || safeSortBy === 'due_date') {
+        aValue = new Date(aValue);
+        bValue = new Date(bValue);
+      } else if (typeof aValue === 'string') {
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
+      }
+      
+      if (safeSortOrder === 'asc') {
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      } else {
+        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+      }
+    });
+
+    // Apply pagination to final results
+    const paginatedInvoices = finalInvoices.slice(offset, offset + limit);
+    const totalPages = Math.ceil(finalCount / limit);
+
+    // Process invoices to add first line item description
+    const processedInvoices = paginatedInvoices.map(invoice => {
+      // Get the first line item description for dashboard display
+      const firstLineItemDescription = invoice.invoice_items && invoice.invoice_items.length > 0 
+        ? invoice.invoice_items[0].description 
+        : null;
+      
+      return {
+        ...invoice,
+        first_line_item_description: firstLineItemDescription,
+        // Remove the nested invoice_items array to keep response clean
+        invoice_items: undefined
+      };
+    });
 
     return {
-      invoices: invoices || [],
-      total: count || 0,
+      invoices: processedInvoices,
+      total: finalCount,
       page: parseInt(page),
       limit: parseInt(limit),
       totalPages,
@@ -189,8 +312,9 @@ async function getInvoiceStats(userId, filters = {}) {
       }
       stats.totalAmount[currency] += amount;
 
-      // Check if overdue
-      if (status !== 'Paid' && status !== 'Cancelled' && dueDate < now) {
+      // Check if overdue (either explicitly marked as overdue OR past due date)
+      if (status.toLowerCase() === 'overdue' || 
+          (status !== 'Paid' && status !== 'Cancelled' && dueDate < now)) {
         stats.overdue++;
       }
     });

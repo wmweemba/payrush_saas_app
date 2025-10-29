@@ -136,14 +136,15 @@ router.post('/export', async (req, res) => {
         return res.send(result.data);
       
       case 'pdf':
-        if (result.data) {
-          res.setHeader('Content-Type', 'application/pdf');
+        if (result.success && result.data) {
+          // For now, we return HTML that can be printed to PDF by the browser
+          res.setHeader('Content-Type', result.mimeType || 'text/html');
           res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
           return res.send(result.data);
         } else {
           return res.status(501).json({
             success: false,
-            error: result.message || 'PDF export not yet implemented'
+            error: result.message || 'PDF export failed'
           });
         }
       

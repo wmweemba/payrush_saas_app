@@ -670,11 +670,11 @@ Template: Classic Business
    - **Expected:** PDF displays correctly in browser
 
 **✅ Pass Criteria:**
-- [ ] PDF generation completes successfully
+- [x] PDF generation completes successfully
 - [ ] Branding (logo, colors) applied correctly
 - [ ] All invoice data properly formatted
 - [ ] Template styling differences visible
-- [ ] Download functionality works
+- [x] Download functionality works
 
 ---
 
@@ -717,11 +717,11 @@ Template: Classic Business
    - **Expected:** Results reorder correctly
 
 **✅ Pass Criteria:**
-- [ ] Text search returns relevant results
-- [ ] Individual filters work correctly
-- [ ] Combined filters work together
-- [ ] Quick filters function properly
-- [ ] Sorting changes result order correctly
+- [x] Text search returns relevant results
+- [x] Individual filters work correctly
+- [x] Combined filters work together
+- [x] Quick filters function properly
+- [x] Sorting changes result order correctly
 
 ---
 

@@ -165,7 +165,7 @@ class BulkInvoiceService {
       // Include line items if requested
       if (includeLineItems) {
         const { data: lineItems, error: lineItemsError } = await supabase
-          .from('invoice_line_items')
+          .from('invoice_items')
           .select('*')
           .in('invoice_id', invoiceIds)
           .order('created_at', { ascending: true });

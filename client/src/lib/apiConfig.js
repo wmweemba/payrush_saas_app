@@ -178,7 +178,43 @@ export const apiClient = async (endpoint, options = {}) => {
       throw error;
     }
 
-    return response.json();
+    // Check content type to determine how to parse response
+    const contentType = response.headers.get('content-type');
+    
+    if (contentType?.includes('application/json')) {
+      // Standard JSON response
+      return response.json();
+    } else if (contentType?.includes('text/html')) {
+      // HTML response (like PDF export)
+      const htmlContent = await response.text();
+      return {
+        success: true,
+        data: htmlContent,
+        contentType: contentType,
+        isHtml: true
+      };
+    } else if (contentType?.includes('text/csv')) {
+      // CSV response
+      const csvContent = await response.text();
+      return {
+        success: true,
+        data: csvContent,
+        contentType: contentType,
+        isCsv: true
+      };
+    } else if (contentType?.includes('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')) {
+      // Excel response
+      const blob = await response.blob();
+      return {
+        success: true,
+        data: blob,
+        contentType: contentType,
+        isExcel: true
+      };
+    } else {
+      // Fallback to JSON for other content types
+      return response.json();
+    }
   } catch (error) {
     console.error(`API call failed for ${endpoint}:`, error);
     throw error;

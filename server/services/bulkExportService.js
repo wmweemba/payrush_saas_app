@@ -318,16 +318,176 @@ class BulkExportService {
   }
 
   /**
-   * Generate PDF export (placeholder for future implementation)
+   * Generate PDF export
    */
   static async generatePDFExport(data, options = {}) {
-    // This would integrate with the existing PDF generation system
-    // For now, return a message indicating PDF export is coming soon
-    return {
-      success: false,
-      message: 'PDF bulk export feature coming soon. Use CSV or Excel for now.',
-      data: null
-    };
+    try {
+      const { includeLineItems = false, includePayments = false } = options;
+      
+      // Create a simple HTML table for PDF generation
+      let htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Invoice Export</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { color: #333; border-bottom: 2px solid #333; padding-bottom: 10px; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    th { background-color: #f4f4f4; font-weight: bold; }
+    tr:nth-child(even) { background-color: #f9f9f9; }
+    .amount { text-align: right; }
+    .status { padding: 4px 8px; border-radius: 4px; text-align: center; }
+    .status-paid { background-color: #d4edda; color: #155724; }
+    .status-sent { background-color: #d1ecf1; color: #0c5460; }
+    .status-draft { background-color: #fff3cd; color: #856404; }
+    .status-overdue { background-color: #f8d7da; color: #721c24; }
+  </style>
+</head>
+<body>
+  <h1>Invoice Export Report</h1>
+  <p>Generated on: ${new Date().toLocaleString()}</p>
+  <p>Total Invoices: ${data.length}</p>
+`;
+
+      // Create main invoice table
+      htmlContent += `
+  <table>
+    <thead>
+      <tr>
+        <th>Invoice ID</th>
+        <th>Client</th>
+        <th>Amount</th>
+        <th>Currency</th>
+        <th>Status</th>
+        <th>Due Date</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+`;
+
+      data.forEach(invoice => {
+        const statusClass = `status-${invoice.status.toLowerCase()}`;
+        htmlContent += `
+      <tr>
+        <td>${invoice.id.substring(0, 8)}...</td>
+        <td>${invoice.client_name || 'N/A'}</td>
+        <td class="amount">${this.formatCurrency(invoice.amount, invoice.currency)}</td>
+        <td>${invoice.currency}</td>
+        <td><span class="status ${statusClass}">${invoice.status}</span></td>
+        <td>${this.formatDate(invoice.due_date)}</td>
+        <td>${this.formatDate(invoice.created_at)}</td>
+      </tr>
+`;
+      });
+
+      htmlContent += `
+    </tbody>
+  </table>
+`;
+
+      // Add line items if requested
+      if (includeLineItems && data.some(invoice => invoice.lineItems && invoice.lineItems.length > 0)) {
+        htmlContent += `
+  <h2>Line Items Detail</h2>
+`;
+        data.forEach(invoice => {
+          if (invoice.lineItems && invoice.lineItems.length > 0) {
+            htmlContent += `
+  <h3>Invoice: ${invoice.id.substring(0, 8)}... (${invoice.client_name || 'N/A'})</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Description</th>
+        <th>Quantity</th>
+        <th>Unit Price</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+`;
+            invoice.lineItems.forEach(item => {
+              const total = (item.quantity * item.unit_price).toFixed(2);
+              htmlContent += `
+      <tr>
+        <td>${item.description}</td>
+        <td>${item.quantity}</td>
+        <td class="amount">${this.formatCurrency(item.unit_price, invoice.currency)}</td>
+        <td class="amount">${this.formatCurrency(total, invoice.currency)}</td>
+      </tr>
+`;
+            });
+            htmlContent += `
+    </tbody>
+  </table>
+`;
+          }
+        });
+      }
+
+      // Add payments if requested  
+      if (includePayments && data.some(invoice => invoice.payments && invoice.payments.length > 0)) {
+        htmlContent += `
+  <h2>Payment Details</h2>
+`;
+        data.forEach(invoice => {
+          if (invoice.payments && invoice.payments.length > 0) {
+            htmlContent += `
+  <h3>Invoice: ${invoice.id.substring(0, 8)}... (${invoice.client_name || 'N/A'})</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Payment Date</th>
+        <th>Amount</th>
+        <th>Method</th>
+        <th>Reference</th>
+      </tr>
+    </thead>
+    <tbody>
+`;
+            invoice.payments.forEach(payment => {
+              htmlContent += `
+      <tr>
+        <td>${this.formatDate(payment.payment_date)}</td>
+        <td class="amount">${this.formatCurrency(payment.amount, invoice.currency)}</td>
+        <td>${payment.payment_method || 'N/A'}</td>
+        <td>${payment.reference_number || 'N/A'}</td>
+      </tr>
+`;
+            });
+            htmlContent += `
+    </tbody>
+  </table>
+`;
+          }
+        });
+      }
+
+      htmlContent += `
+</body>
+</html>
+`;
+
+      // For now, return HTML content that can be converted to PDF by the client
+      // In a production environment, you'd use puppeteer or similar to generate actual PDF
+      return {
+        success: true,
+        data: htmlContent,
+        filename: `invoice_export_${new Date().toISOString().split('T')[0]}.html`,
+        mimeType: 'text/html'
+      };
+      
+    } catch (error) {
+      console.error('PDF export error:', error);
+      return {
+        success: false,
+        message: `PDF export failed: ${error.message}`,
+        data: null
+      };
+    }
   }
 
   /**
@@ -340,6 +500,28 @@ class BulkExportService {
       return date.toISOString().split('T')[0]; // YYYY-MM-DD format
     } catch (error) {
       return dateString;
+    }
+  }
+
+  /**
+   * Format currency for display
+   */
+  static formatCurrency(amount, currency = 'USD') {
+    try {
+      const numAmount = parseFloat(amount) || 0;
+      // Simple currency formatting
+      const symbols = {
+        'USD': '$',
+        'EUR': '€',
+        'GBP': '£',
+        'ZMW': 'K',
+        'ZAR': 'R'
+      };
+      
+      const symbol = symbols[currency] || currency + ' ';
+      return `${symbol}${numAmount.toFixed(2)}`;
+    } catch (error) {
+      return `${currency} ${amount}`;
     }
   }
 

@@ -298,6 +298,13 @@ const EnhancedInvoiceSearchResults = ({
                       </p>
                     )}
                     
+                    {/* Display first line item description for easy invoice identification */}
+                    {invoice.first_line_item_description && (
+                      <p className="text-sm text-blue-600 dark:text-blue-400 mb-1 truncate italic">
+                        "{invoice.first_line_item_description}"
+                      </p>
+                    )}
+                    
                     <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
                       <span>Due: {formatDate(invoice.due_date)}</span>
                       <span>Created: {formatDate(invoice.created_at)}</span>

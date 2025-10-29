@@ -95,12 +95,20 @@ const InvoiceSearchStats = ({ searchParams = {}, refreshTrigger = 0 }) => {
       case 'draft': return 'bg-yellow-500';
       case 'overdue': return 'bg-red-500';
       case 'cancelled': return 'bg-gray-400';
+      case 'pending_approval':
+      case 'approved': return 'bg-purple-500';
+      case 'rejected': return 'bg-red-400';
       default: return 'bg-gray-500';
     }
   };
 
-  // Convert status to display format
+  // Convert status to display format - preserve existing capitalization if already formatted
   const getStatusDisplay = (status) => {
+    // If already capitalized properly, return as-is
+    if (['Paid', 'Sent', 'Draft', 'Pending', 'Overdue', 'Cancelled'].includes(status)) {
+      return status;
+    }
+    
     const statusLower = status.toLowerCase();
     switch (statusLower) {
       case 'paid': return 'Paid';
@@ -109,6 +117,9 @@ const InvoiceSearchStats = ({ searchParams = {}, refreshTrigger = 0 }) => {
       case 'pending': return 'Pending';
       case 'overdue': return 'Overdue';
       case 'cancelled': return 'Cancelled';
+      case 'pending_approval': return 'Pending Approval';
+      case 'approved': return 'Approved';
+      case 'rejected': return 'Rejected';
       default: return status.charAt(0).toUpperCase() + status.slice(1);
     }
   };
@@ -202,12 +213,12 @@ const InvoiceSearchStats = ({ searchParams = {}, refreshTrigger = 0 }) => {
                 </p>
                 <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {totalInvoices > 0 
-                    ? ((stats.byStatus?.paid || 0) / totalInvoices * 100).toFixed(1)
+                    ? ((stats.byStatus?.Paid || stats.byStatus?.paid || 0) / totalInvoices * 100).toFixed(1)
                     : 0
                   }%
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {stats.byStatus?.paid || 0} of {totalInvoices} paid
+                  {(stats.byStatus?.Paid || stats.byStatus?.paid || 0)} of {totalInvoices} paid
                 </p>
               </div>
               <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-full">

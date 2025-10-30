@@ -75,7 +75,7 @@ class BrandingService {
    */
   async initializeDefaultBranding(userId) {
     try {
-      // Use the actual column names that exist in the database
+      // Use only the columns that definitely exist in the database
       const defaultBranding = {
         user_id: userId,
         primary_color: '#2563eb',
@@ -84,12 +84,12 @@ class BrandingService {
         text_color: '#1f2937',
         background_color: '#ffffff',
         heading_font: 'Inter, sans-serif',
-        body_font: 'Inter, sans-serif', // Note: using body_font, not primary_font
-        display_business_name: true,
-        display_address: true,
-        display_phone: true,
-        display_email: true,
-        display_website: true
+        primary_font: 'Inter, sans-serif',
+        company_name: '',
+        company_tagline: '',
+        company_website: '',
+        apply_branding_to_templates: true,
+        apply_branding_to_emails: true
       };
 
       const { data, error } = await this.supabase
@@ -122,7 +122,7 @@ class BrandingService {
   }
 
   /**
-   * Update business branding information
+   * Update business branding information with enhanced error handling
    */
   async saveBranding(userId, brandingData) {
     try {
@@ -136,10 +136,23 @@ class BrandingService {
         };
       }
 
-      // Prepare data for update
+      // Prepare data for update with schema-aware sanitization
       const sanitizedData = this.sanitizeBrandingData(brandingData);
       sanitizedData.updated_at = new Date().toISOString();
 
+      // First, try to check if the branding record exists
+      const { data: existingBranding, error: checkError } = await this.supabase
+        .from('business_branding')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (checkError && checkError.code === 'PGRST116') {
+        // No branding exists, initialize first
+        return await this.initializeDefaultBranding(userId);
+      }
+
+      // Update existing branding
       const { data, error } = await this.supabase
         .from('business_branding')
         .update(sanitizedData)
@@ -149,6 +162,19 @@ class BrandingService {
 
       if (error) {
         console.error('Database error in saveBranding:', error);
+        
+        // Check if it's a column not found error
+        if (error.code === 'PGRST204' && error.message.includes('column')) {
+          const columnMatch = error.message.match(/Could not find the '([^']+)' column/);
+          const missingColumn = columnMatch ? columnMatch[1] : 'unknown';
+          
+          return {
+            success: false,
+            error: `Database schema mismatch: column '${missingColumn}' not found. Please check database migration.`,
+            statusCode: 500
+          };
+        }
+        
         return {
           success: false,
           error: 'Failed to update branding',
@@ -552,15 +578,25 @@ class BrandingService {
   }
 
   /**
-   * Enhanced branding data sanitization
+   * Enhanced branding data sanitization with schema validation
    */
   sanitizeBrandingData(data) {
     const sanitized = {};
 
+    // Define the exact columns that exist in the database after migration
+    const allowedColumns = [
+      'primary_color', 'secondary_color', 'accent_color', 'text_color', 'background_color',
+      'primary_font', 'heading_font',
+      'company_name', 'company_tagline', 'company_website',
+      'logo_url', 'logo_filename', 'logo_size', 'favicon_url',
+      'apply_branding_to_templates',
+      'apply_branding_to_emails'
+    ];
+
     // Handle text fields
     const textFields = ['company_name', 'company_tagline', 'company_website', 'primary_font', 'heading_font'];
     textFields.forEach(field => {
-      if (data[field] !== undefined) {
+      if (allowedColumns.includes(field) && data[field] !== undefined) {
         sanitized[field] = data[field] ? sanitizeString(data[field]) : null;
       }
     });
@@ -568,7 +604,7 @@ class BrandingService {
     // Handle URL fields
     const urlFields = ['logo_url', 'favicon_url'];
     urlFields.forEach(field => {
-      if (data[field] !== undefined) {
+      if (allowedColumns.includes(field) && data[field] !== undefined) {
         sanitized[field] = data[field];
       }
     });
@@ -576,7 +612,7 @@ class BrandingService {
     // Handle numeric fields
     const numericFields = ['logo_size'];
     numericFields.forEach(field => {
-      if (data[field] !== undefined) {
+      if (allowedColumns.includes(field) && data[field] !== undefined) {
         const num = parseInt(data[field]);
         if (!isNaN(num)) {
           sanitized[field] = num;
@@ -587,18 +623,23 @@ class BrandingService {
     // Handle color fields
     const colorFields = ['primary_color', 'secondary_color', 'accent_color', 'text_color', 'background_color'];
     colorFields.forEach(field => {
-      if (data[field] !== undefined) {
+      if (allowedColumns.includes(field) && data[field] !== undefined) {
         sanitized[field] = data[field];
       }
     });
 
-    // Handle boolean fields
+    // Handle boolean fields - include both template and email branding options
     const booleanFields = ['apply_branding_to_templates', 'apply_branding_to_emails'];
     booleanFields.forEach(field => {
-      if (data[field] !== undefined) {
+      if (allowedColumns.includes(field) && data[field] !== undefined) {
         sanitized[field] = Boolean(data[field]);
       }
     });
+
+    console.log('Sanitized branding data:', sanitized);
+    console.log('Original data keys:', Object.keys(data));
+    console.log('Filtered keys:', Object.keys(sanitized));
+    console.log('Excluded keys:', Object.keys(data).filter(key => !Object.keys(sanitized).includes(key)));
 
     return sanitized;
   }

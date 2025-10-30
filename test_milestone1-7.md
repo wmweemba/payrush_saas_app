@@ -765,10 +765,10 @@ Template: Classic Business
    - Check email logs for delivery status
 
 **✅ Pass Criteria:**
-- [ ] Bulk selection controls work
-- [ ] Status updates apply to all selected
-- [ ] Excel export generates multi-sheet file
-- [ ] CSV export contains correct data
+- [x] Bulk selection controls work
+- [x] Status updates apply to all selected
+- [x] Excel export generates multi-sheet file
+- [x] CSV export contains correct data
 - [ ] Bulk email functionality operational
 
 ---

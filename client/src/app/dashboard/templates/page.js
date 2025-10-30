@@ -171,43 +171,46 @@ export default function TemplatesPage() {
 
   // Template card component
   const TemplateCard = ({ template }) => (
-    <Card className="group hover:shadow-md transition-shadow">
+    <Card className="group hover:shadow-lg transition-all duration-200 border-l-4 border-l-blue-500 hover:border-l-blue-600">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CardTitle className="text-lg">{template.template_name}</CardTitle>
+            <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">{template.template_name}</CardTitle>
             {template.is_default && (
-              <Badge variant="default" className="text-xs">
+              <Badge variant="default" className="text-xs bg-yellow-100 text-yellow-800 border-yellow-300">
                 <Star className="w-3 h-3 mr-1" />
                 Default
               </Badge>
             )}
             {template.is_system_template && (
-              <Badge variant="secondary" className="text-xs">System</Badge>
+              <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800 border-blue-300">System</Badge>
             )}
           </div>
-          <Badge variant="outline" className="capitalize">
+          <Badge variant="outline" className="capitalize font-medium bg-gray-50 dark:bg-gray-800">
             {template.template_type}
           </Badge>
         </div>
         {template.description && (
-          <CardDescription>{template.description}</CardDescription>
+          <CardDescription className="text-gray-600 dark:text-gray-400">{template.description}</CardDescription>
         )}
       </CardHeader>
       
       <CardContent>
         <div className="space-y-4">
           {/* Template preview placeholder */}
-          <div className="bg-gray-50 rounded-lg h-32 flex items-center justify-center border">
-            <div className="text-center text-gray-500">
+          <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-lg h-32 flex items-center justify-center border-2 border-dashed border-gray-200 dark:border-gray-600 group-hover:border-blue-300 transition-colors">
+            <div className="text-center text-gray-500 dark:text-gray-400">
               <Eye className="w-8 h-8 mx-auto mb-2" />
-              <p className="text-sm">Template Preview</p>
+              <p className="text-sm font-medium">Template Preview</p>
             </div>
           </div>
           
           {/* Template metadata */}
-          <div className="flex justify-between text-sm text-gray-500">
-            <span>Used {template.usage_count || 0} times</span>
+          <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+            <span className="flex items-center">
+              <Download className="w-4 h-4 mr-1" />
+              Used {template.usage_count || 0} times
+            </span>
             <span>{new Date(template.updated_at).toLocaleDateString()}</span>
           </div>
           
@@ -216,7 +219,7 @@ export default function TemplatesPage() {
             <Button 
               variant="default" 
               size="sm" 
-              className="flex-1"
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
               onClick={() => window.open(`/dashboard/templates/editor/${template.id}`, '_blank')}
             >
               <Edit className="w-4 h-4 mr-1" />
@@ -226,6 +229,7 @@ export default function TemplatesPage() {
               variant="outline" 
               size="sm"
               onClick={() => handleDuplicateTemplate(template.id)}
+              className="hover:bg-gray-50 dark:hover:bg-gray-700"
             >
               <Copy className="w-4 h-4" />
             </Button>
@@ -234,6 +238,7 @@ export default function TemplatesPage() {
                 variant="outline" 
                 size="sm"
                 onClick={() => handleSetDefault(template.id)}
+                className="hover:bg-yellow-50 dark:hover:bg-yellow-900 hover:text-yellow-700 dark:hover:text-yellow-400"
               >
                 <Star className="w-4 h-4" />
               </Button>
@@ -243,6 +248,7 @@ export default function TemplatesPage() {
                 variant="outline" 
                 size="sm"
                 onClick={() => handleDeleteTemplate(template.id)}
+                className="hover:bg-red-50 dark:hover:bg-red-900 hover:text-red-700 dark:hover:text-red-400"
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
@@ -256,34 +262,62 @@ export default function TemplatesPage() {
   // Stats overview component
   const StatsOverview = () => (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      <Card>
-        <CardContent className="pt-6">
-          <div className="text-2xl font-bold">{templates.length}</div>
-          <p className="text-xs text-muted-foreground">Total Templates</p>
+      <Card className="border-l-4 border-l-blue-500 hover:shadow-md transition-shadow">
+        <CardContent className="p-4">
+          <div className="flex items-center">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+              <Settings className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Templates</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{templates.length}</p>
+            </div>
+          </div>
         </CardContent>
       </Card>
-      <Card>
-        <CardContent className="pt-6">
-          <div className="text-2xl font-bold">
-            {templates.filter(t => t.is_system_template).length}
+      <Card className="border-l-4 border-l-green-500 hover:shadow-md transition-shadow">
+        <CardContent className="p-4">
+          <div className="flex items-center">
+            <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+              <Star className="w-6 h-6 text-green-600 dark:text-green-400" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">System Templates</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {templates.filter(t => t.is_system_template).length}
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground">System Templates</p>
         </CardContent>
       </Card>
-      <Card>
-        <CardContent className="pt-6">
-          <div className="text-2xl font-bold">
-            {templates.filter(t => !t.is_system_template).length}
+      <Card className="border-l-4 border-l-purple-500 hover:shadow-md transition-shadow">
+        <CardContent className="p-4">
+          <div className="flex items-center">
+            <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
+              <Edit className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Custom Templates</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {templates.filter(t => !t.is_system_template).length}
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground">Custom Templates</p>
         </CardContent>
       </Card>
-      <Card>
-        <CardContent className="pt-6">
-          <div className="text-2xl font-bold">
-            {templates.reduce((sum, t) => sum + (t.usage_count || 0), 0)}
+      <Card className="border-l-4 border-l-orange-500 hover:shadow-md transition-shadow">
+        <CardContent className="p-4">
+          <div className="flex items-center">
+            <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
+              <Download className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Usage</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {templates.reduce((sum, t) => sum + (t.usage_count || 0), 0)}
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground">Total Usage</p>
         </CardContent>
       </Card>
     </div>
@@ -343,25 +377,52 @@ export default function TemplatesPage() {
     >
       <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-start">
+      <div className="flex justify-between items-start bg-gradient-to-r from-blue-50 to-purple-50 dark:from-slate-800 dark:to-slate-700 p-6 rounded-lg border">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Invoice Templates</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Invoice Templates</h1>
+          <p className="text-gray-600 dark:text-gray-400">
             Create and customize professional invoice templates for your business
           </p>
         </div>
-        <Button onClick={() => window.open('/dashboard/templates/editor/new', '_blank')} className="bg-blue-600 hover:bg-blue-700 text-white">
-          <Plus className="w-4 h-4 mr-2" />
+        <Button 
+          onClick={() => window.open('/dashboard/templates/editor/new', '_blank')} 
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 h-auto font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+        >
+          <Plus className="w-5 h-5 mr-2" />
           Create Template
         </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-gray-100 dark:bg-gray-800">
-          <TabsTrigger value="templates" className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white data-[state=active]:text-gray-900 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white">Templates</TabsTrigger>
-          <TabsTrigger value="branding" className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white data-[state=active]:text-gray-900 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white">Branding</TabsTrigger>
-          <TabsTrigger value="numbering" className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white data-[state=active]:text-gray-900 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white">Numbering</TabsTrigger>
-          <TabsTrigger value="approval" className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white data-[state=active]:text-gray-900 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white">Approval</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4 bg-gray-100 dark:bg-slate-800 h-12 p-1 rounded-lg border">
+          <TabsTrigger 
+            value="templates"
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200"
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            Templates
+          </TabsTrigger>
+          <TabsTrigger 
+            value="branding"
+            className="data-[state=active]:bg-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200"
+          >
+            <Star className="w-4 h-4 mr-2" />
+            Branding
+          </TabsTrigger>
+          <TabsTrigger 
+            value="numbering"
+            className="data-[state=active]:bg-green-600 data-[state=active]:text-white data-[state=active]:shadow-md font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200"
+          >
+            <span className="w-4 h-4 mr-2 text-sm">🔢</span>
+            Numbering
+          </TabsTrigger>
+          <TabsTrigger 
+            value="approval"
+            className="data-[state=active]:bg-orange-600 data-[state=active]:text-white data-[state=active]:shadow-md font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200"
+          >
+            <Eye className="w-4 h-4 mr-2" />
+            Approval
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="templates" className="space-y-6">

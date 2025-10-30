@@ -355,27 +355,30 @@ const BrandingPage = () => {
     >
       <div className="space-y-6">
         {/* Header Actions */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 to-purple-50 dark:from-slate-800 dark:to-slate-700 p-6 rounded-lg border">
           <div>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Professional Brand Identity</h2>
             <p className="text-gray-600 dark:text-gray-400">Create a professional brand identity for your invoices and business communications</p>
           </div>
           <Button 
             onClick={handleSaveBranding} 
             disabled={saving}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          {saving ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-          Save Changes
-        </Button>
-      </div>
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 h-auto font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+          >
+            {saving ? <RefreshCw className="w-5 h-5 mr-2 animate-spin" /> : <Save className="w-5 h-5 mr-2" />}
+            Save Changes
+          </Button>
+        </div>
 
       {/* Quick Stats */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
+          <Card className="border-l-4 border-l-blue-500 hover:shadow-md transition-shadow">
             <CardContent className="p-4">
               <div className="flex items-center">
-                <ImageIcon className="w-8 h-8 text-blue-500" />
+                <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                  <ImageIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                </div>
                 <div className="ml-3">
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Assets</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total_assets}</p>
@@ -384,37 +387,41 @@ const BrandingPage = () => {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="border-l-4 border-l-green-500 hover:shadow-md transition-shadow">
             <CardContent className="p-4">
               <div className="flex items-center">
-                <Download className="w-8 h-8 text-green-500" />
+                <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+                  <Download className="w-6 h-6 text-green-600 dark:text-green-400" />
+                </div>
                 <div className="ml-3">
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Storage Used</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {formatFileSize(stats.total_storage_used)}
+                  <p className="text-lg font-bold text-gray-900 dark:text-white">
+                    {stats.total_storage_used ? formatFileSize(stats.total_storage_used) : '0 Bytes'}
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="border-l-4 border-l-purple-500 hover:shadow-md transition-shadow">
             <CardContent className="p-4">
               <div className="flex items-center">
-                <Palette className="w-8 h-8 text-purple-500" />
+                <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                  <Palette className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                </div>
                 <div className="ml-3">
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Brand Colors</p>
                   <div className="flex space-x-1 mt-1">
                     <div 
-                      className="w-4 h-4 rounded border border-gray-300" 
+                      className="w-5 h-5 rounded-full border-2 border-white shadow-sm" 
                       style={{ backgroundColor: brandingForm.primary_color }}
                     />
                     <div 
-                      className="w-4 h-4 rounded border border-gray-300" 
+                      className="w-5 h-5 rounded-full border-2 border-white shadow-sm" 
                       style={{ backgroundColor: brandingForm.secondary_color }}
                     />
                     <div 
-                      className="w-4 h-4 rounded border border-gray-300" 
+                      className="w-5 h-5 rounded-full border-2 border-white shadow-sm" 
                       style={{ backgroundColor: brandingForm.accent_color }}
                     />
                   </div>
@@ -423,16 +430,19 @@ const BrandingPage = () => {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="border-l-4 border-l-yellow-500 hover:shadow-md transition-shadow">
             <CardContent className="p-4">
               <div className="flex items-center">
-                <Zap className="w-8 h-8 text-yellow-500" />
+                <div className="p-2 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
+                  <Zap className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+                </div>
                 <div className="ml-3">
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Auto-Apply</p>
-                  <p className="text-sm text-gray-900 dark:text-white">
-                    {brandingForm.apply_branding_to_templates ? 'Templates ✓' : ''}
-                    {brandingForm.apply_branding_to_templates && brandingForm.apply_branding_to_emails ? ' & ' : ''}
-                    {brandingForm.apply_branding_to_emails ? 'Emails ✓' : ''}
+                  <p className="text-sm text-gray-900 dark:text-white font-medium">
+                    {[
+                      brandingForm.apply_branding_to_templates && 'Templates',
+                      brandingForm.apply_branding_to_emails && 'Emails'
+                    ].filter(Boolean).join(', ') || 'None'}
                   </p>
                 </div>
               </div>
@@ -443,11 +453,35 @@ const BrandingPage = () => {
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="colors">Colors & Fonts</TabsTrigger>
-          <TabsTrigger value="assets">Assets</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4 bg-gray-100 dark:bg-slate-800 h-12 p-1 rounded-lg border">
+          <TabsTrigger 
+            value="overview"
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200"
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger 
+            value="colors"
+            className="data-[state=active]:bg-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200"
+          >
+            <Palette className="w-4 h-4 mr-2" />
+            Colors & Fonts
+          </TabsTrigger>
+          <TabsTrigger 
+            value="assets"
+            className="data-[state=active]:bg-green-600 data-[state=active]:text-white data-[state=active]:shadow-md font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200"
+          >
+            <ImageIcon className="w-4 h-4 mr-2" />
+            Assets
+          </TabsTrigger>
+          <TabsTrigger 
+            value="settings"
+            className="data-[state=active]:bg-orange-600 data-[state=active]:text-white data-[state=active]:shadow-md font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200"
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            Settings
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">

@@ -363,7 +363,7 @@ const EmailButton = ({ onSendEmail, disabled }) => {
   return (
     <Select value={selectedTemplate} onValueChange={handleEmailTemplateChange} disabled={disabled}>
       <SelectTrigger className="w-full">
-        <SelectValue placeholder="📧 Send Emails" />
+        <SelectValue placeholder="📧 Send Emails (Coming Soon)" />
       </SelectTrigger>
       <SelectContent className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 shadow-lg">
         {emailTemplates.map((template) => (

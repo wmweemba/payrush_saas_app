@@ -22,25 +22,24 @@ class BulkInvoiceService {
         throw new Error(`Invalid status: ${newStatus}`);
       }
 
-      // Try lowercase status values to match what might actually be in the database
-      // The constraint might not have been properly updated
-      // Note: 'cancelled' might not be allowed by the original constraint
+      // Use lowercase status values to match updated database constraint
+      // Updated constraint now allows: 'draft', 'sent', 'paid', 'overdue', 'cancelled'
       const statusMapping = {
-        'pending': 'draft',      // Map pending to draft (original constraint)
-        'sent': 'sent',          // Try lowercase  
-        'paid': 'paid',          // Try lowercase
-        'overdue': 'overdue',    // Try lowercase
-        'cancelled': 'draft'     // Map cancelled to draft since cancelled might not be allowed
+        'pending': 'draft',      // Map to 'draft' 
+        'sent': 'sent',          // Use lowercase
+        'paid': 'paid',          // Use lowercase
+        'overdue': 'overdue',    // Use lowercase
+        'cancelled': 'cancelled' // Now allowed by updated constraint!
       };
       
       // Map status values for approval_status column (lowercase)
-      // Keep approval_status as 'draft' to avoid constraint conflicts until trigger is fixed
+      // Keep approval_status as 'draft' for most statuses, 'cancelled' for cancelled
       const approvalStatusMapping = {
-        'pending': 'draft',     // Keep as draft for now
-        'sent': 'draft',        // Keep as draft for now  
-        'paid': 'draft',        // Keep as draft for now
-        'overdue': 'draft',     // Keep as draft for now
-        'cancelled': 'cancelled' // For cancelled, set approval_status to cancelled
+        'pending': 'draft',     
+        'sent': 'draft',        
+        'paid': 'draft',        
+        'overdue': 'draft',     
+        'cancelled': 'cancelled' 
       };
       
       const dbStatus = statusMapping[statusLower];

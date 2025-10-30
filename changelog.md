@@ -2,6 +2,87 @@
 
 All notable changes to the PayRush SaaS application will be documented in this file.
 
+## [1.9.19] - 2025-10-30
+
+### Enhanced
+#### Email Feature Preparation - Coming Soon Notification
+
+- **📧 Email Functionality Placeholder Implementation**
+  - **Background**: Complete email infrastructure exists but email service provider integration pending
+  - **User Experience**: Added "Coming Soon" messaging for email functionality instead of broken/incomplete features
+  - **Implementation**: 
+    - **Bulk Email Actions**: Shows informative message about upcoming email feature
+    - **Visual Indicator**: Updated email button placeholder to show "(Coming Soon)"
+    - **User Guidance**: Suggests downloading PDFs and sending manually as interim solution
+    - **No Errors**: Email selection no longer causes errors, shows professional coming soon message
+  - **Future Ready**: All email infrastructure (templates, tracking, API endpoints) ready for service provider integration
+  - **Files Modified**: 
+    - `client/src/components/invoices/AdvancedInvoiceManager.js` - Added coming soon message for bulk email
+    - `client/src/components/invoices/BulkInvoiceActions.js` - Updated email button placeholder text
+
+### Fixed
+#### Invoice Dashboard Refresh Functionality - Critical UX Fix
+
+- **🔄 Refresh Button Now Actually Refreshes Data**
+  - **Problem**: Clicking the "Refresh" button in the invoice dashboard didn't refresh the current invoice data or update the displayed results
+  - **User Impact**: Users clicking refresh expected to see the latest invoice statuses and data, but nothing would change
+  - **Root Cause**: Refresh button only updated internal state (`refreshTrigger`) without actually calling the search function to fetch fresh data
+  - **Solution**: Enhanced refresh button functionality to comprehensively refresh all data
+    - **Search Results Refresh**: Now calls `handleSearch(currentSearchParams)` to refetch current search results with latest data
+    - **Parent Component Refresh**: Calls `onRefreshInvoices()` callback to refresh main dashboard invoice data  
+    - **Analytics Refresh**: Automatically updates analytics tab through existing `refreshTrigger` mechanism
+    - **User Feedback**: Shows loading spinner during refresh and displays success message
+    - **Button State**: Disables refresh button during loading to prevent duplicate requests
+  - **Enhanced User Experience**:
+    - Immediate visual feedback with loading spinner
+    - Success message confirmation: "🔄 Invoices refreshed"
+    - Button disabled during refresh operation to prevent spam clicking
+    - Comprehensive data refresh across all invoice-related components
+  - **Files Modified**: 
+    - `client/src/components/invoices/AdvancedInvoiceManager.js` - Enhanced refresh button click handler
+
+#### Invoice Status Update Database Constraint Fix
+
+- **🔧 Fixed Bulk Status Update "Cancelled" Status Issue - Complete Resolution**
+  - **Problem**: Bulk status update to "Cancelled" was failing and incorrectly showing invoices as "draft" status
+  - **Error Details**: Database constraint violation error: `new row for relation "invoices" violates check constraint "invoices_status_check"`
+  - **Root Cause**: Database constraint did not include 'cancelled' as a valid status value, only allowing: `'draft', 'sent', 'paid', 'overdue'`
+  - **Historical Context**: From changelog v1.9.10 - previous workaround mapped cancelled to 'draft' with approval_status tracking
+  - **Complete Solution**: Updated database constraint to properly support cancelled status
+    - **Database Migration**: Created migration `017_fix_status_constraint_add_cancelled.sql`
+    - **Updated Constraint**: Now allows: `'draft', 'sent', 'paid', 'overdue', 'cancelled'`
+    - **Data Migration**: Updated existing invoices with `status='draft'` and `approval_status='cancelled'` to `status='cancelled'`
+    - **Code Updates**: Removed workaround mapping, now uses direct 'cancelled' status
+  - **Implementation Details**:
+    - **SQL Migration**: Drops old constraint and creates new one with 'cancelled' included
+    - **Data Cleanup**: Fixes existing cancelled invoices to show correct status
+    - **Backend Mapping**: Updated bulk and individual status updates to use 'cancelled' directly
+    - **Verification Queries**: Included SQL to verify constraint and data consistency
+  - **Files Modified**: 
+    - `supabase/migrations/017_fix_status_constraint_add_cancelled.sql` - Database schema fix
+    - `server/services/bulkInvoiceService.js` - Updated status mapping to use 'cancelled'
+    - `client/src/components/invoices/AdvancedInvoiceManager.js` - Updated individual status mapping
+
+### User Experience Improvements
+- ✅ **Functional Refresh**: Refresh button now actually fetches latest invoice data from database
+- ✅ **Correct Status Updates**: Cancelled status now properly applied and displayed
+- ✅ **Visual Feedback**: Loading spinner and success message provide clear user feedback
+- ✅ **Database Consistency**: Status updates now work reliably without constraint violations
+- ✅ **Complete Data Sync**: Refreshes search results, analytics, and main dashboard invoice data
+
+### Technical Implementation
+- **Database Constraint Compliance**: All status updates now comply with actual production database constraints
+- **Status Mapping Logic**: Proper mapping between UI status values and database constraint requirements
+- **Error Prevention**: Eliminated database constraint violations for status updates
+- **Comprehensive Refresh Logic**: Refresh button triggers multiple data refresh operations
+- **State Management**: Proper loading state handling prevents duplicate operations
+
+### Business Value
+- **Improved Data Accuracy**: Users can refresh to see latest invoice information and status updates work correctly
+- **Better User Confidence**: Functional refresh and reliable status updates build trust in application
+- **Enhanced Workflow**: Users can immediately see updates after making changes without errors
+- **Professional Experience**: Proper functionality matches user expectations for business applications
+
 ## [1.9.18] - 2025-10-29
 
 ### Enhanced

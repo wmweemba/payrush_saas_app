@@ -172,9 +172,33 @@ const AdvancedInvoiceManager = ({
   // Update invoice status
   const updateInvoiceStatus = async (invoiceId, newStatus) => {
     try {
+      // Map status to match updated database constraint
+      // Updated constraint now allows: 'draft', 'sent', 'paid', 'overdue', 'cancelled'
+      const statusMapping = {
+        'Paid': 'paid',
+        'Sent': 'sent', 
+        'Cancelled': 'cancelled', // Now allowed by updated constraint!
+        'Overdue': 'overdue',
+        'Pending': 'draft'
+      };
+      
+      const approvalStatusMapping = {
+        'Paid': 'draft',
+        'Sent': 'draft',
+        'Cancelled': 'cancelled',
+        'Overdue': 'draft',
+        'Pending': 'draft'
+      };
+      
+      const dbStatus = statusMapping[newStatus] || newStatus.toLowerCase();
+      const dbApprovalStatus = approvalStatusMapping[newStatus] || 'draft';
+      
       const { error } = await supabase
         .from('invoices')
-        .update({ status: newStatus.toLowerCase() })
+        .update({ 
+          status: dbStatus,
+          approval_status: dbApprovalStatus
+        })
         .eq('id', invoiceId)
         .eq('user_id', user.id);
 
@@ -319,6 +343,7 @@ const AdvancedInvoiceManager = ({
     try {
       const invoiceIds = data.invoices.map(invoice => invoice.id);
       
+      // Handle bulk action initiation
       switch (action) {
         case 'updateStatus':
           await handleBulkStatusUpdate(invoiceIds, data.status);
@@ -336,9 +361,12 @@ const AdvancedInvoiceManager = ({
           throw new Error(`Unknown bulk action: ${action}`);
       }
 
-      // Refresh search results after bulk action
-      handleSearch(currentSearchParams);
-      onMessage(`✅ Bulk ${action} completed successfully for ${invoiceIds.length} invoice(s)`, false);
+      // Refresh search results after bulk action (except for email notifications)
+      if (action !== 'sendEmail') {
+        handleSearch(currentSearchParams);
+        onMessage(`✅ Bulk ${action} completed successfully for ${invoiceIds.length} invoice(s)`, false);
+      }
+      // Email success message is handled within handleBulkEmail function
     } catch (error) {
       console.error('Bulk action error:', error);
       onMessage(`❌ Bulk ${action} failed: ${error.message}`, true);
@@ -521,33 +549,14 @@ const AdvancedInvoiceManager = ({
 
   // Bulk email
   const handleBulkEmail = async (invoiceIds, data) => {
-    const { 
-      template = 'invoice_sent',
-      includeAttachment = true,
-      priority = 'normal'
-    } = data;
-
-    const response = await apiClient('/api/invoices/bulk/send-emails', {
-      method: 'POST',
-      body: JSON.stringify({ 
-        invoiceIds,
-        emailOptions: {
-          template,
-          includeAttachment,
-          priority
-        }
-      })
-    });
-
-    if (!response.success) {
-      throw new Error(response.error || 'Failed to send email notifications');
-    }
-
-    if (response.data.failed > 0) {
-      onMessage(`📧 Sent ${response.data.sent} emails successfully, ${response.data.failed} failed`, false);
-    } else {
-      onMessage(`✅ Successfully sent ${response.data.sent} email notifications`, false);
-    }
+    // Feature coming soon - email service integration pending
+    onMessage(`📧 Email feature coming soon! We're working on integrating email delivery for invoice notifications. For now, you can download PDFs and send them manually.`, false);
+    
+    // Optional: Show additional helpful information
+    console.log(`📧 Email feature requested for ${invoiceIds.length} invoices with template: ${data.template || 'invoice_sent'}`);
+    
+    // Don't throw error - treat as successful notification
+    return;
   };
 
   // Handle invoice form actions
@@ -615,12 +624,26 @@ const AdvancedInvoiceManager = ({
         </div>
         <div className="flex space-x-3">
           <Button
-            onClick={() => setRefreshTrigger(prev => prev + 1)}
+            onClick={() => {
+              setRefreshTrigger(prev => prev + 1);
+              // Refresh the current search results to get latest data
+              handleSearch(currentSearchParams);
+              // Also trigger parent refresh if available
+              if (onRefreshInvoices) {
+                onRefreshInvoices();
+              }
+              onMessage('🔄 Invoices refreshed', false);
+            }}
             variant="outline"
             size="sm"
+            disabled={searchLoading}
             className="bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-600"
           >
-            🔄 Refresh
+            {searchLoading ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+            ) : (
+              '🔄 Refresh'
+            )}
           </Button>
           <Button 
             onClick={handleCreateInvoice}

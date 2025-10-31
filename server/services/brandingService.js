@@ -201,22 +201,38 @@ class BrandingService {
    */
   async uploadAsset(userId, file, assetType = 'logo', metadata = {}) {
     try {
+      console.log('=== BRANDING SERVICE UPLOAD ===');
+      console.log('User ID:', userId);
+      console.log('Asset Type:', assetType);
+      console.log('File info:', {
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size,
+        bufferLength: file.buffer ? file.buffer.length : 0
+      });
+      console.log('Metadata:', metadata);
+
       // Validate file
+      console.log('🔍 Validating file...');
       const validation = this.validateAssetFile(file, assetType);
       if (!validation.valid) {
+        console.log('❌ File validation failed:', validation.error);
         return {
           success: false,
           error: validation.error,
           statusCode: 400
         };
       }
+      console.log('✅ File validation passed');
 
       // Generate unique filename
       const fileExtension = file.originalname.split('.').pop().toLowerCase();
       const timestamp = Date.now();
       const filename = `${userId}/${assetType}/${timestamp}.${fileExtension}`;
+      console.log('📝 Generated filename:', filename);
 
       // Upload to Supabase Storage
+      console.log('☁️  Uploading to Supabase Storage bucket:', this.storageBucket);
       const { data: uploadData, error: uploadError } = await this.supabase.storage
         .from(this.storageBucket)
         .upload(filename, file.buffer, {
@@ -225,37 +241,41 @@ class BrandingService {
         });
 
       if (uploadError) {
-        console.error('Storage error in uploadAsset:', uploadError);
+        console.error('❌ Storage upload error:', uploadError);
         return {
           success: false,
-          error: 'Failed to upload asset',
+          error: 'Failed to upload asset to storage: ' + uploadError.message,
           statusCode: 500
         };
       }
+      console.log('✅ File uploaded to storage:', uploadData);
 
       // Get public URL
+      console.log('🔗 Getting public URL...');
       const { data: publicUrlData } = this.supabase.storage
         .from(this.storageBucket)
         .getPublicUrl(filename);
 
       const fileUrl = publicUrlData.publicUrl;
+      console.log('🔗 Public URL generated:', fileUrl);
 
-      // Get user's branding to associate asset
+      // Get user's branding to associate asset (but don't fail if it doesn't exist)
+      console.log('👤 Getting user branding...');
       const brandingResult = await this.getBranding(userId);
-      if (!brandingResult.success) {
-        // Clean up uploaded file if branding retrieval fails
-        await this.supabase.storage.from(this.storageBucket).remove([filename]);
-        return {
-          success: false,
-          error: 'Failed to get user branding information',
-          statusCode: 500
-        };
+      let brandingId = null;
+      
+      if (brandingResult.success && brandingResult.data) {
+        brandingId = brandingResult.data.id;
+        console.log('✅ Branding found, ID:', brandingId);
+      } else {
+        console.warn('⚠️  No branding found for user, creating asset without branding association');
       }
 
       // Save asset information to database
+      console.log('💾 Saving asset to database...');
       const assetData = {
         user_id: userId,
-        branding_id: brandingResult.data.id,
+        branding_id: brandingId, // Can be null
         asset_name: metadata.name || file.originalname,
         asset_type: assetType,
         file_url: fileUrl,
@@ -270,6 +290,8 @@ class BrandingService {
         usage_context: metadata.usageContext || {}
       };
 
+      console.log('📝 Asset data to insert:', assetData);
+
       const { data: assetRecord, error: assetError } = await this.supabase
         .from('brand_assets')
         .insert(assetData)
@@ -278,21 +300,25 @@ class BrandingService {
 
       if (assetError) {
         // Clean up uploaded file if database insert fails
+        console.error('❌ Database insert failed:', assetError);
+        console.log('🧹 Cleaning up uploaded file...');
         await this.supabase.storage.from(this.storageBucket).remove([filename]);
-        console.error('Database error in uploadAsset:', assetError);
         return {
           success: false,
-          error: 'Failed to save asset information',
+          error: 'Failed to save asset information: ' + assetError.message,
           statusCode: 500
         };
       }
 
+      console.log('✅ Asset saved to database:', assetRecord);
+
       // If this is a logo, update the branding table
       if (assetType === 'logo') {
+        console.log('🖼️  Updating logo in branding table...');
         await this.updateLogo(userId, fileUrl, file.originalname, file.size);
       }
 
-      return {
+      const result = {
         success: true,
         data: {
           asset: assetRecord,
@@ -300,11 +326,14 @@ class BrandingService {
           filename: filename
         }
       };
+      
+      console.log('✅ Upload completed successfully:', result);
+      return result;
     } catch (error) {
-      console.error('Error in uploadAsset:', error);
+      console.error('💥 Upload asset error:', error);
       return {
         success: false,
-        error: 'Internal server error',
+        error: 'Internal server error: ' + error.message,
         statusCode: 500
       };
     }
@@ -441,6 +470,10 @@ class BrandingService {
    */
   async getBrandAssets(userId, assetType = null) {
     try {
+      console.log('=== GET BRAND ASSETS ===');
+      console.log('User ID:', userId);
+      console.log('Asset Type Filter:', assetType);
+
       let query = this.supabase
         .from('brand_assets')
         .select('*')
@@ -452,26 +485,30 @@ class BrandingService {
         query = query.eq('asset_type', assetType);
       }
 
+      console.log('🔍 Executing assets query...');
       const { data, error } = await query;
 
       if (error) {
-        console.error('Database error in getBrandAssets:', error);
+        console.error('❌ Database error in getBrandAssets:', error);
         return {
           success: false,
-          error: 'Failed to retrieve assets',
+          error: 'Failed to retrieve assets: ' + error.message,
           statusCode: 500
         };
       }
+
+      console.log('✅ Assets retrieved:', data?.length || 0, 'assets found');
+      console.log('Assets data:', data);
 
       return {
         success: true,
         data: data || []
       };
     } catch (error) {
-      console.error('Error in getBrandAssets:', error);
+      console.error('💥 Error in getBrandAssets:', error);
       return {
         success: false,
-        error: 'Internal server error',
+        error: 'Internal server error: ' + error.message,
         statusCode: 500
       };
     }
@@ -702,6 +739,47 @@ class BrandingService {
         success: false,
         error: 'Internal server error',
         statusCode: 500
+      };
+    }
+  }
+
+  /**
+   * Check if brand_assets table exists and create it if not
+   */
+  async ensureBrandAssetsTable() {
+    try {
+      // Try to query the brand_assets table to see if it exists
+      const { data, error } = await this.supabase
+        .from('brand_assets')
+        .select('id')
+        .limit(1);
+
+      if (error && error.code === 'PGRST204') {
+        // Table doesn't exist, need to create it
+        console.log('brand_assets table does not exist, need to run migration');
+        return {
+          success: false,
+          error: 'brand_assets table does not exist. Please run migration 019_ensure_brand_assets_table.sql',
+          needs_migration: true
+        };
+      }
+
+      if (error) {
+        console.error('Error checking brand_assets table:', error);
+        return {
+          success: false,
+          error: 'Failed to check brand_assets table: ' + error.message
+        };
+      }
+
+      return {
+        success: true
+      };
+    } catch (error) {
+      console.error('Error in ensureBrandAssetsTable:', error);
+      return {
+        success: false,
+        error: 'Failed to check table existence: ' + error.message
       };
     }
   }

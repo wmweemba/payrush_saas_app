@@ -219,11 +219,11 @@ Business Information:
    - **Expected:** Branding applied to invoice templates
 
 **✅ Pass Criteria:**
-- [ ] Logo upload functionality works
-- [ ] Color customization applies in real-time
+- [x] Logo upload functionality works
+- [x] Color customization applies in real-time
 - [ ] Typography changes reflected in preview
-- [ ] Business information saves correctly
-- [ ] Branding settings persist across sessions
+- [x] Business information saves correctly
+- [x] Branding settings persist across sessions
 
 ---
 

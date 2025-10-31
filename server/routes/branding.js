@@ -83,18 +83,30 @@ router.put('/', auth, async (req, res, next) => {
  */
 router.post('/upload', auth, upload.single('asset'), async (req, res, next) => {
   try {
+    console.log('=== ASSET UPLOAD REQUEST ===');
+    console.log('User ID:', req.user.id);
+    console.log('File received:', req.file ? {
+      originalname: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+      buffer: req.file.buffer ? 'Buffer present' : 'No buffer'
+    } : 'No file');
+    console.log('Request body:', req.body);
+    
     const userId = req.user.id;
     const file = req.file;
     const { assetType, name, description, altText, width, height, usageContext } = req.body;
 
     // Validate required fields
     if (!file) {
+      console.log('❌ Validation failed: No file provided');
       return res.status(400).json(
         createErrorResponse('No file provided', 400)
       );
     }
 
     if (!assetType) {
+      console.log('❌ Validation failed: No asset type provided');
       return res.status(400).json(
         createErrorResponse('Asset type is required', 400)
       );
@@ -103,11 +115,14 @@ router.post('/upload', auth, upload.single('asset'), async (req, res, next) => {
     // Validate asset type
     const validAssetTypes = ['logo', 'favicon', 'letterhead', 'signature', 'background'];
     if (!validAssetTypes.includes(assetType)) {
+      console.log('❌ Validation failed: Invalid asset type:', assetType);
       return res.status(400).json(
         createErrorResponse(`Invalid asset type. Allowed types: ${validAssetTypes.join(', ')}`, 400)
       );
     }
 
+    console.log('✅ Validation passed, preparing metadata...');
+    
     // Prepare metadata
     const metadata = {
       name: name || file.originalname,
@@ -118,16 +133,24 @@ router.post('/upload', auth, upload.single('asset'), async (req, res, next) => {
       usageContext: usageContext ? JSON.parse(usageContext) : {}
     };
 
+    console.log('📝 Metadata prepared:', metadata);
+    console.log('🚀 Calling brandingService.uploadAsset...');
+
     const result = await brandingService.uploadAsset(userId, file, assetType, metadata);
 
+    console.log('📥 Upload service result:', result);
+
     if (!result.success) {
+      console.log('❌ Upload service failed:', result.error);
       return res.status(result.statusCode || 500).json(
         createErrorResponse(result.error, result.statusCode || 500)
       );
     }
 
+    console.log('✅ Upload successful, sending response...');
     res.status(201).json(createApiResponse(true, result.data, 'Asset uploaded successfully'));
   } catch (error) {
+    console.error('💥 Upload route error:', error);
     if (error instanceof multer.MulterError) {
       if (error.code === 'LIMIT_FILE_SIZE') {
         return res.status(400).json(
@@ -145,19 +168,27 @@ router.post('/upload', auth, upload.single('asset'), async (req, res, next) => {
  */
 router.get('/assets', auth, async (req, res, next) => {
   try {
+    console.log('=== GET ASSETS REQUEST ===');
+    console.log('User ID:', req.user.id);
+    console.log('Query params:', req.query);
+    
     const userId = req.user.id;
     const { assetType } = req.query;
 
     const result = await brandingService.getBrandAssets(userId, assetType);
+    console.log('📥 Assets service result:', result);
 
     if (!result.success) {
+      console.log('❌ Assets service failed:', result.error);
       return res.status(result.statusCode || 500).json(
         createErrorResponse(result.error, result.statusCode || 500)
       );
     }
 
+    console.log('✅ Sending assets response, count:', result.data?.length || 0);
     res.json(createApiResponse(true, result.data, 'Assets retrieved successfully'));
   } catch (error) {
+    console.error('💥 Get assets route error:', error);
     next(error);
   }
 });
@@ -310,6 +341,26 @@ router.post('/validate-colors', auth, async (req, res, next) => {
     }
 
     res.json(createApiResponse(true, { valid: true }, 'Color scheme is valid'));
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /api/branding/check-tables
+ * Check if required database tables exist
+ */
+router.get('/check-tables', auth, async (req, res, next) => {
+  try {
+    const result = await brandingService.ensureBrandAssetsTable();
+
+    if (!result.success) {
+      return res.status(result.needs_migration ? 400 : 500).json(
+        createErrorResponse(result.error, result.needs_migration ? 400 : 500)
+      );
+    }
+
+    res.json(createApiResponse(true, { message: 'All required tables exist' }, 'Database tables verified'));
   } catch (error) {
     next(error);
   }

@@ -63,13 +63,56 @@ const BrandingPage = () => {
   });
 
   const [preview, setPreview] = useState(null);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   // Load branding data on component mount
   useEffect(() => {
     loadBrandingData();
     loadAssets();
     loadStats();
+    initializeStorage();
   }, []);
+
+  const initializeStorage = async () => {
+    try {
+      // First check if database tables exist
+      console.log('Checking database tables...');
+      const tableCheck = await apiClient('/api/branding/check-tables', { 
+        method: 'GET'
+      });
+      console.log('Table check response:', tableCheck);
+      
+      if (!tableCheck.success) {
+        console.error('Database tables missing:', tableCheck.error);
+        toast({
+          title: "Database Setup Required",
+          description: "Please run migration 019_ensure_brand_assets_table.sql in Supabase",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Then initialize storage bucket
+      console.log('Initializing storage bucket...');
+      const response = await apiClient('/api/branding/initialize-storage', { 
+        method: 'POST'
+      });
+      console.log('Storage initialization response:', response);
+      
+      if (response.success) {
+        console.log('Storage initialized successfully');
+      }
+    } catch (error) {
+      console.warn('Initialization failed:', error);
+      if (error.message?.includes('brand_assets')) {
+        toast({
+          title: "Database Setup Required",
+          description: "The brand_assets table is missing. Please run the database migration.",
+          variant: "destructive"
+        });
+      }
+    }
+  };
 
   const loadBrandingData = async () => {
     try {
@@ -166,23 +209,39 @@ const BrandingPage = () => {
 
   const loadAssets = async () => {
     try {
+      console.log('Loading assets from /api/branding/assets...');
       const response = await apiClient('/api/branding/assets', { method: 'GET' });
+      console.log('Assets API response:', response);
+      
       if (response.success) {
+        console.log('Assets loaded successfully:', response.data);
         setAssets(response.data);
+      } else {
+        console.warn('Assets API returned unsuccessful response:', response);
+        setAssets([]);
       }
     } catch (error) {
       console.error('Error loading assets:', error);
+      setAssets([]);
     }
   };
 
   const loadStats = async () => {
     try {
+      console.log('Loading stats from /api/branding/stats...');
       const response = await apiClient('/api/branding/stats', { method: 'GET' });
+      console.log('Stats API response:', response);
+      
       if (response.success) {
+        console.log('Stats loaded successfully:', response.data);
         setStats(response.data);
+      } else {
+        console.warn('Stats API returned unsuccessful response:', response);
+        setStats(null);
       }
     } catch (error) {
       console.error('Error loading stats:', error);
+      setStats(null);
     }
   };
 
@@ -216,23 +275,90 @@ const BrandingPage = () => {
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (file) {
-      setUploadForm({
-        ...uploadForm,
-        file,
-        name: uploadForm.name || file.name
-      });
+      processSelectedFile(file);
+    }
+  };
 
-      // Create preview for images
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = (e) => setPreview(e.target.result);
-        reader.readAsDataURL(file);
-      }
+  const processSelectedFile = (file) => {
+    // Validate file type
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Error",
+        description: "File type not supported. Please upload images, PDF, or DOC files.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate file size (10MB max)
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "Error",
+        description: "File size too large. Please upload files smaller than 10MB.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setUploadForm({
+      ...uploadForm,
+      file,
+      name: uploadForm.name || file.name
+    });
+
+    // Create preview for images
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => setPreview(e.target.result);
+      reader.readAsDataURL(file);
+    } else {
+      setPreview(null);
+    }
+  };
+
+  const handleDragOver = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragEnter = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    // Only set isDragOver to false if we're leaving the drop zone entirely
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = event.clientX;
+    const y = event.clientY;
+    if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) {
+      setIsDragOver(false);
+    }
+  };
+
+  const handleDrop = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragOver(false);
+
+    const files = event.dataTransfer.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      processSelectedFile(file);
     }
   };
 
   const handleUploadAsset = async () => {
+    console.log('=== STARTING ASSET UPLOAD ===');
+    console.log('Upload form state:', uploadForm);
+    
     if (!uploadForm.file) {
+      console.log('❌ No file selected');
       toast({
         title: "Error",
         description: "Please select a file to upload",
@@ -243,6 +369,8 @@ const BrandingPage = () => {
 
     try {
       setLoading(true);
+      console.log('📤 Creating FormData...');
+      
       const formData = new FormData();
       formData.append('asset', uploadForm.file);
       formData.append('assetType', uploadForm.assetType);
@@ -250,6 +378,14 @@ const BrandingPage = () => {
       formData.append('description', uploadForm.description);
       formData.append('altText', uploadForm.altText);
 
+      console.log('📝 FormData contents:');
+      console.log('- File:', uploadForm.file.name, uploadForm.file.type, uploadForm.file.size);
+      console.log('- Asset Type:', uploadForm.assetType);
+      console.log('- Name:', uploadForm.name);
+      console.log('- Description:', uploadForm.description);
+      console.log('- Alt Text:', uploadForm.altText);
+
+      console.log('🚀 Sending upload request to /api/branding/upload...');
       const response = await apiClient('/api/branding/upload', {
         method: 'POST',
         body: formData,
@@ -258,7 +394,10 @@ const BrandingPage = () => {
         }
       });
 
+      console.log('📥 Upload API response:', response);
+
       if (response.success) {
+        console.log('✅ Upload successful, response data:', response.data);
         toast({
           title: "Success",
           description: "Asset uploaded successfully"
@@ -273,17 +412,40 @@ const BrandingPage = () => {
           altText: ''
         });
         setPreview(null);
+        setIsDragOver(false);
+        
+        // Reset file input
+        const fileInput = document.getElementById('assetFile');
+        if (fileInput) {
+          fileInput.value = '';
+        }
         
         // Reload data
-        loadBrandingData();
-        loadAssets();
-        loadStats();
+        console.log('🔄 Reloading branding data after successful upload...');
+        await loadBrandingData();
+        await loadAssets();
+        await loadStats();
+        console.log('✅ Data reloaded after upload');
+      } else {
+        console.error('❌ Upload failed with response:', response);
+        toast({
+          title: "Error",
+          description: response.error || "Failed to upload asset",
+          variant: "destructive"
+        });
       }
     } catch (error) {
-      console.error('Error uploading asset:', error);
+      console.error('💥 Upload error caught:', error);
+      console.error('Error details:', {
+        message: error.message,
+        status: error.status,
+        data: error.data,
+        stack: error.stack
+      });
+      
       toast({
         title: "Error",
-        description: "Failed to upload asset",
+        description: "Failed to upload asset: " + (error.message || "Unknown error"),
         variant: "destructive"
       });
     } finally {
@@ -682,6 +844,17 @@ const BrandingPage = () => {
                 <Upload className="w-5 h-5 mr-2" />
                 Upload Brand Assets
               </CardTitle>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
+                <div className="flex items-start">
+                  <div className="bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mr-2 mt-0.5">i</div>
+                  <div>
+                    <p className="text-sm text-blue-800 font-medium">Two-step upload process</p>
+                    <p className="text-xs text-blue-700 mt-1">
+                      Select your file and fill in the details, then click the upload button to save it to your brand library.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -746,40 +919,131 @@ const BrandingPage = () => {
               </div>
               
               <div>
-                <Label htmlFor="assetFile">Select File</Label>
-                <Input
-                  id="assetFile"
-                  type="file"
-                  onChange={handleFileSelect}
-                  accept="image/*,.pdf,.doc,.docx"
-                  className="cursor-pointer"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Supported formats: Images (PNG, JPG, SVG), PDF, DOC, DOCX. Max size: 10MB
-                </p>
+                <div className="flex items-center justify-between mb-2">
+                  <Label htmlFor="assetFile">Select File</Label>
+                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Step 1 of 2</span>
+                </div>
+                <div
+                  onDragOver={handleDragOver}
+                  onDragEnter={handleDragEnter}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  className={`mt-2 border-2 border-dashed rounded-lg p-6 text-center transition-all cursor-pointer ${
+                    isDragOver 
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                      : uploadForm.file
+                        ? 'border-green-300 bg-green-50'
+                        : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  <input
+                    id="assetFile"
+                    type="file"
+                    onChange={handleFileSelect}
+                    accept="image/*,.pdf,.doc,.docx"
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="assetFile"
+                    className="cursor-pointer flex flex-col items-center"
+                  >
+                    {uploadForm.file ? (
+                      <>
+                        <div className="w-8 h-8 mb-2 bg-green-500 rounded-full flex items-center justify-center">
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                        <p className="text-sm text-green-700 font-medium mb-1">
+                          File selected successfully!
+                        </p>
+                        <p className="text-xs text-green-600">
+                          Complete the form below, then click upload
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className={`w-8 h-8 mb-2 transition-colors ${
+                          isDragOver ? 'text-blue-500' : 'text-gray-400'
+                        }`} />
+                        <p className="text-sm text-gray-600 mb-1">
+                          <span className="font-medium text-blue-600 hover:text-blue-500">
+                            {isDragOver ? 'Drop file here' : 'Click to select file'}
+                          </span> 
+                          {!isDragOver && ' or drag and drop'}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Images (PNG, JPG, SVG), PDF, DOC, DOCX. Max size: 10MB
+                        </p>
+                      </>
+                    )}
+                  </label>
+                </div>
+                {uploadForm.file && (
+                  <div className="mt-2 p-2 bg-gray-50 rounded border text-sm text-gray-700">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{uploadForm.file.name}</span>
+                      <span className="text-gray-500">({formatFileSize(uploadForm.file.size)})</span>
+                    </div>
+                  </div>
+                )}
               </div>
               
               {preview && (
                 <div>
                   <Label>Preview</Label>
-                  <div className="mt-2 p-4 border border-gray-200 rounded-md">
+                  <div className="mt-2 p-4 border border-gray-200 rounded-md bg-gray-50">
                     <img 
                       src={preview} 
                       alt="Preview" 
-                      className="max-h-32 w-auto object-contain"
+                      className="max-h-32 w-auto object-contain mx-auto"
                     />
                   </div>
                 </div>
               )}
-              
-              <Button 
-                onClick={handleUploadAsset} 
-                disabled={!uploadForm.file || loading}
-                className="w-full"
-              >
-                {loading ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
-                Upload Asset
-              </Button>
+
+              {/* Upload Progress Indicator */}
+              {uploadForm.file && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-blue-900">Ready to upload</span>
+                    <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">Step 2 of 2</span>
+                  </div>
+                  <p className="text-sm text-blue-700 mb-3">
+                    Click the button below to complete the upload and add this asset to your brand library.
+                  </p>
+                  <Button 
+                    onClick={handleUploadAsset} 
+                    disabled={loading}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    size="lg"
+                  >
+                    {loading ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> 
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Complete Upload & Save Asset
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+
+              {/* Show upload button in muted state when no file selected */}
+              {!uploadForm.file && (
+                <Button 
+                  disabled={true}
+                  className="w-full"
+                  variant="outline"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Select a file above to upload
+                </Button>
+              )}
             </CardContent>
           </Card>
 
@@ -823,18 +1087,18 @@ const BrandingPage = () => {
                         </Button>
                       </div>
                       
-                      {asset.file_type && asset.file_type.startsWith('image/') && asset.url && (
+                      {asset.file_type && asset.file_type.startsWith('image/') && asset.file_url && (
                         <div className="mb-3">
                           <img 
-                            src={asset.url} 
-                            alt={asset.alt_text || asset.name}
+                            src={asset.file_url} 
+                            alt={asset.alt_text || asset.asset_name}
                             className="w-full h-24 object-contain border border-gray-100 rounded bg-gray-50"
                           />
                         </div>
                       )}
                       
                       <div>
-                        <h4 className="font-medium text-gray-900 truncate">{asset.name}</h4>
+                        <h4 className="font-medium text-gray-900 truncate">{asset.asset_name}</h4>
                         {asset.description && (
                           <p className="text-sm text-gray-600 truncate">{asset.description}</p>
                         )}
@@ -844,12 +1108,12 @@ const BrandingPage = () => {
                         </div>
                       </div>
                       
-                      {asset.url && (
+                      {asset.file_url && (
                         <div className="flex space-x-2 mt-3">
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => window.open(asset.url, '_blank')}
+                            onClick={() => window.open(asset.file_url, '_blank')}
                             className="flex-1"
                           >
                             <Eye className="w-4 h-4 mr-1" />
@@ -860,8 +1124,8 @@ const BrandingPage = () => {
                             size="sm"
                             onClick={() => {
                               const link = document.createElement('a');
-                              link.href = asset.url;
-                              link.download = asset.filename || asset.name;
+                              link.href = asset.file_url;
+                              link.download = asset.file_name || asset.asset_name;
                               link.click();
                             }}
                             className="flex-1"

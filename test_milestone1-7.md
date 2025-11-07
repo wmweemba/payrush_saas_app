@@ -672,8 +672,8 @@ Template: Classic Business
 **✅ Pass Criteria:**
 - [x] PDF generation completes successfully
 - [x] Branding (logo, colors) applied correctly
-- [ ] All invoice data properly formatted
-- [ ] Template styling differences visible
+- [x] All invoice data properly formatted
+- [x] Template styling differences visible
 - [x] Download functionality works
 
 ---

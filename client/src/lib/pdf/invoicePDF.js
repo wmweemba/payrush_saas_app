@@ -185,16 +185,16 @@ export const generateDatabaseTemplatedPDF = async (invoice, profileData = {}, te
   
   // Invoice Details Box (positioned on blue background with proper spacing)
   pdf.setTextColor(255, 255, 255);  // White text for visibility
-  pdf.setFontSize(templateConfig.fonts.body.size - 1);  // Slightly smaller for better fit
+  pdf.setFontSize(templateConfig.fonts.body.size - 2);  // Smaller text for better fit
   pdf.setFont('helvetica', templateConfig.fonts.body.weight);
   
-  const invoiceDetailsX = pageWidth - 65;
-  const invoiceDetailsY = 28;  // Adjusted to fit within header
+  const invoiceDetailsX = pageWidth - 80;  // Moved further left to prevent cutoff
+  const invoiceDetailsY = 22;  // Moved higher to ensure all text fits within header
   
   pdf.text(`Invoice ID: #${invoice.id?.slice(0, 8) || 'N/A'}`, invoiceDetailsX, invoiceDetailsY);
-  pdf.text(`Date: ${new Date(invoice.created_at || new Date()).toLocaleDateString()}`, invoiceDetailsX, invoiceDetailsY + 4);
-  pdf.text(`Due Date: ${new Date(invoice.due_date).toLocaleDateString()}`, invoiceDetailsX, invoiceDetailsY + 8);
-  pdf.text(`Status: ${(invoice.status || 'draft').toUpperCase()}`, invoiceDetailsX, invoiceDetailsY + 12);
+  pdf.text(`Date: ${new Date(invoice.created_at || new Date()).toLocaleDateString()}`, invoiceDetailsX, invoiceDetailsY + 3.5);
+  pdf.text(`Due Date: ${new Date(invoice.due_date).toLocaleDateString()}`, invoiceDetailsX, invoiceDetailsY + 7);
+  pdf.text(`Status: ${(invoice.status || 'draft').toUpperCase()}`, invoiceDetailsX, invoiceDetailsY + 10.5);
   
   // Business Details Section (start well below the blue header)
   let currentY = templateConfig.layout.headerHeight + 15;  // Increased margin from header
@@ -257,9 +257,9 @@ export const generateDatabaseTemplatedPDF = async (invoice, profileData = {}, te
   pdf.setFont('helvetica', templateConfig.fonts.body.weight);
   
   pdf.text('Description', templateConfig.layout.marginX + 5, tableStartY + 7);
-  pdf.text('Quantity', pageWidth - 80, tableStartY + 7, { align: 'center' });
-  pdf.text('Rate', pageWidth - 50, tableStartY + 7, { align: 'center' });
-  pdf.text('Amount', pageWidth - templateConfig.layout.marginX, tableStartY + 7, { align: 'right' });
+  pdf.text('Quantity', pageWidth - 90, tableStartY + 7, { align: 'center' });
+  pdf.text('Rate', pageWidth - 60, tableStartY + 7, { align: 'center' });
+  pdf.text('Amount', pageWidth - templateConfig.layout.marginX - 5, tableStartY + 7, { align: 'right' });
   
   // Table Border
   pdf.setDrawColor(secondaryRgb.r, secondaryRgb.g, secondaryRgb.b);
@@ -282,14 +282,14 @@ export const generateDatabaseTemplatedPDF = async (invoice, profileData = {}, te
       pdf.text(description, templateConfig.layout.marginX + 5, currentY);
       
       // Quantity
-      pdf.text((item.quantity || 1).toString(), pageWidth - 80, currentY, { align: 'center' });
+      pdf.text((item.quantity || 1).toString(), pageWidth - 90, currentY, { align: 'center' });
       
       // Unit Price
-      pdf.text(formatCurrency(item.unit_price || 0, invoice.currency), pageWidth - 50, currentY, { align: 'center' });
+      pdf.text(formatCurrency(item.unit_price || 0, invoice.currency), pageWidth - 60, currentY, { align: 'center' });
       
       // Line Total
       const lineTotal = item.total || (item.quantity * item.unit_price) || 0;
-      pdf.text(formatCurrency(lineTotal, invoice.currency), pageWidth - templateConfig.layout.marginX, currentY, { align: 'right' });
+      pdf.text(formatCurrency(lineTotal, invoice.currency), pageWidth - templateConfig.layout.marginX - 5, currentY, { align: 'right' });
       
       // Row border
       pdf.setDrawColor(secondaryRgb.r, secondaryRgb.g, secondaryRgb.b);
@@ -304,9 +304,9 @@ export const generateDatabaseTemplatedPDF = async (invoice, profileData = {}, te
     
     const description = invoice.description || 'Invoice Payment';
     pdf.text(description, templateConfig.layout.marginX + 5, currentY);
-    pdf.text('1', pageWidth - 80, currentY, { align: 'center' });
-    pdf.text(formatCurrency(invoice.amount, invoice.currency), pageWidth - 50, currentY, { align: 'center' });
-    pdf.text(formatCurrency(invoice.amount, invoice.currency), pageWidth - templateConfig.layout.marginX, currentY, { align: 'right' });
+    pdf.text('1', pageWidth - 90, currentY, { align: 'center' });
+    pdf.text(formatCurrency(invoice.amount, invoice.currency), pageWidth - 60, currentY, { align: 'center' });
+    pdf.text(formatCurrency(invoice.amount, invoice.currency), pageWidth - templateConfig.layout.marginX - 5, currentY, { align: 'right' });
     
     // Row border
     pdf.setDrawColor(secondaryRgb.r, secondaryRgb.g, secondaryRgb.b);
@@ -317,7 +317,7 @@ export const generateDatabaseTemplatedPDF = async (invoice, profileData = {}, te
   
   // Totals Section
   currentY += 15;
-  const totalsX = pageWidth - 80;
+  const totalsX = pageWidth - 90;  // Moved left to provide more space
   
   // Calculate totals
   const subtotal = invoice.line_items 
@@ -327,26 +327,26 @@ export const generateDatabaseTemplatedPDF = async (invoice, profileData = {}, te
   // Subtotal
   pdf.setFont('helvetica', 'normal');
   pdf.text('Subtotal:', totalsX, currentY);
-  pdf.text(formatCurrency(subtotal, invoice.currency), pageWidth - templateConfig.layout.marginX, currentY, { align: 'right' });
+  pdf.text(formatCurrency(subtotal, invoice.currency), pageWidth - templateConfig.layout.marginX - 5, currentY, { align: 'right' });
   
   currentY += 8;
   
   // Total (highlight with template primary color)
   pdf.setFillColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
-  pdf.rect(totalsX - 5, currentY - 5, 75, 12, 'F');
+  pdf.rect(totalsX - 5, currentY - 5, 85, 12, 'F');  // Made box slightly wider
   
   pdf.setTextColor(255, 255, 255);
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(templateConfig.fonts.subheading.size);
   pdf.text('Total:', totalsX, currentY + 2);
-  pdf.text(formatCurrency(invoice.amount, invoice.currency), pageWidth - templateConfig.layout.marginX, currentY + 2, { align: 'right' });
+  pdf.text(formatCurrency(invoice.amount, invoice.currency), pageWidth - templateConfig.layout.marginX - 5, currentY + 2, { align: 'right' });
   
   // Currency Information
   currentY += 20;
   pdf.setTextColor(secondaryRgb.r, secondaryRgb.g, secondaryRgb.b);
   pdf.setFontSize(templateConfig.fonts.small.size);
   pdf.setFont('helvetica', templateConfig.fonts.small.weight);
-  pdf.text(`Currency: ${currency.name} (${currency.code}) ${currency.flag}`, templateConfig.layout.marginX, currentY);
+  pdf.text(`Currency: ${currency.name} (${currency.code})`, templateConfig.layout.marginX, currentY);
   
   // Footer with template accent
   const footerY = pageHeight - 30;

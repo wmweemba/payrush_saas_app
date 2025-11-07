@@ -54,7 +54,7 @@ export const getTemplateConfig = (templateId) => {
         small: { size: 8, weight: 'normal' }
       },
       layout: {
-        headerHeight: 40,
+        headerHeight: 55,
         marginX: 20,
         marginY: 20
       }
@@ -111,7 +111,7 @@ export const getTemplateConfig = (templateId) => {
         small: { size: 8, weight: 'normal' }
       },
       layout: {
-        headerHeight: 35,
+        headerHeight: 40,
         marginX: 20,
         marginY: 20
       }
@@ -388,7 +388,7 @@ const generateMinimalTemplate = (pdf, invoice, profileData, template, currency, 
   currentY += 30;
   pdf.setTextColor(160, 160, 160);
   pdf.setFontSize(7);
-  pdf.text(`${currency.code} ${currency.flag}`, 30, currentY);
+  pdf.text(`${currency.code}`, 30, currentY);
   
   // Ultra-minimal footer
   const footerY = pageHeight - 30;
@@ -547,7 +547,7 @@ const generateModernTemplate = (pdf, invoice, profileData, template, currency, p
   currentY += 25;
   pdf.setTextColor(100, 100, 100);
   pdf.setFontSize(8);
-  pdf.text(`Currency: ${currency.name} (${currency.code}) ${currency.flag}`, template.layout.marginX, currentY);
+  pdf.text(`Currency: ${currency.name} (${currency.code})`, template.layout.marginX, currentY);
   
   // MODERN: Purple footer
   const footerY = pageHeight - 40;
@@ -747,7 +747,7 @@ const generateClassicTemplate = (pdf, invoice, profileData, template, currency, 
   
   // Currency info
   pdf.setFontSize(8);
-  pdf.text(`Currency: ${currency.name} (${currency.code}) ${currency.flag}`, 25, currentY + 40);
+  pdf.text(`Currency: ${currency.name} (${currency.code})`, 25, currentY + 40);
   
   // CLASSIC: Formal footer with border
   const footerY = pageHeight - 40;

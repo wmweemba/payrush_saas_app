@@ -2,6 +2,53 @@
 
 All notable changes to the PayRush SaaS application will be documented in this file.
 
+## [1.9.23] - 2025-11-07
+
+### Fixed
+#### Invoice PDF Formatting Issues - Final Resolution
+
+- **🖼️ Header Text Cutoff in PDF Invoices**
+  - **Problem**: Invoice details (company info and invoice data) getting cut off in PDF header areas
+  - **Root Cause**: Insufficient header heights and text positioning causing overlap with content areas
+  - **Impact**: Important invoice information partially hidden or unreadable in generated PDFs
+  - **Solution**: Enhanced PDF formatting with improved spacing and positioning
+    - **Increased Header Heights**: 
+      - Classic template header: 35px → 40px for additional text space
+      - Modern/Professional templates: 40px → 45px, 50px → 55px for better content fit
+    - **Optimized Invoice Details Position**: Moved invoice details from Y=28 to Y=22 for better placement
+    - **Reduced Font Sizes**: Changed from `body.size-1` to `body.size-2` for better fit within headers
+    - **Improved Line Spacing**: Reduced spacing from 4px to 3.5px between invoice detail lines
+    - **Removed Problematic Elements**: Eliminated corrupted currency flags that didn't render properly
+  - **Result**: Clean, professional PDF layout with all text properly visible and formatted
+
+- **💰 Currency Display Enhancement**
+  - **Removed Unicode Currency Flags**: Eliminated `${currency.flag}` from all currency displays
+  - **Reason**: Unicode flag emojis don't render properly in jsPDF causing display corruption
+  - **Enhanced Currency Display**: Clean currency code display without flag symbols
+  - **Consistent Formatting**: Uniform currency presentation across all PDF templates
+  - **Better Compatibility**: Improved PDF rendering across different systems and viewers
+
+- **📊 Table Text Cutoff Prevention**
+  - **Problem**: Long text in invoice tables getting cut off or overlapping
+  - **Solution**: Adjusted table column spacing and text positioning for better content fit
+  - **Enhanced Readability**: Improved table layout for cleaner presentation
+  - **Professional Appearance**: Consistent table formatting across all invoice templates
+
+### Technical Implementation
+- **PDF Generation Logic**: Updated positioning calculations in `invoicePDF.js`
+- **Template System**: Enhanced all templates in `templates.js` with improved header sizing
+- **Cross-Template Consistency**: Applied formatting fixes across Classic, Modern, Professional, and Minimal templates
+- **Quality Assurance**: Verified formatting improvements work with various invoice data types
+
+### User Experience Improvements
+- ✅ **Professional PDF Output**: All invoice details now properly visible in PDF headers
+- ✅ **Consistent Formatting**: Uniform text positioning and spacing across all templates
+- ✅ **Enhanced Readability**: Clean, professional appearance without text cutoffs
+- ✅ **Reliable Currency Display**: Consistent currency formatting without rendering issues
+- ✅ **Cross-Browser Compatible**: PDF formatting works consistently across different systems
+
+---
+
 ## [1.9.22] - 2025-11-07
 
 ### Fixed

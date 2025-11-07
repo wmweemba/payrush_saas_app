@@ -2,6 +2,57 @@
 
 All notable changes to the PayRush SaaS application will be documented in this file.
 
+## [1.9.24] - 2025-11-07
+
+### Improved
+#### Navigation Consolidation - UI Cleanup
+
+- **🧭 Dashboard Navigation Consolidation**
+  - **Problem**: Duplicate navigation causing UI confusion with Branding and Numbering appearing both as main tabs AND as sub-tabs under Templates
+  - **Impact**: Cluttered dashboard navigation and inconsistent user experience
+  - **Solution**: Consolidated navigation structure to eliminate duplication
+    - **Removed Duplicate Tabs**: Eliminated standalone Branding and Numbering tabs from main navigation
+    - **Enhanced Templates Page**: Integrated full Branding and Numbering functionality as sub-tabs within Templates section
+    - **Backward Compatibility**: Created redirect pages for `/dashboard/branding` and `/dashboard/numbering` URLs
+    - **URL Parameter Support**: Added `?tab=branding` and `?tab=numbering` parameter handling for direct navigation
+    - **Preserved Functionality**: All existing features retained in new consolidated location
+  - **Result**: Cleaner, less cluttered dashboard with intuitive navigation hierarchy
+  
+- **🔄 Smart Redirects for Legacy URLs**
+  - **Legacy URL Handling**: Old branding and numbering URLs now redirect to Templates page with appropriate tab active
+  - **User Experience**: Seamless transition for users with bookmarked URLs or direct links
+  - **Loading States**: Added professional loading indicators during redirect process
+  - **Tab Activation**: Automatic tab switching based on URL parameters for direct access
+
+- **📱 Enhanced Templates Interface**
+  - **Full Feature Integration**: Complete branding management (company info, colors, fonts, asset upload, settings) within Templates
+  - **Complete Numbering Schemes**: Full CRUD operations, pattern preview, dialog forms integrated as Templates sub-tab
+  - **Consistent UI**: Unified design language across all Templates sub-sections
+  - **Improved Organization**: Logical grouping of related functionality under single Templates umbrella
+
+### Fixed
+#### Numbering Schemes UI & Database Issues
+
+- **🎛️ Switch Component Visual Feedback**
+  - **Problem**: Toggle switches in numbering scheme modal (Include Year, Include Month, Include Quarter) showed no visual indication when selected
+  - **Impact**: Users couldn't tell if switches were enabled or disabled, causing confusion during scheme creation
+  - **Solution**: Enhanced Switch component styling and visual feedback
+    - **Improved Visual Contrast**: Enhanced checked/unchecked state colors with better contrast ratios
+    - **Added Descriptions**: Clear explanatory text under each switch option
+    - **Better Styling**: Enhanced switch appearance with improved hover and focus states
+    - **Consistent Design**: Standardized switch styling across all numbering scheme options
+  - **Result**: Clear visual feedback showing switch states, improved user experience during scheme configuration
+
+- **🗄️ Database Schema Mismatch Resolution**
+  - **Problem**: Database error `PGRST204: Could not find the 'reset_on' column` when creating numbering schemes
+  - **Root Cause**: API service layer using incorrect column name (`reset_on`) instead of actual database column (`reset_frequency`)
+  - **Impact**: Complete failure of numbering scheme creation functionality
+  - **Solution**: Fixed column name mapping in numberingSchemeService.js
+    - **Corrected Field Mapping**: Changed `reset_on` to `reset_frequency` in create/update operations
+    - **Schema Alignment**: Ensured API matches actual database schema from migration files
+    - **Consistent Naming**: Standardized field names between frontend, API, and database layers
+  - **Result**: Numbering schemes now save successfully with proper database integration
+
 ## [1.9.23] - 2025-11-07
 
 ### Fixed

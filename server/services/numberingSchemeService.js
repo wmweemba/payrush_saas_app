@@ -35,7 +35,7 @@ class NumberingSchemeService {
           sequence_length,
           current_number,
           reset_frequency,
-          reset_on,
+          last_reset_date,
           pattern_preview,
           include_year,
           include_month,
@@ -191,7 +191,7 @@ class NumberingSchemeService {
         sequence_length: schemeData.sequence_length || 3,
         current_number: schemeData.current_number || 1,
         reset_frequency: schemeData.reset_frequency || 'never',
-        reset_on: schemeData.reset_on || null,
+        last_reset_date: null,
         pattern_preview: patternPreview,
         include_year: schemeData.include_year || false,
         include_month: schemeData.include_month || false,
@@ -332,7 +332,6 @@ class NumberingSchemeService {
         }
         updateFields.reset_frequency = updateData.reset_frequency;
       }
-      if (updateData.reset_on !== undefined) updateFields.reset_on = updateData.reset_on;
       if (updateData.include_year !== undefined) updateFields.include_year = updateData.include_year;
       if (updateData.include_month !== undefined) updateFields.include_month = updateData.include_month;
       if (updateData.include_quarter !== undefined) updateFields.include_quarter = updateData.include_quarter;

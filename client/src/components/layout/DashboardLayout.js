@@ -148,16 +148,6 @@ export default function DashboardLayout({ children, currentTab = null, title, de
                 🎨 Templates
               </Link>
               <Link 
-                href="/dashboard/branding"
-                className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
-                  currentTab === 'branding'
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                }`}
-              >
-                🎨 Branding
-              </Link>
-              <Link 
                 href="/dashboard/notes"
                 className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
                   currentTab === 'notes'
@@ -166,16 +156,6 @@ export default function DashboardLayout({ children, currentTab = null, title, de
                 }`}
               >
                 📝 Notes
-              </Link>
-              <Link 
-                href="/dashboard/numbering"
-                className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
-                  currentTab === 'numbering'
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                }`}
-              >
-                🔢 Numbering
               </Link>
               <Link
                 href="/dashboard/approvals"

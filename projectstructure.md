@@ -75,13 +75,13 @@ app/
 │   └── 📁 update-profile/          # Profile update endpoints
 ├── 📁 dashboard/                   # Main application dashboard
 │   ├── 📁 approvals/               # Invoice approval workflows
-│   ├── 📁 branding/                # Business branding management
+│   ├── 📁 branding/                # [REDIRECT] -> Templates tab (legacy URL support)
 │   ├── 📁 clients/                 # Client management interface
 │   ├── 📁 notes/                   # Notes and communication
-│   ├── 📁 numbering/               # Invoice numbering schemes
+│   ├── 📁 numbering/               # [REDIRECT] -> Templates tab (legacy URL support)
 │   ├── 📁 payments/                # Payment tracking interface
 │   ├── 📁 profile-settings/        # User profile management
-│   ├── 📁 templates/               # Invoice template management
+│   ├── 📁 templates/               # **CONSOLIDATED** Template, Branding & Numbering management
 │   │   └── 📁 editor/[id]/         # Template visual editor
 │   └── 📄 page.js                  # Main dashboard (invoice management)
 ├── 📁 debug/                       # Development debugging tools
@@ -89,6 +89,18 @@ app/
 ├── 📁 login/                       # User authentication
 └── 📁 signup/                      # User registration
 ```
+
+#### 🎯 Navigation Consolidation (Nov 2025)
+
+**Important Change**: The application has undergone a navigation consolidation to improve UI clarity:
+
+- **Previous Structure**: Branding and Numbering existed as both main navigation tabs AND sub-tabs under Templates
+- **Current Structure**: All functionality consolidated under Templates with intelligent redirects
+- **User Experience**: 
+  - Main navigation now shows: Invoices, Clients, **Templates** (contains Branding & Numbering), Notes, Approvals, Payments, Settings
+  - Legacy URLs (`/dashboard/branding`, `/dashboard/numbering`) automatically redirect to Templates with appropriate tab active
+  - URL parameters (`?tab=branding`, `?tab=numbering`) supported for direct navigation
+  - All existing functionality preserved in new consolidated location
 
 ### Components Library (`/client/src/components`)
 ```

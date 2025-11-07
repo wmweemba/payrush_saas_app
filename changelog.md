@@ -51,11 +51,19 @@ All notable changes to the PayRush SaaS application will be documented in this f
     - **Corrected Field Mapping**: Changed `reset_on` to `reset_frequency` in create/update operations
     - **Schema Alignment**: Ensured API matches actual database schema from migration files
     - **Consistent Naming**: Standardized field names between frontend, API, and database layers
-  - **Result**: Numbering schemes now save successfully with proper database integration
+    - **Result**: Numbering schemes now save successfully with proper database integration
 
-## [1.9.23] - 2025-11-07
+- **🧭 Additional Navigation Cleanup - Approvals Tab**
+  - **Problem**: Duplicate Approval navigation - appeared both as main navigation tab AND as Templates sub-tab
+  - **Impact**: Confusion between main Approvals functionality and template-related approval workflows
+  - **Solution**: Removed Approval sub-tab from Templates page to eliminate duplication
+    - **Removed Duplicate Sub-tab**: Eliminated "Approval" tab from Templates page navigation
+    - **Preserved Main Navigation**: Kept standalone Approvals tab in main dashboard navigation
+    - **Clean Separation**: Clear distinction between template management and approval workflows
+    - **Updated URL Handling**: Removed 'approval' from Templates page URL parameter validation
+  - **Result**: Clean navigation hierarchy with Approvals as dedicated main section, Templates focused on design/configuration
 
-### Fixed
+## [1.9.23] - 2025-11-07### Fixed
 #### Invoice PDF Formatting Issues - Final Resolution
 
 - **🖼️ Header Text Cutoff in PDF Invoices**

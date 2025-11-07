@@ -1607,7 +1607,7 @@ export default function TemplatesPage() {
   const [activeTab, setActiveTab] = useState(() => {
     // Check URL parameter for tab, default to 'templates'
     const tabParam = searchParams?.get('tab');
-    return ['templates', 'branding', 'numbering', 'approval'].includes(tabParam) ? tabParam : 'templates';
+    return ['templates', 'branding', 'numbering'].includes(tabParam) ? tabParam : 'templates';
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState('all');
@@ -1617,7 +1617,7 @@ export default function TemplatesPage() {
   // Handle URL parameter changes
   useEffect(() => {
     const tabParam = searchParams?.get('tab');
-    if (tabParam && ['templates', 'branding', 'numbering', 'approval'].includes(tabParam)) {
+    if (tabParam && ['templates', 'branding', 'numbering'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [searchParams]);
@@ -2104,13 +2104,6 @@ export default function TemplatesPage() {
             <span className="w-4 h-4 mr-2 text-sm">🔢</span>
             Numbering
           </TabsTrigger>
-          <TabsTrigger 
-            value="approval"
-            className="data-[state=active]:bg-orange-600 data-[state=active]:text-white data-[state=active]:shadow-md font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200"
-          >
-            <Eye className="w-4 h-4 mr-2" />
-            Approval
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="templates" className="space-y-6">
@@ -2189,23 +2182,6 @@ export default function TemplatesPage() {
 
         <TabsContent value="numbering">
           <NumberingTabContent />
-        </TabsContent>
-
-        <TabsContent value="approval">
-          <Card>
-            <CardHeader>
-              <CardTitle>Approval Workflows</CardTitle>
-              <CardDescription>
-                Set up invoice approval processes
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <Settings className="w-12 h-12 mx-auto mb-4" />
-                <p>Approval workflows coming soon...</p>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
       </Tabs>
       </div>

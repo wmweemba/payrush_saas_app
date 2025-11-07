@@ -25,8 +25,11 @@ router.post('/', async (req, res, next) => {
       status,
       due_date,
       is_line_item_invoice,
-      client_id
+      client_id,
+      template_id
     } = req.body;
+
+    console.log('🏗️ Creating invoice with template_id:', template_id);
 
     // Validate required fields
     if (!customer_name || !customer_name.trim()) {
@@ -64,7 +67,8 @@ router.post('/', async (req, res, next) => {
       currency: currency,
       status: status || 'draft',
       due_date: finalDueDate,
-      is_line_item_invoice: is_line_item_invoice || false
+      is_line_item_invoice: is_line_item_invoice || false,
+      template_id: template_id || null
     };
 
     // Add client_id if provided

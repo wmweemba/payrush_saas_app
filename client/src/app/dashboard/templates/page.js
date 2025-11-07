@@ -197,12 +197,89 @@ export default function TemplatesPage() {
       
       <CardContent>
         <div className="space-y-4">
-          {/* Template preview placeholder */}
-          <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-lg h-32 flex items-center justify-center border-2 border-dashed border-gray-200 dark:border-gray-600 group-hover:border-blue-300 transition-colors">
-            <div className="text-center text-gray-500 dark:text-gray-400">
-              <Eye className="w-8 h-8 mx-auto mb-2" />
-              <p className="text-sm font-medium">Template Preview</p>
-            </div>
+          {/* Template preview with actual design preview */}
+          <div className="bg-white rounded-lg h-32 border border-gray-200 overflow-hidden group-hover:border-blue-300 transition-colors relative">
+            {/* Mini preview based on template type */}
+            {template.template_type === 'professional' && (
+              <div className="h-full relative">
+                <div className="bg-blue-600 h-6 w-full"></div>
+                <div className="p-2 space-y-1">
+                  <div className="flex justify-between">
+                    <div className="bg-gray-300 h-2 w-16 rounded"></div>
+                    <div className="bg-gray-300 h-2 w-12 rounded"></div>
+                  </div>
+                  <div className="bg-gray-200 h-1 w-full rounded"></div>
+                  <div className="bg-gray-200 h-1 w-3/4 rounded"></div>
+                  <div className="bg-gray-200 h-1 w-1/2 rounded"></div>
+                  <div className="absolute bottom-2 right-2 bg-blue-600 text-white text-xs px-1 py-0.5 rounded">TOTAL</div>
+                </div>
+              </div>
+            )}
+            {template.template_type === 'minimal' && (
+              <div className="h-full p-3 space-y-2 relative">
+                <div className="border-b border-gray-300 pb-1">
+                  <div className="flex justify-between">
+                    <div className="bg-gray-400 h-2 w-20 rounded"></div>
+                    <div className="bg-gray-300 h-1 w-10 rounded"></div>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="bg-gray-200 h-1 w-full rounded"></div>
+                  <div className="bg-gray-200 h-1 w-4/5 rounded"></div>
+                  <div className="bg-gray-200 h-1 w-3/5 rounded"></div>
+                </div>
+                <div className="absolute bottom-2 right-2 text-xs font-mono">$0.00</div>
+              </div>
+            )}
+            {template.template_type === 'modern' && (
+              <div className="h-full relative">
+                <div className="bg-purple-600 h-8 w-full relative">
+                  <div className="absolute top-1 right-1 bg-purple-400 w-3 h-3 rounded-full"></div>
+                  <div className="absolute top-2 right-6 bg-purple-300 w-2 h-2"></div>
+                </div>
+                <div className="p-2 space-y-1">
+                  <div className="flex justify-between">
+                    <div className="bg-gray-300 h-2 w-18 rounded"></div>
+                    <div className="bg-purple-300 h-2 w-14 rounded"></div>
+                  </div>
+                  <div className="bg-gray-200 h-1 w-full rounded"></div>
+                  <div className="bg-gray-200 h-1 w-4/5 rounded"></div>
+                  <div className="absolute bottom-2 right-2 bg-purple-600 text-white text-xs px-1 py-0.5 rounded font-bold">TOTAL</div>
+                </div>
+              </div>
+            )}
+            {template.template_type === 'classic' && (
+              <div className="h-full border-2 border-gray-400 relative">
+                <div className="border border-gray-300 m-1 h-[calc(100%-8px)] p-2">
+                  <div className="border-b-2 border-gray-600 pb-1 mb-1">
+                    <div className="bg-gray-600 h-2 w-20 rounded"></div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="grid grid-cols-4 gap-1">
+                      <div className="bg-gray-300 h-1 rounded"></div>
+                      <div className="bg-gray-300 h-1 rounded"></div>
+                      <div className="bg-gray-300 h-1 rounded"></div>
+                      <div className="bg-gray-300 h-1 rounded"></div>
+                    </div>
+                    <div className="grid grid-cols-4 gap-1">
+                      <div className="bg-gray-200 h-1 rounded"></div>
+                      <div className="bg-gray-200 h-1 rounded"></div>
+                      <div className="bg-gray-200 h-1 rounded"></div>
+                      <div className="bg-gray-200 h-1 rounded"></div>
+                    </div>
+                  </div>
+                  <div className="absolute bottom-2 right-2 bg-gray-600 text-white text-xs px-1 py-0.5">TOTAL</div>
+                </div>
+              </div>
+            )}
+            {!['professional', 'minimal', 'modern', 'classic'].includes(template.template_type) && (
+              <div className="h-full flex items-center justify-center text-center text-gray-500 dark:text-gray-400">
+                <div>
+                  <Eye className="w-6 h-6 mx-auto mb-1" />
+                  <p className="text-xs font-medium">Custom Template</p>
+                </div>
+              </div>
+            )}
           </div>
           
           {/* Template metadata */}
@@ -384,13 +461,26 @@ export default function TemplatesPage() {
             Create and customize professional invoice templates for your business
           </p>
         </div>
-        <Button 
-          onClick={() => window.open('/dashboard/templates/editor/new', '_blank')} 
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 h-auto font-medium shadow-lg hover:shadow-xl transition-all duration-200"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          Create Template
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={async () => {
+              console.log('🧪 Testing static templates...');
+              const { testTemplateGeneration } = await import('@/lib/pdf/templates');
+              await testTemplateGeneration();
+            }} 
+            variant="outline"
+            className="border-purple-600 text-purple-600 hover:bg-purple-50 dark:border-purple-400 dark:text-purple-400"
+          >
+            🧪 Test Templates
+          </Button>
+          <Button 
+            onClick={() => window.open('/dashboard/templates/editor/new', '_blank')} 
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 h-auto font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Create Template
+          </Button>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>

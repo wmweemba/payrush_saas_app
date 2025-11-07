@@ -53,21 +53,44 @@ export const getTemplateForPDF = async (templateId) => {
   try {
     if (!templateId) {
       // Return default professional template if no ID provided
+      console.log('📋 No templateId provided, using default');
       return await getDefaultTemplate();
     }
 
-    const response = await apiClient(`/api/templates/${templateId}`, {
-      method: 'GET'
-    });
+    // Check if templateId is a static template type (not a UUID)
+    const staticTemplateTypes = ['professional', 'minimal', 'modern', 'classic'];
+    if (staticTemplateTypes.includes(templateId)) {
+      console.log('🎨 Static template type detected:', templateId);
+      // Return a simplified template config for static templates
+      return {
+        id: templateId,
+        name: templateId.charAt(0).toUpperCase() + templateId.slice(1),
+        type: templateId,
+        isSystem: true,
+        isStatic: true // Flag to indicate this is a static template
+      };
+    }
 
-    if (response.success && response.data) {
-      return await formatTemplateForPDF(response.data);
+    // Only try to fetch from API if it looks like a UUID
+    if (templateId.length > 10 && templateId.includes('-')) {
+      console.log('🆔 UUID template detected, fetching from API:', templateId);
+      
+      const response = await apiClient(`/api/templates/${templateId}`, {
+        method: 'GET'
+      });
+
+      if (response.success && response.data) {
+        return await formatTemplateForPDF(response.data);
+      } else {
+        console.warn(`❌ Template ${templateId} not found in database, using default`);
+        return await getDefaultTemplate();
+      }
     } else {
-      console.warn(`Template ${templateId} not found, using default`);
+      console.warn(`⚠️ Invalid template ID format: ${templateId}, using default`);
       return await getDefaultTemplate();
     }
   } catch (error) {
-    console.error('Error fetching template:', error);
+    console.error('❌ Error fetching template:', error);
     return await getDefaultTemplate();
   }
 };
@@ -177,7 +200,7 @@ export const getDefaultTemplate = async () => {
   const branding = await getBusinessBranding();
   
   return {
-    id: 'default',
+    id: 'professional', // Use 'professional' as the fallback ID for static templates
     name: 'Professional',
     type: 'professional',
     isSystem: true,
@@ -267,8 +290,8 @@ export const getAvailableTemplates = async () => {
  */
 export const recordTemplateUsage = async (templateId) => {
   try {
-    if (!templateId || templateId === 'default') {
-      return; // Don't track usage for default fallback
+    if (!templateId || templateId === 'default' || templateId === 'professional' || templateId === 'minimal' || templateId === 'modern' || templateId === 'classic') {
+      return; // Don't track usage for static template fallbacks
     }
 
     await apiClient(`/api/templates/${templateId}/use`, {

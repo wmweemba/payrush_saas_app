@@ -555,7 +555,7 @@ Template: Modern Professional
 - [x] Invoice creation form loads properly
 - [x] Client selection auto-populates currency
 - [x] Line items calculate correctly
-- [ ] Template selection works
+- [x] Template selection works
 - [x] Invoice saves and appears in list
 
 ---
@@ -671,7 +671,7 @@ Template: Classic Business
 
 **✅ Pass Criteria:**
 - [x] PDF generation completes successfully
-- [ ] Branding (logo, colors) applied correctly
+- [x] Branding (logo, colors) applied correctly
 - [ ] All invoice data properly formatted
 - [ ] Template styling differences visible
 - [x] Download functionality works

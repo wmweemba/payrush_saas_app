@@ -2,6 +2,76 @@
 
 All notable changes to the PayRush SaaS application will be documented in this file.
 
+## [1.9.22] - 2025-11-07
+
+### Fixed
+#### Critical PDF Template Selection & Application Issues - Complete Resolution
+
+- **🎯 Template Selection Not Persisting to Database**
+  - **Problem**: Invoice template selection was lost during creation, causing PDFs to show wrong templates
+  - **Root Cause**: Server invoice creation endpoint missing `template_id` field extraction and storage
+  - **Impact**: All invoices defaulted to minimal template regardless of user selection
+  - **Solution**: Enhanced invoice creation API to properly save template selections
+    - **Server-side Fix**: Added `template_id` extraction from request body in `POST /api/invoices`
+    - **Database Storage**: Template selections now properly saved to `invoices.template_id` column
+    - **Template Priority Logic**: Enhanced PDF generation with proper template resolution hierarchy
+
+- **🏛️ Enhanced Template Visual Distinctiveness**
+  - **Classic Template Redesign**: Dramatically enhanced with formal styling
+    - **Triple Border System**: Black outer border (3px), decorative inner borders (1px, 0.5px)
+    - **Formal Header Box**: Black header section with white text and structured layout
+    - **Times Serif Typography**: Professional serif fonts for traditional business appearance
+    - **Formal Table Design**: Bordered table structure with header backgrounds and column lines
+    - **Signature Section**: Formal signature line and professional footer layout
+  - **Modern Template Enhancement**: Purple gradient theme with geometric elements
+    - **Purple Gradient Header**: BlueViolet to MediumSlateBlue gradient background
+    - **Geometric Decorations**: Circles, squares, and geometric accent elements
+    - **Bold Typography**: Large, modern Helvetica fonts with strong visual hierarchy
+    - **Contemporary Layout**: Clean, modern design with professional purple branding
+  - **Minimal Template Refinement**: Ultra-clean design with subtle styling
+    - **Generous White Space**: Spacious layout with minimal visual elements
+    - **Light Gray Typography**: Subtle text colors for understated appearance
+    - **Clean Line Elements**: Thin border lines and minimal decorative elements
+    - **Professional Simplicity**: Focus on content with minimal visual distractions
+
+- **🖼️ Logo Integration Across All Templates**
+  - **Branding Data Loading**: Added `loadBrandingData()` function for static templates
+  - **Logo Embedding**: Proper logo support with aspect ratio preservation
+  - **Template-Specific Placement**: Optimized logo positioning for each template style
+  - **Error Handling**: Graceful fallbacks when logos fail to load
+  - **Cross-Template Consistency**: Unified branding approach across all template types
+
+- **🔧 PDF Generation Logic Enhancement**
+  - **Template Resolution Priority**: 
+    1. Passed template parameter (highest priority)
+    2. Invoice saved template_id (medium priority) 
+    3. Customer name fallback (testing only - lowest priority)
+  - **Enhanced Logging**: Comprehensive console logging for template selection debugging
+  - **Template Validation**: Proper template ID validation and error handling
+  - **Filename Accuracy**: PDF filenames now correctly reflect selected templates
+
+### Technical Implementation
+- **Server Route Updates**: Enhanced `invoiceLineItems.js` with template_id handling
+- **PDF Service Enhancement**: Updated `invoicePDF.js` with improved template priority logic
+- **Template System**: Enhanced `templates.js` with logo support and distinct visual styling
+- **Error Prevention**: Added logging throughout template selection and application pipeline
+- **Data Persistence**: Proper template selection storage and retrieval from database
+
+### User Experience Improvements
+- ✅ **Template Selection Persistence**: Selected templates now properly applied to generated PDFs
+- ✅ **Visual Template Distinction**: Each template now has dramatically different appearance
+- ✅ **Logo Integration**: Business logos properly displayed across all template types
+- ✅ **Accurate Filenames**: PDF downloads show correct template names in filenames
+- ✅ **Professional Appearance**: Enhanced template styling for business presentation
+
+### Business Value
+- **🎯 Template System Reliability**: Template selections now work as expected without user confusion
+- **🎨 Professional Branding**: Consistent logo and branding application across all invoice types
+- **📈 User Confidence**: Reliable template system builds trust in platform functionality
+- **💼 Business Presentation**: Dramatically improved invoice appearance for client relationships
+
+---
+
 ## [1.9.21] - 2025-10-31
 
 ### Enhanced

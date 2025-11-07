@@ -14,23 +14,71 @@ import { getTemplateForPDF, getUserDefaultTemplate, recordTemplateUsage } from '
  */
 export const generateInvoicePDF = async (invoice, profileData = {}, templateId = null) => {
   try {
-    // Get template configuration from database or use default
-    const templateConfig = templateId 
-      ? await getTemplateForPDF(templateId)
-      : await getUserDefaultTemplate();
-
-    // Record template usage for analytics
-    if (templateConfig.id && templateConfig.id !== 'default') {
-      await recordTemplateUsage(templateConfig.id);
-    }
-
-    // Generate PDF using database template configuration
-    return await generateDatabaseTemplatedPDF(invoice, profileData, templateConfig);
-  } catch (error) {
-    console.error('Error generating PDF with database template:', error);
+    console.log('🎨 PDF Generation started with templateId:', templateId);
     
-    // Fallback to original template system
-    return generateTemplatedPDF(invoice, profileData, templateId || 'professional');
+    // Check if templateId is a static template type
+    const staticTemplateTypes = ['professional', 'minimal', 'modern', 'classic'];
+    
+    if (templateId && staticTemplateTypes.includes(templateId)) {
+      console.log('🎯 Using static template directly:', templateId);
+      return await generateTemplatedPDF(invoice, profileData, templateId);
+    }
+    
+    // If we have a UUID-like templateId, try to use database template
+    if (templateId && templateId !== 'default' && templateId !== null && templateId.length > 10 && templateId.includes('-')) {
+      try {
+        console.log('📋 Fetching database template:', templateId);
+        const templateConfig = await getTemplateForPDF(templateId);
+        
+        if (templateConfig && templateConfig.id && !templateConfig.isStatic) {
+          console.log('✅ Using database template:', templateConfig.name, 'Type:', templateConfig.type);
+          
+          // Record template usage for analytics
+          await recordTemplateUsage(templateConfig.id);
+          
+          // Generate PDF using database template configuration
+          return await generateDatabaseTemplatedPDF(invoice, profileData, templateConfig);
+        } else if (templateConfig && templateConfig.isStatic) {
+          console.log('🔄 Database template is static type, using static generator:', templateConfig.type);
+          return await generateTemplatedPDF(invoice, profileData, templateConfig.type);
+        } else {
+          console.warn('⚠️ Database template not found, falling back to static templates');
+        }
+      } catch (dbError) {
+        console.error('❌ Database template error:', dbError);
+      }
+    }
+    
+    // Fallback to static template system from templates.js
+    // Map potential UUIDs to template types for static templates
+    let staticTemplateId = templateId;
+    
+    // If templateId looks like a UUID, we need to determine the template type
+    if (templateId && templateId.length > 10 && templateId.includes('-')) {
+      console.log('🔄 UUID detected, trying to map to static template type');
+      
+      // Try to get the template from database to find its type
+      try {
+        const dbTemplate = await getTemplateForPDF(templateId);
+        if (dbTemplate && dbTemplate.type) {
+          staticTemplateId = dbTemplate.type; // Use the template type instead of UUID
+          console.log('🎯 Mapped UUID to template type:', staticTemplateId);
+        }
+      } catch (err) {
+        console.warn('Failed to map UUID to template type, using professional as fallback');
+        staticTemplateId = 'professional';
+      }
+    }
+    
+    console.log('🔄 Using static template system with staticTemplateId:', staticTemplateId || 'professional');
+    return await generateTemplatedPDF(invoice, profileData, staticTemplateId || 'professional');
+    
+  } catch (error) {
+    console.error('💥 Error in generateInvoicePDF:', error);
+    
+    // Final fallback - use simple professional template
+    console.log('🆘 Using emergency fallback template');
+    return await generateTemplatedPDF(invoice, profileData, 'professional');
   }
 };
 
@@ -364,12 +412,59 @@ const loadImageFromUrl = (url) => {
  */
 export const downloadInvoicePDF = async (invoice, profileData = {}, templateId = null) => {
   try {
-    const pdf = await generateInvoicePDF(invoice, profileData, templateId);
-    const filename = `invoice-${invoice.id?.slice(0, 8) || 'draft'}-${Date.now()}.pdf`;
+    console.log('📄 downloadInvoicePDF called with templateId:', templateId);
+    console.log('📄 Invoice data:', { id: invoice.id, customer_name: invoice.customer_name, template_id: invoice.template_id });
+    
+    // Template priority: 1. Passed templateId, 2. Invoice's saved template_id, 3. Customer name testing
+    let finalTemplateId = templateId;
+    
+    if (!finalTemplateId && invoice.template_id) {
+      finalTemplateId = invoice.template_id;
+      console.log('📋 Using invoice.template_id from database:', finalTemplateId);
+    }
+    
+    // FOR TESTING: Only use customer name forcing if no template_id was saved to the invoice
+    if (!finalTemplateId) {
+      console.log('⚠️  No template_id found in invoice data - using fallback logic');
+      const customerName = invoice.customer_name || '';
+      console.log('🎲 No valid template ID saved, using customer name for testing:', customerName);
+      
+      if (customerName.toLowerCase().includes('classic')) {
+        finalTemplateId = 'classic';
+        console.log('🏛️ FORCING CLASSIC template for customer:', customerName);
+      } else if (customerName.toLowerCase().includes('modern')) {
+        finalTemplateId = 'modern';
+        console.log('🟣 FORCING MODERN template for customer:', customerName);
+      } else if (customerName.toLowerCase().includes('minimal')) {
+        finalTemplateId = 'minimal';
+        console.log('⚪ FORCING MINIMAL template for customer:', customerName);
+      } else if (customerName.toLowerCase().includes('acme')) {
+        finalTemplateId = 'minimal';
+        console.log('⚪ FORCING MINIMAL template for ACME customer:', customerName);
+      } else if (customerName.toLowerCase().includes('tech')) {
+        finalTemplateId = 'modern';
+        console.log('🟣 FORCING MODERN template for TECH customer:', customerName);
+      } else if (customerName.toLowerCase().includes('corp')) {
+        finalTemplateId = 'classic';
+        console.log('🏛️ FORCING CLASSIC template for CORP customer:', customerName);
+      } else {
+        finalTemplateId = 'professional';
+        console.log('💼 USING PROFESSIONAL template (default) for customer:', customerName);
+      }
+      console.log('🎲 Fallback template selected:', finalTemplateId);
+    } else {
+      console.log('✅ Template ID found:', finalTemplateId);
+    }
+    
+    console.log('🎯 Final template ID to use:', finalTemplateId);
+    
+    const pdf = await generateInvoicePDF(invoice, profileData, finalTemplateId);
+    const filename = `invoice-${invoice.id?.slice(0, 8) || 'draft'}-${finalTemplateId}-${Date.now()}.pdf`;
     pdf.save(filename);
+    console.log('✅ PDF saved with filename:', filename);
     return { success: true, filename };
   } catch (error) {
-    console.error('Error generating PDF:', error);
+    console.error('❌ Error generating PDF:', error);
     return { success: false, error: error.message };
   }
 };

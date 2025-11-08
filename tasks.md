@@ -408,18 +408,75 @@ How to use: Edit this file as work progresses. Mark tasks as - [x] when done.
   - [ ] Implement data encryption and compliance features
   - [ ] Add audit logging and compliance reporting
 
-## Future Enhancements (WISHLIST 🌟)
+## **NEXT MILESTONE — Email Invoice System MVP (READY FOR IMPLEMENTATION 📧)**
 
-- [ ] **Integrations**
-  - [ ] Accounting software integrations (QuickBooks, Xero)
-  - [ ] Bank account integration for automatic reconciliation
-  - [ ] E-commerce platform integrations (Shopify, WooCommerce)
-  - [ ] CRM integrations (Salesforce, HubSpot)
+### **Phase 1: Email Service & Manual Payment Processing**
 
-- [ ] **Advanced Features**
-  - [ ] Multi-language support and localization
-  - [ ] Advanced tax calculation and compliance
-  - [ ] Inventory management integration
-  - [ ] Time tracking and billable hours
-  - [ ] Project management integration
-  - [ ] Advanced reporting and business intelligence
+- [ ] **Email Infrastructure Setup**
+  - [ ] Install and configure Resend.com service (resend npm package)
+  - [ ] Create email service configuration and API key setup
+  - [ ] Build professional HTML email templates for invoice delivery
+  - [ ] Implement email template system with business branding integration
+  - [ ] Add email delivery tracking and error handling
+
+- [ ] **Invoice Email Features**
+  - [ ] Add "Send Invoice" button to invoice list for DRAFT invoices
+  - [ ] Create email sending API endpoint (/api/invoices/:id/send)
+  - [ ] Implement automatic invoice status update (DRAFT → SENT) after email
+  - [ ] Add PDF attachment generation for email delivery
+  - [ ] Build email content with payment instructions and bank details
+
+- [ ] **Payment Information System**
+  - [ ] Extend branding system with payment information fields (bank details)
+  - [ ] Create payment information form in Templates → Branding → Settings
+  - [ ] Add fields: Bank Name, Account Holder, Account Number, Sort Code, IBAN, Payment Instructions
+  - [ ] Update branding API endpoint to handle payment information
+  - [ ] Integrate payment details into invoice email templates
+
+- [ ] **Simple Payment Tracking**
+  - [ ] Add "Mark as Paid" button for SENT invoices
+  - [ ] Implement manual payment status updates (SENT → PAID)
+  - [ ] Create simple three-state invoice lifecycle (DRAFT → SENT → PAID)
+  - [ ] Add payment date tracking for paid invoices
+  - [ ] Build payment status indicators in invoice list
+
+- [ ] **Approvals Placeholder**
+  - [ ] Replace Approvals page with professional "Coming Soon" component
+  - [ ] Add placeholder for future approval workflow features
+  - [ ] Document approval system architecture for future implementation
+
+### **Success Criteria**
+- ✅ Users can send invoices via email with professional templates
+- ✅ Invoices include PDF attachments and payment instructions
+- ✅ Simple manual payment tracking without gateway complexity
+- ✅ Free email tier supports startup growth (3,000 emails/month)
+- ✅ Clean MVP ready for immediate deployment and user testing
+
+## Future Enhancements (PHASE 2+ 🌟)
+
+### **Phase 2: Advanced Payment & Approval Systems**
+- [ ] Payment gateway integration (Stripe, Flutterwave)
+- [ ] Multi-user approval workflows with roles and permissions
+- [ ] Multiple email templates and customization
+- [ ] Client portal for invoice viewing and payments
+
+### **Phase 2.5: WhatsApp Integration & Enhanced Communication**
+- [ ] **WhatsApp Invoice Delivery**
+  - [ ] Set up Twilio WhatsApp Business API integration
+  - [ ] Create WhatsApp message templates for invoice delivery
+  - [ ] Implement WhatsApp PDF invoice sharing
+  - [ ] Add WhatsApp delivery option alongside email
+- [ ] **WhatsApp Payment Notifications**
+  - [ ] Implement payment reminders via WhatsApp
+  - [ ] Add payment confirmation messages
+  - [ ] Create WhatsApp payment links integration
+- [ ] **Multi-Channel Communication**
+  - [ ] Build unified communication dashboard (Email + WhatsApp)
+  - [ ] Add customer communication preference management
+  - [ ] Implement delivery status tracking across channels
+
+### **Phase 3: Enterprise Features**
+- [ ] Accounting software integrations (QuickBooks, Xero)
+- [ ] Advanced reporting and business intelligence
+- [ ] Multi-tenant support and white-label solutions
+- [ ] Mobile app development

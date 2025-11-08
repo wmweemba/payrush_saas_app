@@ -1,6 +1,6 @@
 # PayRush Client Application
 
-Next.js frontend for the PayRush SaaS platform.
+Next.js frontend for the PayRush SaaS platform - A comprehensive invoicing and client management system.
 
 ## 🚀 Quick Start
 
@@ -28,9 +28,16 @@ Open [http://localhost:3000](http://localhost:3000) with your browser.
 - `ClientAddressManager.js` - Multiple address management
 - `ClientFinancialDashboard.js` - Financial analytics and invoice tracking
 
-### Communication System
+### Invoice & Template Management
+- `TemplatesPage.js` - Consolidated template, branding, and numbering management
+- `BrandingTabContent` - Company branding, colors, fonts, and payment details
+- `NumberingTabContent` - Invoice numbering schemes and patterns
+- Invoice PDF generation with professional templates
+
+### Communication & Email
 - `ClientCommunication.js` - Notes, timeline, and reminders
 - `ClientCurrencyPreferences.js` - Currency and payment method settings
+- Email service integration for invoice delivery
 
 ### Core Features
 - **Multi-tab Interface**: Overview, Contacts, Addresses, Financial, Currency, Communication, Invoices
@@ -59,6 +66,12 @@ All dropdown menus include:
 ```
 NEXT_PUBLIC_API_URL=http://localhost:5000/api
 ```
+
+### Email Service Integration
+- **Resend**: Primary email service for invoice delivery
+- **Free Tier**: 3,000 emails/month (perfect for startup phase)
+- **Professional Templates**: HTML email templates with PDF attachments
+- **Reliable Delivery**: High deliverability rates for business communications
 
 ### API Integration
 - Centralized API configuration in `lib/apiConfig.js`

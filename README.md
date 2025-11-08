@@ -8,14 +8,22 @@ A comprehensive client management and invoicing platform built with Next.js and 
 - **Client Management**: Complete CRUD operations for client data
 - **Contact Management**: Multiple contacts per client with roles and communication preferences
 - **Address Management**: Multiple addresses (billing, shipping, office) per client
-- **Invoice Management**: Create, track, and manage client invoices
+- **Invoice Management**: Create, edit, and track client invoices with professional PDF generation
+- **Email Invoice Delivery**: Send invoices directly to clients via email with PDF attachments
 - **Financial Dashboard**: Comprehensive financial overview and analytics
+
+### Invoice & Payment Features
+- **Professional Invoice Templates**: Customizable branding, colors, and layouts
+- **Numbering Schemes**: Flexible invoice numbering with prefixes, suffixes, and date components
+- **Email Integration**: Resend.com integration for reliable invoice delivery
+- **Payment Tracking**: Simple invoice status management (Draft → Sent → Paid)
+- **Manual Payment Processing**: Bank details integration for traditional payment methods
 
 ### Advanced Features
 - **Currency Preferences**: Client-specific currency settings with automatic conversion
-- **Payment Methods**: Configurable payment options per client (Credit/Debit Cards, Bank Transfers, Mobile Money, USSD, Cryptocurrency)
+- **Business Branding**: Customizable company colors, fonts, and logo integration
+- **Template Management**: Multiple invoice templates with visual editor
 - **Communication System**: Notes, interactions, reminders, and timeline tracking
-- **Financial Analytics**: Invoice aging analysis, payment history, and financial summaries
 - **Multi-region Support**: Support for multiple currencies and regional payment methods
 
 ### Communication & Notes System
@@ -93,6 +101,7 @@ SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 JWT_SECRET=your_jwt_secret
 PORT=5000
+RESEND_API_KEY=your_resend_api_key
 ```
 
 #### Client (.env.local)
@@ -159,22 +168,28 @@ payrush_saas_app/
 
 ## 🚧 Development Status
 
-### Completed Features
+### Completed Features (MVP Phase)
 - [x] Client management with full CRUD operations
 - [x] Multi-contact and multi-address support
-- [x] Currency preferences and payment methods
+- [x] Invoice creation with professional PDF templates
+- [x] Business branding and customization
+- [x] Numbering schemes with flexible patterns
+- [x] Email invoice delivery (Resend integration)
+- [x] Simple payment tracking (Draft → Sent → Paid)
 - [x] Communication system (notes, timeline, reminders)
 - [x] Financial dashboard with invoice aging
-- [x] Enhanced UI with proper dropdown styling
-- [x] Error handling and validation
+- [x] Navigation consolidation and UI improvements
 
-### Upcoming Features
-- [ ] Advanced invoice creation and management
-- [ ] Payment processing integration
-- [ ] Email notification system
+### Phase 2 Features (Coming Soon)
+- [ ] Advanced approval workflows with user roles
+- [ ] Payment gateway integration (Stripe/PayPal)
+- [ ] WhatsApp invoice delivery and payment notifications
+- [ ] Client portal for invoice viewing and payments
+- [ ] Multiple email templates and customization
+- [ ] Multi-channel communication dashboard (Email + WhatsApp)
 - [ ] Advanced reporting and analytics
 - [ ] Multi-tenant support
-- [ ] Mobile responsiveness improvements
+- [ ] Mobile app development
 
 ## 🤝 Contributing
 

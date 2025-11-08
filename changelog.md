@@ -63,6 +63,32 @@ All notable changes to the PayRush SaaS application will be documented in this f
     - **Updated URL Handling**: Removed 'approval' from Templates page URL parameter validation
   - **Result**: Clean navigation hierarchy with Approvals as dedicated main section, Templates focused on design/configuration
 
+### Planned
+#### Email Invoice System & Payment Processing - MVP Phase
+
+- **📧 Email Invoice Delivery System**
+  - **Implementation Approach**: Resend.com integration for reliable email delivery
+  - **Free Tier Strategy**: 3,000 emails/month free tier perfect for startup phase
+  - **Features Planned**:
+    - Professional HTML email templates with PDF attachments
+    - Automatic invoice status updates (DRAFT → SENT → PAID)
+    - Business branding integration in emails
+    - Payment instructions with bank details
+    - Email delivery tracking and error handling
+
+- **💳 Manual Payment Processing (MVP)**
+  - **Strategy**: Simple manual payment tracking before gateway integration
+  - **Payment Information**: Bank details integration in branding system
+  - **Status Management**: Simple three-state flow (Draft → Sent → Paid)
+  - **Future Enhancement**: Stripe/Flutterwave integration in Phase 2
+
+- **📋 Approvals Placeholder**
+  - **Current State**: "Coming Soon" message for advanced approval workflows  
+  - **Future Features**: Multi-user approval system with roles and permissions
+  - **MVP Focus**: Simple invoice creation and sending without approval complexity
+
+- **🎯 Implementation Priority**: Email system → Payment tracking → Gateway integration
+
 ## [1.9.23] - 2025-11-07### Fixed
 #### Invoice PDF Formatting Issues - Final Resolution
 

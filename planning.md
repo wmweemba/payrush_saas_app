@@ -4,9 +4,13 @@ Frontend + SSR: Next.js (JavaScript) deployed to Vercel/Netlify.
 
 Database & Auth: Supabase (Postgres + Auth) — use service role key only on server-side.
 
-Payments: Flutterwave (initial gateway) — create payment links and webhooks.
+Email Service: Resend.com (MVP phase with free tier - 3,000 emails/month) — reliable invoice delivery with professional templates.
 
-Notifications: Email via SendGrid; WhatsApp via Twilio or merchant's WhatsApp (simple link) in MVP.
+WhatsApp Integration: Twilio WhatsApp Business API (Phase 2) — invoice delivery and payment notifications via WhatsApp.
+
+Payments: Manual bank transfer processing (MVP) → Future: Flutterwave integration for automatic payment processing.
+
+Notifications: Email-first approach (MVP) → Multi-channel communication (Email + WhatsApp) in Phase 2.
 
 CI/CD: GitHub Actions — run lint/test and deploy.
 
@@ -22,9 +26,11 @@ FLW_SECRET_KEY (Flutterwave secret)
 
 FLW_PUBLIC_KEY (Flutterwave public)
 
-EMAIL_API_KEY (SendGrid/Mailgun)
+RESEND_API_KEY (Resend.com for email delivery)
 
-WHATSAPP_API_KEY (Twilio) — optional for MVP
+TWILIO_ACCOUNT_SID (Twilio WhatsApp - Phase 2)
+TWILIO_AUTH_TOKEN (Twilio WhatsApp - Phase 2)
+TWILIO_WHATSAPP_NUMBER (WhatsApp Business number - Phase 2)
 
 APP_URL (production URL)
 
@@ -34,7 +40,7 @@ users: id (uuid), email, org_name, plan, created_at
 
 clients: id, user_id (FK), name, phone, email, metadata
 
-invoices: id, user_id, client_id, invoice_number, currency, total_amount, due_date, status (draft|sent|paid|overdue), public_url, created_at
+invoices: id, user_id (FK), client_id, invoice_number, currency, total_amount, due_date, status (draft|sent|paid|overdue), sent_at, paid_at, public_url, created_at
 
 invoice_items: id, invoice_id, description, quantity, unit_price
 
@@ -90,15 +96,23 @@ payment_webhooks: id, raw_payload, received_at, processed_at, status
 - Payments are accessible only through owned invoices
 - Full CRUD permissions for own data
 
-API endpoints (minimal)
+API endpoints (MVP Phase)
 
+POST /api/invoices/:id/send — send invoice via email with PDF attachment
+
+PUT /api/invoices/:id/status — update invoice status (DRAFT → SENT → PAID)
+
+GET /api/invoices/:id — public invoice page for customer viewing
+
+GET /api/branding — get business branding and payment information
+
+PUT /api/branding — update payment details (bank account, etc.)
+
+POST /api/numbering-schemes — create custom invoice numbering patterns
+
+Future Endpoints (Phase 2):
 POST /api/create-payment — create payment link via gateway
-
-POST /api/webhook/flutterwave — webhook receiver
-
-GET /api/invoices/:id — public invoice page
-
-POST /api/send-invoice — trigger send (email/whatsapp)
+POST /api/webhook/flutterwave — webhook receiver for automatic payment updates
 
 Security & compliance
 

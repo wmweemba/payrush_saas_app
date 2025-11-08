@@ -6,8 +6,9 @@ Express.js backend API for the PayRush SaaS platform.
 
 ```bash
 npm install
+npm install resend  # Email service for invoice delivery
 cp .env.example .env
-# Configure your environment variables
+# Configure your environment variables (including RESEND_API_KEY)
 npm start
 ```
 
@@ -18,7 +19,9 @@ Server runs on [http://localhost:5000](http://localhost:5000)
 - **Framework**: Express.js
 - **Database**: Supabase (PostgreSQL)
 - **Authentication**: JWT with Supabase Auth
+- **Email Service**: Resend.com for invoice delivery
 - **ORM**: Supabase Client
+- **PDF Generation**: Server-side PDF creation for invoices
 - **Validation**: Custom middleware
 - **Logging**: Console-based logging
 
@@ -67,6 +70,14 @@ Server runs on [http://localhost:5000](http://localhost:5000)
 - `GET /api/clients/:id/reminders` - Get reminders
 - `POST /api/clients/:id/reminders` - Create reminder
 - `GET /api/clients/:id/communication-stats` - Get communication stats
+
+#### Invoice & Email Management
+- `POST /api/invoices/:id/send` - Send invoice via email
+- `PUT /api/invoices/:id/status` - Update invoice status (DRAFT → SENT → PAID)
+- `GET /api/branding` - Get business branding and payment information
+- `PUT /api/branding` - Update branding and payment details
+- `GET /api/numbering-schemes` - Get numbering schemes
+- `POST /api/numbering-schemes` - Create numbering scheme
 
 ### Authentication
 All endpoints require JWT authentication via `Authorization: Bearer <token>` header.
@@ -140,6 +151,9 @@ JWT_SECRET=your_jwt_secret_key
 # Server Configuration
 PORT=5000
 NODE_ENV=development
+
+# Email Service Configuration
+RESEND_API_KEY=your_resend_api_key
 
 # CORS Configuration
 CLIENT_URL=http://localhost:3000

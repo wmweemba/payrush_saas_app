@@ -74,7 +74,7 @@ app/
 │   ├── 📁 debug-profile/           # Profile debugging utilities
 │   └── 📁 update-profile/          # Profile update endpoints
 ├── 📁 dashboard/                   # Main application dashboard
-│   ├── 📁 approvals/               # Invoice approval workflows
+│   ├── 📁 approvals/               # [COMING SOON] Invoice approval workflows (placeholder)
 │   ├── 📁 branding/                # [REDIRECT] -> Templates tab (legacy URL support)
 │   ├── 📁 clients/                 # Client management interface
 │   ├── 📁 notes/                   # Notes and communication
@@ -83,7 +83,7 @@ app/
 │   ├── 📁 profile-settings/        # User profile management
 │   ├── 📁 templates/               # **CONSOLIDATED** Template, Branding & Numbering management
 │   │   └── 📁 editor/[id]/         # Template visual editor
-│   └── 📄 page.js                  # Main dashboard (invoice management)
+│   └── 📄 page.js                  # Main dashboard (invoice management + email sending)
 ├── 📁 debug/                       # Development debugging tools
 ├── 📁 invoice/[id]/                # Public customer-facing invoice pages
 ├── 📁 login/                       # User authentication
@@ -97,10 +97,16 @@ app/
 - **Previous Structure**: Branding and Numbering existed as both main navigation tabs AND sub-tabs under Templates
 - **Current Structure**: All functionality consolidated under Templates with intelligent redirects
 - **User Experience**: 
-  - Main navigation now shows: Invoices, Clients, **Templates** (contains Branding & Numbering), Notes, Approvals, Payments, Settings
+  - Main navigation shows: Invoices, Clients, **Templates** (contains Branding & Numbering), Notes, Approvals, Payments, Settings
   - Legacy URLs (`/dashboard/branding`, `/dashboard/numbering`) automatically redirect to Templates with appropriate tab active
   - URL parameters (`?tab=branding`, `?tab=numbering`) supported for direct navigation
   - All existing functionality preserved in new consolidated location
+
+**MVP Email & Payment Strategy**:
+- **Email Service**: Resend.com integration for invoice delivery (3,000 free emails/month)
+- **Payment Processing**: Manual bank transfer with payment details in invoices (Phase 1)
+- **Invoice Flow**: Draft → Send via Email → Mark as Paid (simple three-state progression)
+- **Approvals**: Coming Soon placeholder (complex workflows deferred to Phase 2)
 
 ### Components Library (`/client/src/components`)
 ```

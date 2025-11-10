@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Plus, Edit, Copy, Trash2, Star, Download, Settings, Eye, Search, Filter, Upload, Palette, Image as ImageIcon, Save, RefreshCw, Zap, FileImage, Globe, Type, Paintbrush, Hash, Calendar } from 'lucide-react';
+import { Plus, Edit, Copy, Trash2, Star, Download, Settings, Eye, Search, Filter, Upload, Palette, Image as ImageIcon, Save, RefreshCw, Zap, FileImage, Globe, Type, Paintbrush, Hash, Calendar, CreditCard } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -715,7 +715,14 @@ const BrandingTabContent = () => {
     company_tagline: '',
     company_website: '',
     apply_branding_to_templates: true,
-    apply_branding_to_emails: true
+    apply_branding_to_emails: true,
+    // Payment Information Fields
+    bank_name: '',
+    account_number: '',
+    routing_number: '',
+    account_holder_name: '',
+    payment_instructions: '',
+    preferred_payment_methods: []
   });
 
   const [uploadForm, setUploadForm] = useState({
@@ -773,7 +780,14 @@ const BrandingTabContent = () => {
           company_tagline: brandingData.company_tagline || '',
           company_website: brandingData.company_website || '',
           apply_branding_to_templates: brandingData.apply_branding_to_templates ?? true,
-          apply_branding_to_emails: brandingData.apply_branding_to_emails ?? true
+          apply_branding_to_emails: brandingData.apply_branding_to_emails ?? true,
+          // Payment Information Fields
+          bank_name: brandingData.bank_name || '',
+          account_number: brandingData.account_number || '',
+          routing_number: brandingData.routing_number || '',
+          account_holder_name: brandingData.account_holder_name || '',
+          payment_instructions: brandingData.payment_instructions || '',
+          preferred_payment_methods: brandingData.preferred_payment_methods || []
         });
       } else {
         setBrandingForm({
@@ -788,7 +802,14 @@ const BrandingTabContent = () => {
           company_tagline: '',
           company_website: '',
           apply_branding_to_templates: true,
-          apply_branding_to_emails: true
+          apply_branding_to_emails: true,
+          // Payment Information Fields
+          bank_name: '',
+          account_number: '',
+          routing_number: '',
+          account_holder_name: '',
+          payment_instructions: '',
+          preferred_payment_methods: []
         });
       }
     } catch (error) {
@@ -806,7 +827,14 @@ const BrandingTabContent = () => {
         company_tagline: '',
         company_website: '',
         apply_branding_to_templates: true,
-        apply_branding_to_emails: true
+        apply_branding_to_emails: true,
+        // Payment Information Fields
+        bank_name: '',
+        account_number: '',
+        routing_number: '',
+        account_holder_name: '',
+        payment_instructions: '',
+        preferred_payment_methods: []
       });
       
       toast({
@@ -1589,6 +1617,89 @@ const BrandingTabContent = () => {
                     apply_branding_to_emails: e.target.checked
                   })}
                   className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Payment Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <CreditCard className="w-5 h-5 mr-2" />
+                Payment Information
+              </CardTitle>
+              <p className="text-sm text-gray-600 mt-2">Configure payment details to include in invoice emails</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="bank_name">Bank Name</Label>
+                  <Input
+                    id="bank_name"
+                    value={brandingForm.bank_name}
+                    onChange={(e) => setBrandingForm({
+                      ...brandingForm,
+                      bank_name: e.target.value
+                    })}
+                    placeholder="Your Bank Name"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="account_holder_name">Account Holder Name</Label>
+                  <Input
+                    id="account_holder_name"
+                    value={brandingForm.account_holder_name}
+                    onChange={(e) => setBrandingForm({
+                      ...brandingForm,
+                      account_holder_name: e.target.value
+                    })}
+                    placeholder="Account Holder Name"
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="account_number">Account Number</Label>
+                  <Input
+                    id="account_number"
+                    value={brandingForm.account_number}
+                    onChange={(e) => setBrandingForm({
+                      ...brandingForm,
+                      account_number: e.target.value
+                    })}
+                    placeholder="Account Number"
+                    type="password"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="routing_number">Routing Number</Label>
+                  <Input
+                    id="routing_number"
+                    value={brandingForm.routing_number}
+                    onChange={(e) => setBrandingForm({
+                      ...brandingForm,
+                      routing_number: e.target.value
+                    })}
+                    placeholder="Routing Number"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="payment_instructions">Payment Instructions</Label>
+                <Textarea
+                  id="payment_instructions"
+                  value={brandingForm.payment_instructions}
+                  onChange={(e) => setBrandingForm({
+                    ...brandingForm,
+                    payment_instructions: e.target.value
+                  })}
+                  placeholder="Additional payment instructions for your clients..."
+                  rows={3}
                 />
               </div>
             </CardContent>

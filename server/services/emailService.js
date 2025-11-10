@@ -1,10 +1,14 @@
 /**
- * Email Service
+ * Email Service for PayRush Invoice System
  * 
- * Handles bulk email notifications for invoices with template support and delivery tracking
+ * Handles invoice delivery via Resend.com, payment reminders, and notifications
  */
 
+const { Resend } = require('resend');
 const { supabase } = require('../config/database');
+
+// Initialize Resend client
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 class EmailService {
   // Email templates

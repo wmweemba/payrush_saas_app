@@ -40,6 +40,7 @@ const InvoiceDetailView = ({
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   useEffect(() => {
     if (invoiceId) {
@@ -103,6 +104,103 @@ const InvoiceDetailView = ({
       setIsError(true);
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleSendEmail = async () => {
+    if (!invoice.customer_email) {
+      setMessage('No customer email address found');
+      setIsError(true);
+      return;
+    }
+
+    setIsSendingEmail(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`http://localhost:5000/api/invoice-email/send/${invoiceId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          includePdf: true
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send invoice email');
+      }
+
+      const data = await response.json();
+      
+      // Update invoice status to SENT if it was DRAFT
+      if (invoice.status === 'draft') {
+        setInvoice(prev => ({ ...prev, status: 'sent' }));
+        if (onStatusChange) {
+          onStatusChange('sent');
+        }
+      }
+
+      setMessage(`✅ Invoice email sent successfully to ${invoice.customer_email}!`);
+      setIsError(false);
+    } catch (error) {
+      console.error('Error sending invoice email:', error);
+      setMessage(`❌ Failed to send email: ${error.message}`);
+      setIsError(true);
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
+  const handleSendReminder = async () => {
+    if (!invoice.customer_email) {
+      setMessage('No customer email address found');
+      setIsError(true);
+      return;
+    }
+
+    setIsSendingEmail(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      
+      // Determine reminder type based on how overdue the invoice is
+      const dueDate = new Date(invoice.due_date);
+      const today = new Date();
+      const daysOverdue = Math.ceil((today - dueDate) / (1000 * 60 * 60 * 24));
+      
+      let reminderType = 'gentle';
+      if (daysOverdue > 30) {
+        reminderType = 'final';
+      } else if (daysOverdue > 7) {
+        reminderType = 'firm';
+      }
+
+      const response = await fetch(`http://localhost:5000/api/invoice-email/remind/${invoiceId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          reminderType
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send payment reminder');
+      }
+
+      const data = await response.json();
+      
+      setMessage(`🔔 Payment reminder sent successfully to ${invoice.customer_email}!`);
+      setIsError(false);
+    } catch (error) {
+      console.error('Error sending payment reminder:', error);
+      setMessage(`❌ Failed to send reminder: ${error.message}`);
+      setIsError(true);
+    } finally {
+      setIsSendingEmail(false);
     }
   };
 
@@ -347,6 +445,31 @@ const InvoiceDetailView = ({
                   </Button>
                 );
               })}
+
+              {/* Email Actions */}
+              <div className="border-l border-gray-300 pl-3 ml-3 space-x-2">
+                <Button 
+                  variant="default"
+                  onClick={handleSendEmail}
+                  disabled={isUpdating || isSendingEmail || !invoice.customer_email}
+                  className="bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
+                >
+                  <Mail className={`w-4 h-4 mr-2 ${isSendingEmail ? 'animate-pulse' : ''}`} />
+                  {isSendingEmail ? 'Sending...' : 'Send Invoice Email'}
+                </Button>
+                
+                {(invoice.status === 'overdue' || invoice.status === 'sent') && (
+                  <Button 
+                    variant="outline"
+                    onClick={() => handleSendReminder()}
+                    disabled={isUpdating || isSendingEmail || !invoice.customer_email}
+                    className="border-orange-300 text-orange-600 hover:bg-orange-50 dark:border-orange-600 dark:text-orange-400"
+                  >
+                    <Calendar className={`w-4 h-4 mr-2 ${isSendingEmail ? 'animate-pulse' : ''}`} />
+                    Send Reminder
+                  </Button>
+                )}
+              </div>
 
               {/* Export Actions */}
               <div className="border-l border-gray-300 pl-3 ml-3">

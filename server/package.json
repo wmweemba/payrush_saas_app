@@ -10,7 +10,14 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
-  "keywords": ["payrush", "invoice", "payment", "saas", "express", "api"],
+  "keywords": [
+    "payrush",
+    "invoice",
+    "payment",
+    "saas",
+    "express",
+    "api"
+  ],
   "author": "PayRush Team",
   "license": "ISC",
   "packageManager": "pnpm@10.12.1",
@@ -32,6 +39,7 @@
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "pg": "^8.16.3",
+    "resend": "^6.4.2",
     "winston": "^3.17.0",
     "xlsx": "^0.18.5"
   },

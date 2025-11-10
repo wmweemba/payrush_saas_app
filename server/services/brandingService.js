@@ -89,7 +89,13 @@ class BrandingService {
         company_tagline: '',
         company_website: '',
         apply_branding_to_templates: true,
-        apply_branding_to_emails: true
+        apply_branding_to_emails: true,
+        bank_name: null,
+        account_number: null,
+        routing_number: null,
+        account_holder_name: null,
+        payment_instructions: null,
+        preferred_payment_methods: []
       };
 
       const { data, error } = await this.supabase
@@ -627,11 +633,16 @@ class BrandingService {
       'company_name', 'company_tagline', 'company_website',
       'logo_url', 'logo_filename', 'logo_size', 'favicon_url',
       'apply_branding_to_templates',
-      'apply_branding_to_emails'
+      'apply_branding_to_emails',
+      'bank_name', 'account_number', 'routing_number', 'account_holder_name', 
+      'payment_instructions', 'preferred_payment_methods'
     ];
 
     // Handle text fields
-    const textFields = ['company_name', 'company_tagline', 'company_website', 'primary_font', 'heading_font'];
+    const textFields = [
+      'company_name', 'company_tagline', 'company_website', 'primary_font', 'heading_font',
+      'bank_name', 'account_number', 'routing_number', 'account_holder_name', 'payment_instructions'
+    ];
     textFields.forEach(field => {
       if (allowedColumns.includes(field) && data[field] !== undefined) {
         sanitized[field] = data[field] ? sanitizeString(data[field]) : null;
@@ -672,6 +683,22 @@ class BrandingService {
         sanitized[field] = Boolean(data[field]);
       }
     });
+
+    // Handle JSONB fields
+    if (allowedColumns.includes('preferred_payment_methods') && data['preferred_payment_methods'] !== undefined) {
+      try {
+        // Ensure it's an array of strings
+        const paymentMethods = Array.isArray(data.preferred_payment_methods) 
+          ? data.preferred_payment_methods 
+          : [];
+        sanitized['preferred_payment_methods'] = paymentMethods.filter(method => 
+          typeof method === 'string' && method.trim().length > 0
+        );
+      } catch (error) {
+        console.warn('Invalid preferred_payment_methods format, using empty array');
+        sanitized['preferred_payment_methods'] = [];
+      }
+    }
 
     console.log('Sanitized branding data:', sanitized);
     console.log('Original data keys:', Object.keys(data));

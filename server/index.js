@@ -27,6 +27,7 @@ const templateRoutes = require('./routes/templates');
 const numberingSchemeRoutes = require('./routes/numberingSchemes');
 const brandingRoutes = require('./routes/branding');
 const invoiceNotesRoutes = require('./routes/invoiceNotes');
+const invoiceEmailRoutes = require('./routes/invoiceEmail');
 const approvalRoutes = require('./routes/approvals');
 
 // Import middleware
@@ -83,6 +84,7 @@ app.use('/api/templates', authMiddleware, templateRoutes); // Template managemen
 app.use('/api/numbering-schemes', authMiddleware, numberingSchemeRoutes); // Numbering scheme routes
 app.use('/api/branding', authMiddleware, brandingRoutes); // Business branding routes
 app.use('/api/notes', authMiddleware, invoiceNotesRoutes); // Invoice notes routes
+app.use('/api/invoice-email', authMiddleware, invoiceEmailRoutes); // Invoice email delivery routes
 app.use('/api/approvals', authMiddleware, approvalRoutes); // Invoice approval workflow routes
 app.use('/api/public', publicInvoiceRoutes); // Public routes don't need auth
 app.use('/api/webhooks', webhookRoutes); // Webhooks don't need auth middleware
@@ -100,6 +102,7 @@ app.get('/api', (req, res) => {
       numberingSchemes: '/api/numbering-schemes',
       branding: '/api/branding',
       notes: '/api/notes',
+      invoiceEmail: '/api/invoice-email',
       approvals: '/api/approvals',
       webhooks: '/api/webhooks',
       health: '/health'

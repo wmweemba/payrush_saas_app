@@ -40,11 +40,11 @@ export default function ClientForm({ client = null, onSubmit, onCancel, isLoadin
   useEffect(() => {
     if (client) {
       setFormData({
-        companyName: client.company_name || '',
-        contactPerson: client.contact_person || '',
+        companyName: client.name || '',
+        contactPerson: client.company || '',
         email: client.email || '',
         phone: client.phone || '',
-        address: client.address || '',
+        address: client.address_line1 || '',
         city: client.city || '',
         state: client.state || '',
         country: client.country || '',
@@ -54,7 +54,7 @@ export default function ClientForm({ client = null, onSubmit, onCancel, isLoadin
         notes: client.notes || '',
         tags: client.tags || [],
         defaultCurrency: client.default_currency || 'USD',
-        paymentTerms: client.payment_terms || 30,
+        paymentTerms: client.payment_terms_days || 30,
         discountRate: client.discount_rate || 0
       });
     }

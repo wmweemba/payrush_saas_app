@@ -252,6 +252,18 @@ class ClientService {
    */
   async updateClient(clientId, userId, clientData) {
     try {
+      // Debug logging
+      console.log('updateClient called with:', { clientId, userId, clientData: Object.keys(clientData) });
+      
+      // Validate clientId
+      if (!clientId || clientId === 'undefined' || clientId === 'null') {
+        return {
+          success: false,
+          error: 'Valid client ID is required',
+          statusCode: 400
+        };
+      }
+
       // Validate required fields
       const { name, email } = clientData;
       if (!name || !email) {

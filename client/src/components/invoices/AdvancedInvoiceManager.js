@@ -117,7 +117,7 @@ const AdvancedInvoiceManager = ({
           await updateInvoiceStatus(invoice.id, 'Paid');
           break;
         case 'send':
-          await updateInvoiceStatus(invoice.id, 'Sent');
+          await handleSendInvoiceEmail(invoice);
           break;
         case 'cancel':
           await updateInvoiceStatus(invoice.id, 'Cancelled');
@@ -165,6 +165,30 @@ const AdvancedInvoiceManager = ({
       );
     } catch (error) {
       console.error('Payment processing error:', error);
+      throw error;
+    }
+  };
+
+  // Send invoice via email
+  const handleSendInvoiceEmail = async (invoice) => {
+    try {
+      onMessage('📧 Sending invoice email...', false);
+      
+      const response = await apiClient(`/api/invoice-email/send/${invoice.id}`, {
+        method: 'POST'
+      });
+
+      if (response.success) {
+        onMessage(`✅ Invoice sent successfully to ${invoice.customer_email}!`, false);
+        // Refresh invoices to update status
+        setRefreshTrigger(prev => prev + 1);
+        if (onRefreshInvoices) onRefreshInvoices();
+      } else {
+        throw new Error(response.error || 'Failed to send email');
+      }
+    } catch (error) {
+      console.error('Email sending error:', error);
+      onMessage(`❌ Failed to send invoice: ${error.message}`, true);
       throw error;
     }
   };
@@ -549,14 +573,55 @@ const AdvancedInvoiceManager = ({
 
   // Bulk email
   const handleBulkEmail = async (invoiceIds, data) => {
-    // Feature coming soon - email service integration pending
-    onMessage(`📧 Email feature coming soon! We're working on integrating email delivery for invoice notifications. For now, you can download PDFs and send them manually.`, false);
-    
-    // Optional: Show additional helpful information
-    console.log(`📧 Email feature requested for ${invoiceIds.length} invoices with template: ${data.template || 'invoice_sent'}`);
-    
-    // Don't throw error - treat as successful notification
-    return;
+    try {
+      onMessage(`📧 Sending emails to ${invoiceIds.length} invoice(s)...`, false);
+      
+      let successCount = 0;
+      let failureCount = 0;
+      const errors = [];
+
+      // Send emails for each invoice
+      for (const invoiceId of invoiceIds) {
+        try {
+          const response = await apiClient(`/api/invoice-email/send/${invoiceId}`, {
+            method: 'POST',
+            body: JSON.stringify({
+              includePdf: data.includePdf || false,
+              customMessage: data.customMessage
+            })
+          });
+
+          if (response.success) {
+            successCount++;
+          } else {
+            throw new Error(response.error || 'Failed to send email');
+          }
+        } catch (error) {
+          failureCount++;
+          errors.push(`Invoice ${invoiceId}: ${error.message}`);
+          console.error(`Failed to send email for invoice ${invoiceId}:`, error);
+        }
+      }
+
+      // Show results
+      if (successCount > 0 && failureCount === 0) {
+        onMessage(`✅ Successfully sent ${successCount} email(s)!`, false);
+      } else if (successCount > 0 && failureCount > 0) {
+        onMessage(`⚠️ Sent ${successCount} email(s), ${failureCount} failed. Check console for details.`, true);
+        console.error('Email sending errors:', errors);
+      } else {
+        throw new Error(`Failed to send all ${failureCount} email(s). ${errors.join('; ')}`);
+      }
+
+      // Refresh invoices to update statuses
+      setRefreshTrigger(prev => prev + 1);
+      if (onRefreshInvoices) onRefreshInvoices();
+
+    } catch (error) {
+      console.error('Bulk email error:', error);
+      onMessage(`❌ Failed to send emails: ${error.message}`, true);
+      throw error;
+    }
   };
 
   // Handle invoice form actions

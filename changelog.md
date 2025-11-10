@@ -2,6 +2,93 @@
 
 All notable changes to the PayRush SaaS application will be documented in this file.
 
+## [1.9.25] - 2025-11-10
+
+### Fixed
+#### Email Invoice System Content Display Issues - Complete Resolution
+
+- **📧 Email Content Field Mapping Corrections**
+  - **Problem**: Received email showing "Invoice null", "$0.00" amount, and masked account number "****5213"
+  - **Root Cause**: Email template using incorrect database field mappings and security masking preventing payment processing
+  - **Impact**: Unprofessional email presentation and blocked payment processing due to incomplete payment details
+  - **Solution**: Fixed all email content field mappings and display logic
+    - **Invoice Number Fix**: Updated template to use proper field priority (custom_invoice_number → invoice_number → ID-based fallback)
+    - **Amount Display Fix**: Changed from `invoice.total_amount` to `invoice.amount` based on actual database fields
+    - **Account Number Fix**: Removed security masking to show full account number for payment processing (123654785213)
+    - **Template Variable Consistency**: Standardized all template references to use correct field names
+
+- **🔧 Email Template Generation Improvements**
+  - **Enhanced Invoice Number Logic**: Implemented comprehensive invoice number generation
+    - Primary: Use `custom_invoice_number` if available
+    - Secondary: Use `invoice_number` if available  
+    - Fallback: Generate `INV-${ID_PREFIX}` for null values
+    - Consistent usage across email subject, template content, and payment instruction links
+  - **Database Field Alignment**: Updated all template fields to match actual database schema
+    - Fixed amount field reference from `total_amount` to `amount`
+    - Verified field availability through server-side debugging output
+    - Removed references to non-existent fields that caused null values
+  - **Payment Information Enhancement**: Unmasked payment details for customer use
+    - Full account number display: "123654785213" instead of "****5213"
+    - Complete Access Bank Zambia payment information visible
+    - Proper payment instructions with unmasked routing number
+
+- **✅ Email System Validation Complete**
+  - **Successful Email Delivery**: All emails now sending successfully with correct content
+  - **Professional Presentation**: Invoice numbers display properly (e.g., "INV-451C9E5")
+  - **Accurate Amounts**: Correct dollar amounts displayed (e.g., "$758.00")
+  - **Complete Payment Info**: Full bank account details visible for payment processing
+  - **Payment Integration**: Access Bank Zambia details properly configured and displayed
+  - **Invoice Status Tracking**: Email sending updates invoice status from DRAFT to SENT
+
+### Enhanced
+#### Email Invoice Delivery System - Production Ready
+
+- **💼 Professional Email Templates**
+  - **Company Branding**: PayRush company branding with professional email styling
+  - **Payment Instructions**: Complete bank transfer details with Access Bank Zambia information
+  - **Contact Integration**: Email includes contact buttons for payment inquiries and confirmations
+  - **Invoice Details**: Comprehensive invoice information with line items, amounts, and payment terms
+  - **Professional Layout**: Clean HTML email layout with proper formatting and responsive design
+
+- **🔗 Complete System Integration**
+  - **Resend Service**: Fully integrated with Resend.com email delivery service (API key configured)
+  - **Database Integration**: Email logs table tracking delivery status and attempts
+  - **Frontend Integration**: Bulk email functionality in AdvancedInvoiceManager with proper API calls
+  - **Authentication**: Secure email sending with user context and JWT authentication
+  - **Status Updates**: Automatic invoice status updates when emails are successfully sent
+
+### Technical Implementation
+
+- **Server-Side Email Service**: `invoiceEmailService.js`
+  - Fixed field mappings: `invoice.amount`, proper invoice number generation
+  - Removed account number masking for payment processing
+  - Enhanced error handling and logging throughout email generation
+  - Proper parameter passing between service methods for consistency
+
+- **Frontend Email Integration**: `AdvancedInvoiceManager.js`  
+  - Updated handleBulkEmail to make actual API calls instead of placeholder
+  - Proper error handling and success messaging for email operations
+  - Integrated with bulk action dialog system for user confirmation
+
+- **Database Schema**: Enhanced payment information storage
+  - Payment fields in business_branding table: bank_name, account_number, routing_number
+  - Access Bank Zambia configuration: "15486" routing, "123654785213" account number
+  - User-scoped branding data with Row Level Security policies
+
+### User Experience Improvements
+- ✅ **Professional Email Communication**: Clients receive polished, branded invoice emails with complete information
+- ✅ **Payment Processing Ready**: Full account details enable immediate payment processing
+- ✅ **Invoice Tracking**: Clear invoice numbers and amounts for easy reference and payment
+- ✅ **Streamlined Workflow**: Email sending integrated into existing invoice management workflow
+- ✅ **Status Management**: Automatic invoice status progression from DRAFT → SENT when emails delivered
+
+### Business Value
+- **🚀 Professional Client Communication**: High-quality email delivery improves business image and client relationships
+- **💳 Payment Processing**: Complete payment information accelerates invoice payment cycles
+- **📊 Invoice Management**: Integrated email system streamlines invoice-to-payment workflow
+- **🔧 Operational Efficiency**: Automated email delivery reduces manual invoice distribution time
+- **📈 Cash Flow**: Faster invoice delivery and complete payment details improve payment speed
+
 ## [1.9.24] - 2025-11-07
 
 ### Improved

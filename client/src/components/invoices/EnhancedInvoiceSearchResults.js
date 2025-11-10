@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { formatCurrency } from '@/lib/currency/currencies';
+import { apiClient } from '@/lib/apiConfig';
+import { useToast } from '@/hooks/use-toast';
 import BulkInvoiceActions from './BulkInvoiceActions';
 
 const EnhancedInvoiceSearchResults = ({ 

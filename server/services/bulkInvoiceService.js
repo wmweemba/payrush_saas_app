@@ -53,12 +53,26 @@ class BulkInvoiceService {
       
       for (const invoiceId of invoiceIds) {
         try {
+          // Prepare update data
+          const updateData = { 
+            status: dbStatus,
+            approval_status: dbApprovalStatus
+          };
+          
+          // Add payment tracking for paid status
+          if (dbStatus === 'paid') {
+            updateData.paid_at = new Date().toISOString();
+            updateData.payment_method = 'manual'; // Default for bulk operations
+          }
+          
+          // Add sent_at timestamp for sent status
+          if (dbStatus === 'sent') {
+            updateData.sent_at = new Date().toISOString();
+          }
+          
           const { data, error } = await supabase
             .from('invoices')
-            .update({ 
-              status: dbStatus,
-              approval_status: dbApprovalStatus
-            })
+            .update(updateData)
             .eq('user_id', userId)
             .eq('id', invoiceId)
             .select();

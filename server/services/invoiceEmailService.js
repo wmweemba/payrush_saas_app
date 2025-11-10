@@ -6,6 +6,9 @@
 
 const { Resend } = require('resend');
 const { supabase } = require('../config/database');
+const { formatCurrency } = require('../utils');
+const ServerPDFService = require('./serverPDFService');
+const puppeteer = require('puppeteer');
 
 // Initialize Resend client
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -13,9 +16,9 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 class InvoiceEmailService {
 
   /**
-   * Send invoice email to client with PDF attachment
+   * Send invoice email to client with PDF attachment (Server-Side PDF Generation)
    */
-  static async sendInvoiceEmail(invoiceId, userId, pdfBuffer = null, options = {}) {
+  static async sendInvoiceEmail(invoiceId, userId, includePdf = true, options = {}) {
     try {
       // Get invoice details with user context for RLS
       console.log(`🔍 Looking for invoice ${invoiceId} for user ${userId}`);
@@ -67,13 +70,65 @@ class InvoiceEmailService {
 
       console.log(`📧 Sending invoice ${invoiceNumber} to ${clientEmail}`);
       
-      // Prepare attachments
+      // Generate PDF attachment on server (Industry Best Practice)
       const attachments = [];
-      if (pdfBuffer) {
-        attachments.push({
-          filename: `invoice-${invoice.invoice_number}.pdf`,
-          content: pdfBuffer,
-        });
+      let pdfGenerated = false;
+      
+      if (includePdf) {
+        try {
+          console.log('� Generating PDF on server...');
+          
+          // Generate PDF HTML using server-side service
+          const pdfResult = await ServerPDFService.generateInvoicePDFHTML(invoiceId, userId);
+          
+          if (pdfResult.success) {
+            // Convert HTML to PDF using Puppeteer (industry standard)
+            const browser = await puppeteer.launch({ 
+              headless: true,
+              args: ['--no-sandbox', '--disable-setuid-sandbox']
+            });
+            const page = await browser.newPage();
+            await page.setContent(pdfResult.html, { waitUntil: 'networkidle0' });
+            
+            const pdfUint8Array = await page.pdf({
+              format: 'A4',
+              printBackground: true,
+              margin: {
+                top: '0.5in',
+                right: '0.5in',
+                bottom: '0.5in',
+                left: '0.5in'
+              }
+            });
+            
+            await browser.close();
+            
+            // Convert Puppeteer Uint8Array to Node.js Buffer for Resend
+            const pdfBuffer = Buffer.from(pdfUint8Array);
+            
+            // Verify PDF buffer before adding to attachments
+            console.log('📄 PDF Buffer details:', {
+              isBuffer: Buffer.isBuffer(pdfBuffer),
+              size: pdfBuffer?.length,
+              type: typeof pdfBuffer,
+              originalType: typeof pdfUint8Array
+            });
+            
+            // Resend expects attachments in this specific format
+            attachments.push({
+              filename: pdfResult.filename,
+              content: pdfBuffer
+            });
+            
+            pdfGenerated = true;
+            console.log(`✅ Server-generated PDF attachment: ${pdfResult.filename}, size: ${pdfBuffer.length} bytes`);
+          } else {
+            console.warn('⚠️ PDF generation failed:', pdfResult.error);
+          }
+        } catch (pdfError) {
+          console.error('⚠️ Server PDF generation error:', pdfError);
+          // Continue without PDF attachment
+        }
       }
 
       // Email content
@@ -85,6 +140,17 @@ class InvoiceEmailService {
         attachments,
         ...options // Allow custom email options
       };
+
+      console.log('📧 Email data being sent to Resend:', {
+        to: emailData.to,
+        subject: emailData.subject,
+        attachmentsCount: attachments.length,
+        attachmentDetails: attachments.map(att => ({
+          filename: att.filename,
+          contentType: att.type,
+          contentSize: att.content?.length
+        }))
+      });
 
       // Send email via Resend
       const { data, error } = await resend.emails.send(emailData);
@@ -112,7 +178,8 @@ class InvoiceEmailService {
         success: true, 
         message: `Invoice ${invoiceNumber} sent to ${clientEmail}`,
         emailId: data.id,
-        invoice
+        invoice,
+        pdfAttached: pdfGenerated
       };
       
     } catch (error) {
@@ -315,7 +382,7 @@ class InvoiceEmailService {
 
             <div class="amount-box">
               <div class="currency">${invoice.currency || 'USD'}</div>
-              <div class="amount">$${parseFloat(invoice.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+              <div class="amount">${formatCurrency(parseFloat(invoice.amount || 0), invoice.currency || 'USD')}</div>
               <div style="margin-top: 10px; font-size: 16px; color: #666;">Total Amount Due</div>
             </div>
 

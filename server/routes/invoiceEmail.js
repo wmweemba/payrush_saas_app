@@ -16,16 +16,23 @@ const authMiddleware = require('../middleware/auth');
 router.post('/send/:invoiceId', authMiddleware, async (req, res) => {
   try {
     const { invoiceId } = req.params;
-    const { includePdf = true, customMessage } = req.body;
+    
+    // Simplified request body - no more complex PDF buffer handling
+    const requestBody = req.body || {};
+    const { 
+      includePdf = true, 
+      customMessage = ''
+    } = requestBody;
     const userId = req.userId; // Get userId from auth middleware
 
     console.log(`📧 Request to send invoice email for invoice ${invoiceId} (user: ${userId})`);
+    console.log('📋 Request details:', { includePdf, customMessage });
 
-    // For now, we'll send without PDF attachment (PDF generation to be implemented later)
+    // Server-side PDF generation (Industry Best Practice)
     const result = await InvoiceEmailService.sendInvoiceEmail(
       invoiceId,
-      userId, // Pass userId to service
-      null, // PDF buffer - to be implemented
+      userId,
+      includePdf, // Just a boolean flag
       customMessage ? { customMessage } : {}
     );
 
@@ -35,7 +42,8 @@ router.post('/send/:invoiceId', authMiddleware, async (req, res) => {
       data: {
         emailId: result.emailId,
         invoiceNumber: result.invoice?.invoice_number,
-        clientEmail: result.invoice?.clients?.email || result.invoice?.customer_email
+        clientEmail: result.invoice?.clients?.email || result.invoice?.customer_email,
+        pdfAttached: result.pdfAttached
       }
     });
 

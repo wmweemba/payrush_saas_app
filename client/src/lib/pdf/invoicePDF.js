@@ -486,6 +486,71 @@ export const previewInvoicePDF = async (invoice, profileData = {}, templateId = 
 };
 
 /**
+ * Generate PDF buffer for email attachment
+ */
+export const generateInvoicePDFBuffer = async (invoice, profileData = {}, templateId = null) => {
+  try {
+    console.log('📧 Starting PDF buffer generation for email attachment:', {
+      invoiceId: invoice?.id,
+      hasInvoice: !!invoice,
+      hasProfileData: !!profileData,
+      templateId
+    });
+    
+    // Use existing PDF generation logic
+    console.log('🔄 Calling generateInvoicePDF...');
+    const pdf = await generateInvoicePDF(invoice, profileData, templateId);
+    console.log('📄 generateInvoicePDF result:', { hasPdf: !!pdf, pdfType: typeof pdf });
+    
+    if (!pdf) {
+      throw new Error('PDF generation returned null/undefined');
+    }
+    
+    // Convert PDF to base64 buffer for server transmission
+    console.log('🔄 Converting PDF to base64 buffer...');
+    const pdfBuffer = pdf.output('datauristring');
+    const base64Data = pdfBuffer.split(',')[1]; // Remove data:application/pdf;base64, prefix
+    
+    console.log('📊 PDF buffer conversion result:', {
+      originalLength: pdfBuffer?.length,
+      base64Length: base64Data?.length,
+      hasBase64: !!base64Data
+    });
+    
+    // Generate filename using same logic as downloadInvoicePDF
+    const invoiceNumber = invoice.custom_invoice_number || 
+                         invoice.invoice_number || 
+                         `INV-${invoice.id.split('-')[0].toUpperCase()}`;
+    
+    const finalTemplateId = templateId || invoice.template_id || 'professional';
+    const filename = `invoice-${invoiceNumber}.pdf`;
+    
+    console.log('✅ PDF buffer generated successfully for email:', {
+      filename,
+      invoiceNumber,
+      finalTemplateId,
+      bufferSize: base64Data?.length
+    });
+    
+    return {
+      success: true,
+      buffer: base64Data,
+      filename: filename,
+      size: base64Data.length
+    };
+    
+  } catch (error) {
+    console.error('❌ Error generating PDF buffer for email:', error);
+    return {
+      success: false,
+      error: error.message,
+      buffer: null,
+      filename: null
+    };
+  }
+};
+
+/**
  * Generate PDF from HTML element (alternative method)
  */
 export const generatePDFFromHTML = async (elementId, filename = 'invoice.pdf') => {
@@ -535,6 +600,7 @@ export default {
   generateDatabaseTemplatedPDF,
   downloadInvoicePDF,
   previewInvoicePDF,
+  generateInvoicePDFBuffer,
   generatePDFFromHTML,
   INVOICE_TEMPLATES
 };

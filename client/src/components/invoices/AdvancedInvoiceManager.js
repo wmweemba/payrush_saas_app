@@ -7,6 +7,11 @@ import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import InvoiceSearchInterface from './InvoiceSearchInterface';
 import EnhancedInvoiceSearchResults from './EnhancedInvoiceSearchResults';
 import InvoiceSearchStats from './InvoiceSearchStats';
@@ -30,6 +35,10 @@ const AdvancedInvoiceManager = ({
 
   // Invoice form state
   const [showInvoiceForm, setShowInvoiceForm] = useState(false);
+
+  // Payment dialog state
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [currentInvoice, setCurrentInvoice] = useState(null);
 
   // Active tab
   const [activeTab, setActiveTab] = useState('search');
@@ -114,7 +123,7 @@ const AdvancedInvoiceManager = ({
           await handlePayNow(invoice);
           break;
         case 'markPaid':
-          await updateInvoiceStatus(invoice.id, 'Paid');
+          await handleMarkAsPaid(invoice);
           break;
         case 'send':
           await handleSendInvoiceEmail(invoice);
@@ -169,17 +178,32 @@ const AdvancedInvoiceManager = ({
     }
   };
 
-  // Send invoice via email
+
+
+  // Send invoice via email (Server-Side PDF Generation - Clean & Simple)
   const handleSendInvoiceEmail = async (invoice) => {
     try {
-      onMessage('📧 Sending invoice email...', false);
+      console.log('🚀 Starting handleSendInvoiceEmail with:', {
+        invoiceId: invoice?.id,
+        hasUser: !!user,
+        hasProfile: !!profile,
+        userId: user?.id
+      });
       
+      onMessage('📧 Sending invoice email with PDF attachment...', false);
+      
+      // Simple, clean approach - let server handle PDF generation
       const response = await apiClient(`/api/invoice-email/send/${invoice.id}`, {
-        method: 'POST'
+        method: 'POST',
+        body: JSON.stringify({
+          includePdf: true, // Server will generate PDF
+          customMessage: '' // Optional custom message
+        })
       });
 
       if (response.success) {
-        onMessage(`✅ Invoice sent successfully to ${invoice.customer_email}!`, false);
+        const attachmentText = response.data.pdfAttached ? ' with PDF attachment' : '';
+        onMessage(`✅ Invoice sent successfully${attachmentText} to ${invoice.customer_email}!`, false);
         // Refresh invoices to update status
         setRefreshTrigger(prev => prev + 1);
         if (onRefreshInvoices) onRefreshInvoices();
@@ -187,14 +211,15 @@ const AdvancedInvoiceManager = ({
         throw new Error(response.error || 'Failed to send email');
       }
     } catch (error) {
-      console.error('Email sending error:', error);
+      console.error('❌ EMAIL FUNCTION ERROR:', error);
+      console.error('❌ ERROR STACK:', error.stack);
       onMessage(`❌ Failed to send invoice: ${error.message}`, true);
       throw error;
     }
   };
 
   // Update invoice status
-  const updateInvoiceStatus = async (invoiceId, newStatus) => {
+  const updateInvoiceStatus = async (invoiceId, newStatus, paymentDetails = {}) => {
     try {
       // Map status to match updated database constraint
       // Updated constraint now allows: 'draft', 'sent', 'paid', 'overdue', 'cancelled'
@@ -217,12 +242,28 @@ const AdvancedInvoiceManager = ({
       const dbStatus = statusMapping[newStatus] || newStatus.toLowerCase();
       const dbApprovalStatus = approvalStatusMapping[newStatus] || 'draft';
       
+      // Prepare update data
+      const updateData = { 
+        status: dbStatus,
+        approval_status: dbApprovalStatus
+      };
+      
+      // Add payment tracking fields when marking as paid
+      if (newStatus === 'Paid') {
+        updateData.paid_at = new Date().toISOString();
+        updateData.payment_method = paymentDetails.method || 'manual';
+        updateData.payment_reference = paymentDetails.reference || null;
+        updateData.payment_notes = paymentDetails.notes || null;
+      }
+      
+      // Add sent_at timestamp when marking as sent
+      if (newStatus === 'Sent') {
+        updateData.sent_at = new Date().toISOString();
+      }
+      
       const { error } = await supabase
         .from('invoices')
-        .update({ 
-          status: dbStatus,
-          approval_status: dbApprovalStatus
-        })
+        .update(updateData)
         .eq('id', invoiceId)
         .eq('user_id', user.id);
 
@@ -291,6 +332,38 @@ const AdvancedInvoiceManager = ({
     } catch (error) {
       console.error('PDF generation error:', error);
       throw error;
+    }
+  };
+
+  // Handle marking invoice as paid with payment details
+  const handleMarkAsPaid = async (invoice) => {
+    setCurrentInvoice(invoice);
+    setShowPaymentDialog(true);
+  };
+
+  // Process payment with collected details
+  const handleProcessPayment = async (paymentDetails) => {
+    try {
+      setLoading(currentInvoice.id, 'markPaid', true);
+      
+      await updateInvoiceStatus(currentInvoice.id, 'Paid', paymentDetails);
+      
+      onMessage(`✅ Invoice ${currentInvoice.custom_invoice_number || currentInvoice.invoice_number || currentInvoice.id} marked as paid`, false);
+      
+      // Refresh search results
+      if (currentSearchParams) {
+        await handleSearch(currentSearchParams);
+      }
+      
+      // Close dialog
+      setShowPaymentDialog(false);
+      setCurrentInvoice(null);
+      
+    } catch (error) {
+      console.error('Error marking invoice as paid:', error);
+      onMessage(`❌ Failed to mark invoice as paid: ${error.message}`, true);
+    } finally {
+      setLoading(currentInvoice.id, 'markPaid', false);
     }
   };
 
@@ -572,22 +645,23 @@ const AdvancedInvoiceManager = ({
   };
 
   // Bulk email
-  const handleBulkEmail = async (invoiceIds, data) => {
+  const handleBulkEmail = async (invoiceIds, data = {}) => {
     try {
-      onMessage(`📧 Sending emails to ${invoiceIds.length} invoice(s)...`, false);
+      onMessage(`📧 Generating PDFs and sending emails to ${invoiceIds.length} invoice(s)...`, false);
       
       let successCount = 0;
       let failureCount = 0;
       const errors = [];
 
-      // Send emails for each invoice
+      // Send emails for each invoice (server handles PDF generation)
       for (const invoiceId of invoiceIds) {
         try {
+
           const response = await apiClient(`/api/invoice-email/send/${invoiceId}`, {
             method: 'POST',
             body: JSON.stringify({
-              includePdf: data.includePdf || false,
-              customMessage: data.customMessage
+              includePdf: data.includePdf !== false, // Default to true unless explicitly false
+              customMessage: data.customMessage || ''
             })
           });
 
@@ -605,7 +679,8 @@ const AdvancedInvoiceManager = ({
 
       // Show results
       if (successCount > 0 && failureCount === 0) {
-        onMessage(`✅ Successfully sent ${successCount} email(s)!`, false);
+        const attachmentText = data.includePdf ? ' with PDF attachments' : '';
+        onMessage(`✅ Successfully sent ${successCount} email(s)${attachmentText}!`, false);
       } else if (successCount > 0 && failureCount > 0) {
         onMessage(`⚠️ Sent ${successCount} email(s), ${failureCount} failed. Check console for details.`, true);
         console.error('Email sending errors:', errors);
@@ -765,7 +840,129 @@ const AdvancedInvoiceManager = ({
           />
         </TabsContent>
       </Tabs>
+
+      {/* Payment Details Dialog */}
+      <PaymentDetailsDialog
+        open={showPaymentDialog}
+        onOpenChange={setShowPaymentDialog}
+        invoice={currentInvoice}
+        onConfirm={handleProcessPayment}
+        loading={currentInvoice ? isActionLoading(currentInvoice.id, 'markPaid') : false}
+      />
     </div>
+  );
+};
+
+// Payment Details Dialog Component
+const PaymentDetailsDialog = ({ open, onOpenChange, invoice, onConfirm, loading }) => {
+  const [paymentDetails, setPaymentDetails] = useState({
+    method: 'manual',
+    reference: '',
+    notes: ''
+  });
+
+  // Reset form when dialog opens/closes
+  useEffect(() => {
+    if (open) {
+      setPaymentDetails({
+        method: 'manual',
+        reference: '',
+        notes: ''
+      });
+    }
+  }, [open]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onConfirm(paymentDetails);
+  };
+
+  const paymentMethods = [
+    { value: 'manual', label: 'Manual Entry' },
+    { value: 'bank_transfer', label: 'Bank Transfer' },
+    { value: 'card', label: 'Credit/Debit Card' },
+    { value: 'mobile_money', label: 'Mobile Money' },
+    { value: 'cash', label: 'Cash Payment' },
+    { value: 'check', label: 'Check' },
+    { value: 'other', label: 'Other' }
+  ];
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Mark Invoice as Paid</DialogTitle>
+          {invoice && (
+            <p className="text-sm text-gray-500">
+              Invoice: {invoice.custom_invoice_number || invoice.invoice_number || `#${invoice.id?.slice(0, 8)}`}
+              <br />
+              Amount: ${parseFloat(invoice.amount || 0).toFixed(2)} {invoice.currency || 'USD'}
+            </p>
+          )}
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="payment-method">Payment Method</Label>
+            <Select
+              value={paymentDetails.method}
+              onValueChange={(value) => setPaymentDetails(prev => ({ ...prev, method: value }))}
+            >
+              <SelectTrigger id="payment-method">
+                <SelectValue placeholder="Select payment method" />
+              </SelectTrigger>
+              <SelectContent>
+                {paymentMethods.map(method => (
+                  <SelectItem key={method.value} value={method.value}>
+                    {method.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="payment-reference">Payment Reference (Optional)</Label>
+            <Input
+              id="payment-reference"
+              type="text"
+              placeholder="Transaction ID, check number, etc."
+              value={paymentDetails.reference}
+              onChange={(e) => setPaymentDetails(prev => ({ ...prev, reference: e.target.value }))}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="payment-notes">Payment Notes (Optional)</Label>
+            <Textarea
+              id="payment-notes"
+              placeholder="Additional notes about this payment..."
+              value={paymentDetails.notes}
+              onChange={(e) => setPaymentDetails(prev => ({ ...prev, notes: e.target.value }))}
+              rows={3}
+            />
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={loading}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {loading ? 'Processing...' : '✅ Mark as Paid'}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 };
 

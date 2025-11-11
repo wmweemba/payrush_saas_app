@@ -460,10 +460,11 @@ How to use: Edit this file as work progresses. Mark tasks as - [x] when done.
   - [ ] Create PDF attachment options in email sending interface
   - [ ] Test PDF attachment delivery and download functionality
 
-- [x] **Approvals Placeholder** ✅ COMPLETED
-  - [x] Replace Approvals page with professional "Coming Soon" component
-  - [x] Add placeholder for future approval workflow features
-  - [x] Document approval system architecture for future implementation
+- [x] **Approvals System Removal** ✅ COMPLETED (v1.9.28)
+  - [x] Remove Approvals tab from main navigation (single-user model)
+  - [x] Remove complex approval workflow interface
+  - [x] Document approval workflows as future multi-user enhancement
+  - [x] Simplify navigation to focus on core single-user functionality
 
 ### **Success Criteria - ACHIEVED ✅**
 - ✅ Users can send invoices via email with professional templates
@@ -476,11 +477,46 @@ How to use: Edit this file as work progresses. Mark tasks as - [x] when done.
 
 ## Future Enhancements (PHASE 2+ 🌟)
 
-### **Phase 2: Advanced Payment & Approval Systems**
-- [ ] Payment gateway integration (Stripe, Flutterwave)
-- [ ] Multi-user approval workflows with roles and permissions
-- [ ] Multiple email templates and customization
-- [ ] Client portal for invoice viewing and payments
+## PRE-DEPLOYMENT CRITICAL TASKS 🚀
+
+### **Payment Gateway Migration to DPO (CRITICAL BEFORE DEPLOYMENT)**
+- [ ] **DPO Integration Setup**
+  - [ ] Set up DPO merchant account and obtain API credentials for Zambian operations
+  - [ ] Replace Flutterwave as primary payment gateway with DPO
+  - [ ] Implement DPO payment processing service (services/dpoService.js)
+  - [ ] Update public invoice payment pages to use DPO payment URLs
+  - [ ] Configure DPO webhook handlers for automatic payment confirmation
+  - [ ] Test complete payment flow with DPO in staging environment
+
+- [ ] **Flutterwave Migration to Secondary**
+  - [ ] Keep Flutterwave integration as alternative/backup payment option
+  - [ ] Update payment gateway selection logic to prioritize DPO
+  - [ ] Maintain Flutterwave webhook handlers for existing transactions
+  - [ ] Update environment variables and configuration for dual gateway support
+
+- [ ] **Production Environment Setup**
+  - [ ] Configure production DPO API credentials
+  - [ ] Set up production webhook endpoints with proper SSL
+  - [ ] Test payment processing with real DPO account
+  - [ ] Validate automatic invoice status updates via DPO webhooks
+  - [ ] Ensure payment confirmation emails work with DPO transactions
+
+### **Phase 2: Multi-User Business Accounts & Advanced Features**
+- [ ] **Multi-User Account System**
+  - [ ] Implement multi-user business accounts (team management)
+  - [ ] Create role-based access control (Admin, Manager, Accountant, Viewer)
+  - [ ] Build user invitation and management system
+  - [ ] Add team collaboration features and shared workspace
+
+- [ ] **Advanced Approval Workflows** (Requires Multi-User Accounts)
+  - [ ] Implement customizable approval workflows (1-step, 2-step, manager approval)
+  - [ ] Create approval request and notification system
+  - [ ] Build approval history tracking and audit trails
+  - [ ] Add conditional approval rules based on invoice amounts
+
+- [ ] **Enhanced Features**
+  - [ ] Multiple email templates and customization
+  - [ ] Client portal for invoice viewing and payments (NO customer accounts, public pages only)
 
 ### **Phase 2.5: WhatsApp Integration & Enhanced Communication**
 - [ ] **WhatsApp Invoice Delivery**

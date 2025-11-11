@@ -226,17 +226,6 @@ export default function Login() {
             </Link>
           </p>
         </div>
-
-        {/* Demo Credentials */}
-        <div className="mt-6 p-4 bg-gray-50 dark:bg-slate-700 rounded-lg">
-          <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-            <strong>Demo Credentials:</strong>
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-500 font-mono">
-            Email: demo@payrush.com<br/>
-            Password: Demo123!
-          </p>
-        </div>
       </div>
     </div>
   );

@@ -2,6 +2,23 @@
 
 A comprehensive client management and invoicing platform built with Next.js and Express.js.
 
+## 🏢 Business Architecture
+
+**PayRush is a B2B SaaS platform designed for business owners and freelancers:**
+- ✅ **Business Users**: Create PayRush accounts, manage invoices and clients
+- ✅ **End Customers**: Receive invoices via email, pay through public payment pages (no PayRush account required)
+- ✅ **Payment Processing**: DPO payment gateway integration for Zambian market, Flutterwave as alternative
+- ✅ **Single-User Model**: Currently designed for individual business owners (one user per business account)
+
+## 👥 Multi-User Features (Future Enhancement)
+
+**Note**: PayRush currently operates on a single-user model where each business account has one owner/manager. The following features will be added when multi-user functionality is implemented:
+
+- **Approval Workflows**: Invoice approval processes requiring multiple users with different roles
+- **Role-Based Access**: Admin, Manager, Accountant, Viewer permissions
+- **Team Management**: Adding and managing multiple users within a business account
+- **Collaboration Features**: Shared invoice management and team communication tools
+
 ## 🚀 Features
 
 ### Core Functionality
@@ -103,6 +120,10 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 JWT_SECRET=your_jwt_secret
 PORT=5000
 RESEND_API_KEY=your_resend_api_key
+DPO_COMPANY_TOKEN=your_dpo_company_token
+DPO_SERVICE_TYPE=your_dpo_service_type
+DPO_API_URL=https://secure.3gdirectpay.com
+FLUTTERWAVE_PUBLIC_KEY=your_flutterwave_public_key
 ```
 
 #### Client (.env.local)
@@ -189,15 +210,33 @@ payrush_saas_app/
 - [x] Navigation consolidation and UI improvements
 
 ### Phase 2 Features (Coming Soon)
-- [ ] Advanced approval workflows with user roles
-- [ ] Payment gateway integration (Stripe/PayPal)
+- [ ] Multi-user business accounts with role-based access control
+- [ ] Advanced approval workflows (requires multi-user accounts)
+- [ ] DPO payment gateway integration (primary for Zambian market)
 - [ ] WhatsApp invoice delivery and payment notifications
-- [ ] Client portal for invoice viewing and payments
 - [ ] Multiple email templates and customization
 - [ ] Multi-channel communication dashboard (Email + WhatsApp)
 - [ ] Advanced reporting and analytics
 - [ ] Multi-tenant support
 - [ ] Mobile app development
+
+## 🚀 Pre-Deployment Tasks
+
+### Critical Payment Gateway Migration
+- [ ] **Switch from Flutterwave to DPO as primary payment gateway**
+  - [ ] Set up DPO merchant account and obtain API credentials
+  - [ ] Implement DPO payment integration for Zambian market
+  - [ ] Update public invoice payment pages to use DPO
+  - [ ] Configure DPO webhook handlers for automatic payment confirmation
+  - [ ] Test complete payment flow with DPO in production environment
+  - [ ] Keep Flutterwave as backup/alternative payment option
+
+### Production Readiness
+- [ ] Configure production environment variables for DPO
+- [ ] Set up CI/CD pipeline with automated deployments
+- [ ] Implement comprehensive error monitoring and logging
+- [ ] Performance optimization and security hardening
+- [ ] Database backup and disaster recovery procedures
 
 ## 🤝 Contributing
 

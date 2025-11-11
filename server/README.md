@@ -1,6 +1,13 @@
 # PayRush Server API
 
-Express.js backend API for the PayRush SaaS platform.
+Express.js backend API for the PayRush SaaS platform - A business-focused invoicing system for freelancers and small businesses.
+
+## 🏢 Application Architecture
+
+**PayRush is a B2B SaaS platform designed for business owners, not end customers:**
+- ✅ **Business Owners**: Full account access, create/manage invoices, client management
+- ✅ **End Customers**: No accounts required, receive invoices via email, pay via public payment pages
+- ✅ **Payment Flow**: Customers pay through external gateways (DPO, Flutterwave) without PayRush login
 
 ## 🚀 Quick Start
 
@@ -8,7 +15,7 @@ Express.js backend API for the PayRush SaaS platform.
 npm install
 npm install resend  # Email service for invoice delivery
 cp .env.example .env
-# Configure your environment variables (including RESEND_API_KEY)
+# Configure your environment variables (including RESEND_API_KEY and DPO_API_KEY)
 npm start
 ```
 
@@ -83,6 +90,8 @@ Server runs on [http://localhost:5000](http://localhost:5000)
 ### Authentication
 All endpoints require JWT authentication via `Authorization: Bearer <token>` header.
 
+**Note**: Authentication is only for business owners who manage invoices. End customers (invoice recipients) do not need PayRush accounts and interact only through public payment pages.
+
 ## �️ Database Schema
 
 ### Core Tables
@@ -155,6 +164,12 @@ NODE_ENV=development
 
 # Email Service Configuration
 RESEND_API_KEY=your_resend_api_key
+
+# Payment Gateway Configuration
+DPO_COMPANY_TOKEN=your_dpo_company_token
+DPO_SERVICE_TYPE=your_dpo_service_type
+DPO_API_URL=https://secure.3gdirectpay.com
+FLUTTERWAVE_PUBLIC_KEY=your_flutterwave_public_key (alternative gateway)
 
 # CORS Configuration
 CLIENT_URL=http://localhost:3000

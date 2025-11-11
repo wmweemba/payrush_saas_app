@@ -262,14 +262,6 @@ const InvoiceSearchResults = ({
                       <>
                         <Button
                           size="sm"
-                          onClick={() => handleAction('pay', invoice)}
-                          disabled={isActionLoading(invoice.id, 'pay')}
-                          className="bg-orange-600 hover:bg-orange-700 text-white"
-                        >
-                          {isActionLoading(invoice.id, 'pay') ? 'Processing...' : '💳 Pay'}
-                        </Button>
-                        <Button
-                          size="sm"
                           onClick={() => handleAction('markPaid', invoice)}
                           disabled={isActionLoading(invoice.id, 'markPaid')}
                           className="bg-green-600 hover:bg-green-700 text-white"

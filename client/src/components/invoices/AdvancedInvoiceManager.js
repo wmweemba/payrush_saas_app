@@ -16,7 +16,6 @@ import InvoiceSearchInterface from './InvoiceSearchInterface';
 import EnhancedInvoiceSearchResults from './EnhancedInvoiceSearchResults';
 import InvoiceSearchStats from './InvoiceSearchStats';
 import EnhancedInvoiceForm from './EnhancedInvoiceForm';
-import { processPayment } from '@/lib/payments/flutterwave';
 import { downloadInvoicePDF, previewInvoicePDF } from '@/lib/pdf/invoicePDF';
 import { supabase } from '@/lib/supabaseClient';
 import { apiClient, API_BASE_URL } from '@/lib/apiConfig';
@@ -141,9 +140,6 @@ const AdvancedInvoiceManager = ({
 
     try {
       switch (action) {
-        case 'pay':
-          await handlePayNow(invoice);
-          break;
         case 'markPaid':
           await handleMarkAsPaid(invoice);
           break;
@@ -182,31 +178,6 @@ const AdvancedInvoiceManager = ({
   };
 
   // Payment processing
-  const handlePayNow = async (invoice) => {
-    try {
-      await processPayment(
-        invoice,
-        // onSuccess callback
-        () => {
-          onMessage(`✅ Payment successful for invoice ${invoice.id}!`, false);
-          // Refresh invoices to update status
-          setRefreshTrigger(prev => prev + 1);
-          if (onRefreshInvoices) onRefreshInvoices();
-        },
-        // onError callback
-        (error) => {
-          console.error('Payment error:', error);
-          onMessage(`❌ Payment failed: ${error.message}`, true);
-        }
-      );
-    } catch (error) {
-      console.error('Payment processing error:', error);
-      throw error;
-    }
-  };
-
-
-
   // Send invoice via email (Server-Side PDF Generation - Clean & Simple)
   const handleSendInvoiceEmail = async (invoice) => {
     try {

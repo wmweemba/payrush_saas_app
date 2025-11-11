@@ -2,6 +2,13 @@
 
 Next.js frontend for the PayRush SaaS platform - A comprehensive invoicing and client management system.
 
+## 🏢 Application Architecture
+
+**PayRush Client is designed for business owners and freelancers only:**
+- ✅ **Business Users**: Login to manage invoices, clients, and business settings
+- ✅ **End Customers**: Interact via email and public payment pages (no client app access)
+- ✅ **Payment Processing**: Public payment pages integrated with DPO gateway (primary) and Flutterwave (alternative)
+
 ## 🚀 Quick Start
 
 ```bash
@@ -65,6 +72,8 @@ All dropdown menus include:
 ### Environment Variables (.env.local)
 ```
 NEXT_PUBLIC_API_URL=http://localhost:5000/api
+NEXT_PUBLIC_DPO_COMPANY_TOKEN=your_dpo_public_token
+NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY=your_flutterwave_public_key
 ```
 
 ### Email Service Integration
@@ -72,6 +81,12 @@ NEXT_PUBLIC_API_URL=http://localhost:5000/api
 - **Free Tier**: 3,000 emails/month (perfect for startup phase)
 - **Professional Templates**: HTML email templates with PDF attachments
 - **Reliable Delivery**: High deliverability rates for business communications
+
+### Payment Gateway Integration
+- **DPO**: Primary payment gateway for Zambian market operations
+- **Flutterwave**: Alternative/backup payment gateway
+- **Public Payment Pages**: Guest checkout for customers (no PayRush account required)
+- **Automatic Updates**: Webhook integration for real-time payment confirmation
 
 ### API Integration
 - Centralized API configuration in `lib/apiConfig.js`

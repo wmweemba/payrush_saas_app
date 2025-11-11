@@ -74,6 +74,7 @@ Server runs on [http://localhost:5000](http://localhost:5000)
 #### Invoice & Email Management
 - `POST /api/invoices/:id/send` - Send invoice via email
 - `PUT /api/invoices/:id/status` - Update invoice status (DRAFT → SENT → PAID)
+- `PUT /api/invoices/:id/mark-paid` - Mark invoice as paid with payment details
 - `GET /api/branding` - Get business branding and payment information
 - `PUT /api/branding` - Update branding and payment details
 - `GET /api/numbering-schemes` - Get numbering schemes
@@ -204,6 +205,13 @@ server/
 ```
 
 ## 🎯 Recent Updates
+
+### Manual Payment Processing (v1.9.27)
+- ✅ Added "Mark as Paid" API endpoint for manual payment processing
+- ✅ Implemented payment confirmation email service with proper formatting
+- ✅ Created payment method tracking (bank_transfer, cash, check, other)
+- ✅ Enhanced invoice status workflow with payment date tracking
+- ✅ Fixed database constraints and email template content issues
 
 ### Communication System (v1.2.0)
 - ✅ Added notes system with categories and priorities

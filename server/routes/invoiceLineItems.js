@@ -320,4 +320,132 @@ router.get('/:invoiceId/summary', async (req, res, next) => {
   }
 });
 
+/**
+ * PUT /api/invoices/:invoiceId/mark-paid
+ * Mark invoice as paid and create payment record
+ */
+router.put('/:invoiceId/mark-paid', async (req, res, next) => {
+  try {
+    console.log('🔍 Mark-paid endpoint called');
+    console.log('Request params:', req.params);
+    console.log('Request body:', req.body);
+    console.log('User ID from auth:', req.userId);
+
+    const userId = req.userId; // From auth middleware
+    const invoiceId = req.params.invoiceId;
+    
+    if (!userId) {
+      console.error('❌ No userId found - authentication failed');
+      return res.status(401).json(
+        createErrorResponse('Authentication required', 401)
+      );
+    }
+
+    const { 
+      payment_method = 'bank_transfer',
+      payment_notes = 'Marked as paid manually',
+      payment_date = null 
+    } = req.body;
+
+    console.log(`💳 Marking invoice ${invoiceId} as paid for user ${userId}`);
+    console.log('Payment details:', { payment_method, payment_notes, payment_date });
+
+    // First, verify the invoice exists and belongs to the user
+    console.log('🔍 Looking up invoice...');
+    const { data: invoice, error: invoiceError } = await supabase
+      .from('invoices')
+      .select('*')
+      .eq('id', invoiceId)
+      .eq('user_id', userId)
+      .single();
+
+    console.log('Invoice lookup result:', { 
+      found: !!invoice, 
+      error: invoiceError?.message || 'None',
+      invoiceStatus: invoice?.status 
+    });
+
+    if (invoiceError) {
+      console.error('❌ Invoice lookup error:', invoiceError);
+      return res.status(404).json(
+        createErrorResponse(`Invoice lookup failed: ${invoiceError.message}`, 404)
+      );
+    }
+
+    if (!invoice) {
+      console.error('❌ Invoice not found or access denied');
+      return res.status(404).json(
+        createErrorResponse('Invoice not found or access denied', 404)
+      );
+    }
+
+    // Check if invoice is already paid
+    if (invoice.status === 'paid') {
+      console.log('⚠️ Invoice is already paid');
+      return res.status(400).json(
+        createErrorResponse('Invoice is already marked as paid', 400)
+      );
+    }
+
+    // Use provided payment date or current timestamp
+    const paidAt = payment_date ? new Date(payment_date).toISOString() : new Date().toISOString();
+
+    // Update invoice status and payment details
+    const { data: updatedInvoice, error: updateError } = await supabase
+      .from('invoices')
+      .update({ 
+        status: 'paid',
+        paid_at: paidAt,
+        payment_method: payment_method,
+        payment_notes: payment_notes
+      })
+      .eq('id', invoiceId)
+      .eq('user_id', userId)
+      .select('*')
+      .single();
+
+    if (updateError) {
+      console.error('Invoice update error:', updateError);
+      throw new Error(`Failed to update invoice: ${updateError.message}`);
+    }
+
+    // Create payment record for tracking
+    const paymentRecord = {
+      invoice_id: invoiceId,
+      amount: parseFloat(invoice.amount),
+      currency: invoice.currency,
+      status: 'successful',
+      reference: `MANUAL-${Date.now()}-${invoiceId.slice(0, 8)}`,
+      payment_method: payment_method,
+      customer_email: invoice.customer_email,
+      customer_name: invoice.customer_name,
+      created_at: paidAt
+    };
+
+    const { data: payment, error: paymentError } = await supabase
+      .from('payments')
+      .insert(paymentRecord)
+      .select('*')
+      .single();
+
+    if (paymentError) {
+      console.warn('Payment record creation failed (non-critical):', paymentError);
+      // Continue even if payment record fails - invoice is still marked as paid
+    }
+
+    console.log(`✅ Invoice ${invoiceId} marked as paid successfully`);
+    console.log('Payment record created:', payment ? 'Yes' : 'No');
+
+    res.json(createApiResponse(true, { 
+      invoice: updatedInvoice, 
+      payment: payment || null,
+      message: 'Invoice marked as paid successfully'
+    }, 'Invoice marked as paid successfully'));
+
+  } catch (error) {
+    console.error('Mark paid error:', error);
+    next(error);
+  }
+});
+
 module.exports = router;

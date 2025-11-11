@@ -284,10 +284,12 @@ class InvoiceEmailService {
         throw new Error('No client email address found');
       }
 
+      const invoiceNumber = invoice.custom_invoice_number || invoice.invoice_number || `INV-${invoice.id.split('-')[0].toUpperCase()}`;
+      
       const emailData = {
         from: `${process.env.INVOICE_FROM_NAME || 'PayRush'} <${process.env.INVOICE_FROM_EMAIL}>`,
         to: [clientEmail],
-        subject: `Payment Received - Invoice ${invoice.invoice_number}`,
+        subject: `Payment Received - Invoice ${invoiceNumber}`,
         html: this.generatePaymentConfirmationHTML(invoice, clientName, paymentDetails)
       };
 
@@ -550,10 +552,10 @@ class InvoiceEmailService {
             
             <div class="payment-details">
               <h3>Payment Details</h3>
-              <p><strong>Invoice Number:</strong> ${invoice.invoice_number}</p>
-              <p><strong>Amount Paid:</strong> ${invoice.currency || 'USD'} $${parseFloat(paymentDetails.amount || invoice.total_amount || 0).toFixed(2)}</p>
-              <p><strong>Payment Date:</strong> ${new Date().toLocaleDateString()}</p>
-              <p><strong>Payment Method:</strong> ${paymentDetails.method || 'Manual Payment'}</p>
+              <p><strong>Invoice Number:</strong> ${invoice.custom_invoice_number || invoice.invoice_number || `INV-${invoice.id.split('-')[0].toUpperCase()}`}</p>
+              <p><strong>Amount Paid:</strong> ${formatCurrency(parseFloat(invoice.amount || 0), invoice.currency || 'USD')}</p>
+              <p><strong>Payment Date:</strong> ${paymentDetails.date ? new Date(paymentDetails.date).toLocaleDateString() : new Date().toLocaleDateString()}</p>
+              <p><strong>Payment Method:</strong> ${paymentDetails.method || 'bank_transfer'}</p>
               <p><strong>Status:</strong> <span style="color: #28a745; font-weight: bold;">PAID IN FULL</span></p>
             </div>
 

@@ -447,12 +447,12 @@ How to use: Edit this file as work progresses. Mark tasks as - [x] when done.
   - [x] Implement Access Bank Zambia payment configuration
   - [x] Add email logs database table for delivery tracking
 
-- [ ] **Simple Payment Tracking** (NEXT PRIORITY)
-  - [ ] Add "Mark as Paid" button for SENT invoices
-  - [ ] Implement manual payment status updates (SENT → PAID)
-  - [ ] Create simple three-state invoice lifecycle (DRAFT → SENT → PAID)
-  - [ ] Add payment date tracking for paid invoices
-  - [ ] Build payment status indicators in invoice list
+- [x] **Simple Payment Tracking** ✅ COMPLETED (v1.9.27)
+  - [x] Add "Mark as Paid" button for SENT invoices
+  - [x] Implement manual payment status updates (SENT → PAID)
+  - [x] Create simple three-state invoice lifecycle (DRAFT → SENT → PAID)
+  - [x] Add payment date tracking for paid invoices
+  - [x] Build payment status indicators in invoice list
 
 - [ ] **PDF Attachments** (NEXT PRIORITY)
   - [ ] Add PDF generation and attachment to invoice emails

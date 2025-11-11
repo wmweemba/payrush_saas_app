@@ -2,6 +2,110 @@
 
 All notable changes to the PayRush SaaS application will be documented in this file.
 
+## [1.9.27] - 2025-11-11
+
+### Added
+#### MAJOR FEATURE: Complete "Mark as Paid" Manual Payment Processing System
+
+- **💳 Manual Payment Processing Workflow**
+  - **Mark as Paid Button**: Added "✅ Mark Paid" button for invoices with 'sent', 'pending', or 'overdue' status
+  - **Professional Payment Dialog**: Interactive payment confirmation dialog with comprehensive payment details
+    - Payment method selection (Bank Transfer, Cash, Mobile Money, Card, Flutterwave, Stripe, PayPal, Other)
+    - Payment date picker with default to current date
+    - Optional payment reference field for tracking numbers
+    - Optional payment notes field for additional details
+  - **Database Integration**: Complete payment tracking infrastructure
+    - Added `paid_at`, `payment_method`, and `payment_notes` columns to invoices table
+    - Automatic payment record creation in payments table for audit trail
+    - Enhanced invoice status management with payment timestamp tracking
+
+- **📧 Automated Payment Confirmation Email System**
+  - **Professional Email Templates**: Enhanced payment confirmation emails with complete payment details
+    - Proper invoice number display with fallback logic (custom_invoice_number → invoice_number → generated ID)
+    - Accurate amount display using formatCurrency utility for proper currency symbols
+    - Payment date, method, and status information
+    - Professional HTML styling with success indicators and company branding
+  - **Email Integration**: Seamless integration with existing Resend.com email infrastructure
+    - Automatic email sending upon successful payment marking
+    - Email delivery tracking and logging
+    - Non-blocking email processing to prevent workflow interruption
+
+- **🏗️ Backend API Enhancement**
+  - **New Mark-Paid Endpoint**: `PUT /api/invoices/:id/mark-paid` with comprehensive functionality
+    - Payment method validation against database constraints
+    - Invoice ownership verification and status checking
+    - Atomic transaction handling for invoice and payment record updates
+    - Comprehensive error handling and debugging capabilities
+  - **Database Schema Updates**: Enhanced payment tracking infrastructure
+    - Migration 019: Added payment tracking fields with proper constraints
+    - Migration 020: Fixed payment method constraint validation
+    - Performance indexes for payment reporting queries
+
+### Fixed
+#### Payment Constraint & Email Content Issues
+
+- **🔧 Payment Method Constraint Resolution**
+  - **Problem**: Database constraint violation when marking invoices as paid with 'manual_bank_transfer'
+  - **Root Cause**: Payment method constraint didn't properly include all expected values
+  - **Solution**: Updated constraint to use simplified 'bank_transfer' value
+    - Streamlined payment method options to standard industry values
+    - Fixed constraint validation to prevent database errors
+    - Updated frontend and backend to use consistent payment method values
+
+- **📧 Payment Confirmation Email Content Fixes**
+  - **Invoice Number Display**: Fixed "null" invoice number in payment confirmation emails
+    - Implemented proper fallback logic: custom_invoice_number → invoice_number → INV-{ID}
+    - Consistent invoice number display across email subject and content
+  - **Amount Display Correction**: Fixed "EUR €0.00" showing incorrect payment amount
+    - Updated to use actual invoice amount instead of non-existent payment details amount
+    - Proper currency formatting using formatCurrency utility
+    - Accurate payment amount display in confirmation emails
+
+- **⚡ Frontend Status Handling Improvements**
+  - **Case Sensitivity Fix**: Enhanced status checking to handle both 'Sent' and 'sent' status formats
+  - **Loading State Management**: Added proper action loading states for better user feedback
+  - **Error Handling**: Comprehensive error handling with user-friendly messages
+
+### Technical Implementation
+
+- **Database Migrations**:
+  - `019_add_payment_tracking_to_invoices.sql` - Payment tracking fields and constraints
+  - `020_fix_payment_method_constraint.sql` - Constraint validation fixes
+
+- **Backend Enhancements**:
+  - Enhanced `server/routes/invoiceLineItems.js` with mark-paid endpoint
+  - Updated `server/services/invoiceEmailService.js` with payment confirmation templates
+  - Comprehensive error logging and debugging capabilities
+
+- **Frontend Components**:
+  - Enhanced `client/src/components/invoices/AdvancedInvoiceManager.js` with payment dialog
+  - Updated `client/src/components/invoices/EnhancedInvoiceSearchResults.js` with status handling
+  - Professional PaymentDetailsDialog component with form validation
+
+### User Experience Improvements
+
+- ✅ **Streamlined Payment Workflow**: Simple three-step process (Mark as Paid → Fill Details → Confirm)
+- ✅ **Professional Communication**: Automatic payment confirmation emails with complete details
+- ✅ **Payment Audit Trail**: Complete tracking of payment methods, dates, and references
+- ✅ **Status Indicators**: Clear visual feedback for payment status and processing states
+- ✅ **Error Prevention**: Comprehensive validation to prevent duplicate payments and data errors
+
+### Business Value
+
+- **🚀 Manual Payment Processing**: Complete MVP payment solution before gateway integration
+- **📧 Automated Confirmations**: Professional payment confirmations improve customer experience
+- **📊 Payment Tracking**: Comprehensive payment records for business reporting and auditing
+- **⚡ Workflow Efficiency**: Streamlined process reduces time from payment to confirmation
+- **🎯 MVP Achievement**: Completes the three-state invoice lifecycle (Draft → Sent → Paid)
+
+### Integration with Existing Systems
+
+- **Email Infrastructure**: Seamlessly integrates with existing Resend.com email delivery system
+- **Database Architecture**: Builds on existing invoice and payment table structure
+- **UI Components**: Uses established shadcn/ui component library and design patterns
+- **Authentication**: Proper JWT authentication and user permission handling
+- **Error Handling**: Consistent error handling patterns across the application
+
 ## [1.9.26] - 2025-11-10
 
 ### Added

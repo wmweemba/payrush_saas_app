@@ -307,6 +307,18 @@ const EnhancedInvoiceSearchResults = ({
                       </p>
                     )}
                     
+                    {/* Payment information for paid invoices */}
+                    {invoice.status === 'Paid' && invoice.paid_at && (
+                      <div className="flex items-center space-x-2 text-xs text-green-600 dark:text-green-400 mb-1">
+                        <span>✅ Paid on {formatDate(invoice.paid_at)}</span>
+                        {invoice.payment_method && (
+                          <span className="px-2 py-1 bg-green-100 dark:bg-green-900/20 rounded-full">
+                            {invoice.payment_method.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    
                     <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
                       <span>Due: {formatDate(invoice.due_date)}</span>
                       <span>Created: {formatDate(invoice.created_at)}</span>
@@ -377,7 +389,24 @@ const EnhancedInvoiceSearchResults = ({
                         </>
                       )}
 
-                      {(invoice.status === 'Pending' || invoice.status === 'Sent' || invoice.status === 'Overdue') && (
+                      {invoice.status === 'Paid' && (
+                        <>
+                          <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
+                            ✅ Paid
+                          </Badge>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleAction('view', invoice)}
+                            disabled={isActionLoading(invoice.id, 'view')}
+                          >
+                            👁️ View
+                          </Button>
+                        </>
+                      )}
+
+                      {(invoice.status === 'Pending' || invoice.status === 'Sent' || invoice.status === 'Overdue' || 
+                        invoice.status === 'pending' || invoice.status === 'sent' || invoice.status === 'overdue') && (
                         <>
                           <Button
                             size="sm"

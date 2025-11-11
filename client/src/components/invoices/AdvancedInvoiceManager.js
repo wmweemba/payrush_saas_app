@@ -40,8 +40,25 @@ const AdvancedInvoiceManager = ({
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [currentInvoice, setCurrentInvoice] = useState(null);
 
+  // Action loading state
+  const [actionLoading, setActionLoading] = useState({});
+
   // Active tab
   const [activeTab, setActiveTab] = useState('search');
+
+  // Check if a specific action is loading for an invoice
+  const isActionLoading = (invoiceId, action) => {
+    return actionLoading[`${invoiceId}-${action}`] || false;
+  };
+
+  // Set loading state for a specific action on an invoice
+  const setLoading = (invoiceId, action, loading) => {
+    const key = `${invoiceId}-${action}`;
+    setActionLoading(prev => ({
+      ...prev,
+      [key]: loading
+    }));
+  };
 
   // Load initial results (recent invoices)
   useEffect(() => {
@@ -117,6 +134,11 @@ const AdvancedInvoiceManager = ({
 
   // Handle invoice actions
   const handleInvoiceAction = async (action, invoice) => {
+    // Set loading state for non-dialog actions
+    if (action !== 'markPaid' && action !== 'view' && action !== 'edit') {
+      setLoading(invoice.id, action, true);
+    }
+
     try {
       switch (action) {
         case 'pay':
@@ -151,6 +173,11 @@ const AdvancedInvoiceManager = ({
     } catch (error) {
       console.error('Invoice action error:', error);
       onMessage(`Failed to ${action} invoice: ${error.message}`, true);
+    } finally {
+      // Clear loading state for non-dialog actions
+      if (action !== 'markPaid' && action !== 'view' && action !== 'edit') {
+        setLoading(invoice.id, action, false);
+      }
     }
   };
 
@@ -346,13 +373,53 @@ const AdvancedInvoiceManager = ({
     try {
       setLoading(currentInvoice.id, 'markPaid', true);
       
-      await updateInvoiceStatus(currentInvoice.id, 'Paid', paymentDetails);
+      console.log('💳 Marking invoice as paid with details:', paymentDetails);
       
-      onMessage(`✅ Invoice ${currentInvoice.custom_invoice_number || currentInvoice.invoice_number || currentInvoice.id} marked as paid`, false);
-      
-      // Refresh search results
-      if (currentSearchParams) {
-        await handleSearch(currentSearchParams);
+      // Use new mark-paid API endpoint
+      const response = await apiClient(`/api/invoices/${currentInvoice.id}/mark-paid`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          payment_method: paymentDetails.method || 'bank_transfer',
+          payment_notes: paymentDetails.notes || 'Marked as paid manually',
+          payment_date: paymentDetails.date || null
+        })
+      });
+
+      if (response.success) {
+        const invoiceNumber = currentInvoice.custom_invoice_number || 
+                            currentInvoice.invoice_number || 
+                            `INV-${currentInvoice.id.slice(0, 8)}`;
+        
+        onMessage(`✅ Invoice ${invoiceNumber} marked as paid successfully!`, false);
+        
+        // Try to send payment confirmation email (non-blocking)
+        try {
+          await apiClient(`/api/invoice-email/confirm-payment/${currentInvoice.id}`, {
+            method: 'POST',
+            body: JSON.stringify({
+              paymentDetails: {
+                method: paymentDetails.method,
+                date: paymentDetails.date || new Date().toISOString(),
+                notes: paymentDetails.notes
+              }
+            })
+          });
+          console.log('✅ Payment confirmation email sent');
+        } catch (emailError) {
+          console.warn('⚠️ Payment confirmation email failed (non-critical):', emailError.message);
+        }
+        
+        // Refresh search results
+        if (currentSearchParams) {
+          await handleSearch(currentSearchParams);
+        }
+        
+        // Refresh parent invoices if callback provided
+        if (onRefreshInvoices) {
+          onRefreshInvoices();
+        }
+      } else {
+        throw new Error(response.error || 'Failed to mark invoice as paid');
       }
       
       // Close dialog
@@ -856,18 +923,20 @@ const AdvancedInvoiceManager = ({
 // Payment Details Dialog Component
 const PaymentDetailsDialog = ({ open, onOpenChange, invoice, onConfirm, loading }) => {
   const [paymentDetails, setPaymentDetails] = useState({
-    method: 'manual',
+    method: 'bank_transfer',
     reference: '',
-    notes: ''
+    notes: '',
+    date: '' // Add payment date field
   });
 
   // Reset form when dialog opens/closes
   useEffect(() => {
     if (open) {
       setPaymentDetails({
-        method: 'manual',
+        method: 'bank_transfer',
         reference: '',
-        notes: ''
+        notes: '',
+        date: new Date().toISOString().split('T')[0] // Default to today
       });
     }
   }, [open]);
@@ -877,14 +946,16 @@ const PaymentDetailsDialog = ({ open, onOpenChange, invoice, onConfirm, loading 
     onConfirm(paymentDetails);
   };
 
+  // Payment methods matching backend constraints
   const paymentMethods = [
-    { value: 'manual', label: 'Manual Entry' },
-    { value: 'bank_transfer', label: 'Bank Transfer' },
-    { value: 'card', label: 'Credit/Debit Card' },
-    { value: 'mobile_money', label: 'Mobile Money' },
-    { value: 'cash', label: 'Cash Payment' },
-    { value: 'check', label: 'Check' },
-    { value: 'other', label: 'Other' }
+    { value: 'bank_transfer', label: '🏦 Bank Transfer' },
+    { value: 'cash', label: '💵 Cash Payment' },
+    { value: 'mobile_money', label: '📱 Mobile Money' },
+    { value: 'card', label: '💳 Credit/Debit Card' },
+    { value: 'flutterwave', label: '🌊 Flutterwave Payment' },
+    { value: 'stripe', label: '💙 Stripe Payment' },
+    { value: 'paypal', label: '🅿️ PayPal' },
+    { value: 'other', label: '📋 Other Method' }
   ];
 
   return (
@@ -919,6 +990,17 @@ const PaymentDetailsDialog = ({ open, onOpenChange, invoice, onConfirm, loading 
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="payment-date">Payment Date</Label>
+            <Input
+              id="payment-date"
+              type="date"
+              value={paymentDetails.date}
+              onChange={(e) => setPaymentDetails(prev => ({ ...prev, date: e.target.value }))}
+              className="bg-white dark:bg-slate-700 border-gray-300 dark:border-gray-600"
+            />
           </div>
 
           <div className="space-y-2">

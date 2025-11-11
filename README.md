@@ -17,7 +17,8 @@ A comprehensive client management and invoicing platform built with Next.js and 
 - **Numbering Schemes**: Flexible invoice numbering with prefixes, suffixes, and date components
 - **Email Integration**: Resend.com integration for reliable invoice delivery
 - **Payment Tracking**: Simple invoice status management (Draft → Sent → Paid)
-- **Manual Payment Processing**: Bank details integration for traditional payment methods
+- **Manual Payment Processing**: Mark as Paid functionality with payment confirmation emails
+- **Payment Method Support**: Bank transfer, cash, check, and other traditional payment methods
 
 ### Advanced Features
 - **Currency Preferences**: Client-specific currency settings with automatic conversion
@@ -147,6 +148,13 @@ payrush_saas_app/
 - **Modal Dialogs**: Add/edit functionality for all entities
 
 ## 🎯 Recent Updates
+
+### Version 1.9.27 - Manual Payment Processing
+- ✅ Added "Mark as Paid" functionality for manual payment processing
+- ✅ Implemented payment confirmation email system with proper formatting
+- ✅ Created payment method selection (bank transfer, cash, check, other)
+- ✅ Fixed database constraints and email template content issues
+- ✅ Enhanced invoice status workflow with comprehensive payment tracking
 
 ### Version 1.2.0 - Client Communication System
 - ✅ Added comprehensive notes system with categories and priorities

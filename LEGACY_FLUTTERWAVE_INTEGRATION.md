@@ -1,7 +1,18 @@
-# Flutterwave Payment Integration - Setup Guide
+# 🚨 LEGACY DOCUMENT - Flutterwave Payment Integration
 
-## Overview
-PayRush now includes complete Flutterwave payment integration, enabling secure invoice payments with automatic status updates. This guide covers the setup and usage of the new payment system.
+## ⚠️ **IMPORTANT: THIS APPROACH HAS BEEN DISCONTINUED**
+
+**This document describes a payment gateway approach that is NO LONGER USED in PayRush:**
+- **Previous Approach**: Customer invoice payments via Flutterwave payment gateway
+- **Current Approach**: Manual payment processing with "Mark as Paid" functionality
+- **Reason for Change**: Simplified user experience, lower costs, traditional payment methods
+
+**See `PAYMENT_STRATEGY.md` for current payment processing approach.**
+
+---
+
+## Overview (LEGACY - DO NOT IMPLEMENT)
+PayRush previously included Flutterwave payment integration for customer invoice payments. This approach has been replaced with manual payment processing.
 
 ## 🚀 Features Implemented
 

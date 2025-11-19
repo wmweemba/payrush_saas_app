@@ -1,54 +1,64 @@
-Title: SME Invoice + Payments Assistant
+Title: Professional Invoicing & Client Management Platform
 
-Version: 0.1 (PRD)
+Version: 2.0 (Updated PRD)
 
-Date: 2025-09-24
+Date: 2025-11-19
 
 Executive summary
 
-A lightweight, mobile-friendly SaaS that enables Zambian micro and small businesses to create invoices, send payment links/QR codes that accept local mobile money (MTN/Airtel/Zamtel) and international cards, and automatically reconcile payments. The MVP must be buildable with zero upfront cost using free-tier hosting and services and with JavaScript-based code (Next.js + Supabase).
+PayRush is a professional invoicing solution designed for business owners and freelancers who need to create, track, and deliver professional invoices to their clients. The platform focuses on invoice management, client relationships, and manual payment processing, providing a comprehensive yet simple invoicing workflow. Built with Next.js and Supabase for scalability and reliability.
 
 Goals
 
-Enable quick invoicing and fast collection for Zambian SMEs.
+Enable professional invoice creation with custom branding and templates.
 
-Support both local mobile money and international card payments.
+Provide comprehensive client management with communication tracking.
 
-Ship a usable MVP in ~2–4 weeks with no upfront hosting cost.
+Support manual payment processing for businesses using traditional payment methods.
 
-Provide a path to scale services after revenue (paid API usage, upgraded DB, SMS/WhatsApp paid providers).
+Deliver professional email communication with PDF invoice attachments.
+
+Build a sustainable SaaS business with DPO payment integration for subscriptions.
 
 Primary users
 
-Owner/operator of micro & small businesses (shopkeepers, salons, small service providers) in Zambia.
+Business owners and freelancers who need professional invoicing capabilities.
 
-Bookkeepers or small accounting clerks managing invoices for multiple merchants.
+Service providers (consultants, agencies, contractors) managing client billing.
 
-Success metrics (first 3 months)
+Small to medium businesses requiring organized client and invoice management.
 
-100 registered business accounts.
+Success metrics (first 6 months)
 
-500 invoices issued.
+200 registered business accounts actively creating invoices.
 
-30% of invoices paid through payment links.
+1,000+ professional invoices generated with custom branding.
 
-Positive NPS from pilot merchants (goal > 7/10).
+80%+ invoice delivery success rate via email.
 
-Scope — In-scope (MVP)
+Positive user feedback on invoice professionalism and ease of use.
 
-Business signup and login (Supabase Auth).
+Scope — Current Platform (Production Ready)
 
-Client/customer CRUD.
+✅ **User Authentication**: Secure business signup and login (Supabase Auth).
 
-Create invoice with line items, due date, and currency (ZMW, option USD).
+✅ **Client Management**: Complete CRUD operations with contact and address management.
 
-Generate invoice landing page with pay button + QR (payment link from gateway).
+✅ **Professional Invoicing**: Create invoices with line items, custom branding, and templates.
 
-Integrate with a payment gateway (initially Flutterwave) to accept MTN/Airtel/Zamtel mobile money and card payments.
+✅ **Template System**: Multiple professional invoice templates with visual customization.
 
-Webhook endpoint to reconcile payments and mark invoices paid.
+✅ **Business Branding**: Custom logos, colors, fonts, and company information.
 
-Send payment link via WhatsApp / email (templates) and basic dashboard showing paid / unpaid invoices.
+✅ **Email Delivery**: Send professional PDF invoices via email (Resend integration).
+
+✅ **Manual Payment Processing**: "Mark as Paid" functionality for traditional payment methods.
+
+✅ **Communication System**: Client notes, timeline tracking, and reminders.
+
+✅ **Financial Dashboard**: Invoice analytics, status tracking, and aging reports.
+
+✅ **Numbering Schemes**: Flexible invoice numbering with automated patterns.
 
 Simple billing gating (freemium tier: up to X invoices per month free).
 
@@ -68,9 +78,9 @@ As a merchant, I can add a client with name, phone, and email.
 
 As a merchant, I can create an invoice and send a payment link via WhatsApp or email.
 
-As a client, I can click the payment link, choose mobile money or card, and pay.
+As a client, I can view the invoice and make payment via bank transfer using provided bank details.
 
-As the merchant, I receive confirmation that an invoice is paid (automatic reconciliation).
+As the merchant, I can mark invoices as paid and send payment confirmation emails.
 
 As a merchant, I can view invoice status and filter by paid/unpaid.
 
@@ -80,9 +90,9 @@ Auth: Supabase email/password + magic link optional.
 
 Invoices: Create/edit/delete, generate public invoice URL.
 
-Payments: Create payment link via gateway API; support mobile-money network selection.
+Payments: Manual payment processing with multiple payment methods; bank details in invoices.
 
-Webhooks: Verify signature; idempotent processing; update transaction and invoice.
+Subscriptions: DPO integration for PayRush's own subscription billing and revenue collection.
 
 Notifications: Send payment link via WhatsApp template and email via SMTP/API.
 
@@ -124,7 +134,7 @@ M1: Repo + Supabase schema + auth (3 days)
 
 M2: Invoice UI + create/send link (5 days)
 
-M3: Payment gateway integration + webhook (5 days)
+M3: Manual payment processing + DPO subscription billing (5 days)
 
 M4: Notifications + billing gating (4 days)
 

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { loadBranding } from '../../lib/pdf/templateService';
+import { getBusinessBranding } from '../../lib/pdf/templateService';
 
 export default function TemplatePreview({ 
   template, 
@@ -57,7 +57,7 @@ export default function TemplatePreview({
     const fetchBranding = async () => {
       if (businessId) {
         try {
-          const brandingData = await loadBranding(businessId);
+          const brandingData = await getBusinessBranding(businessId);
           setBranding(brandingData);
         } catch (error) {
           console.warn('Could not load branding:', error);

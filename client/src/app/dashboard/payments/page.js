@@ -85,39 +85,32 @@ export default function PaymentsPage() {
   return (
     <DashboardLayout currentTab="payments">
       <div className="space-y-8">
-        {/* Flutterwave Integration Status */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
-          <div className="flex items-start space-x-4">
-            <div className="bg-blue-100 dark:bg-blue-900/30 rounded-full p-3">
-              <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+        {/* Payment Integration Status */}
+        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-xl p-8 border border-purple-200 dark:border-purple-800 text-center">
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-purple-100 dark:bg-purple-900/30 rounded-full p-4 w-16 h-16 mx-auto mb-4">
+              <svg className="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <div className="flex-1">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                Flutterwave Payment Integration
-              </h3>
-              <p className="text-gray-600 dark:text-gray-300 mb-4">
-                Accept payments from customers across Africa and globally using cards, mobile money, bank transfers, and more.
-              </p>
-              <div className="flex items-center space-x-3">
-                <span className="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 text-sm font-medium rounded-full">
-                  🚧 In Development
-                </span>
-                <a 
-                  href="https://developer.flutterwave.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium"
-                >
-                  View Flutterwave API Docs →
-                </a>
-              </div>
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+              Payment Gateway Integration
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+              We're working on integrating secure payment processing capabilities to help you collect payments from your customers seamlessly. This feature will support multiple payment methods and provide real-time transaction tracking.
+            </p>
+            <div className="flex items-center justify-center space-x-3">
+              <span className="px-4 py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 text-sm font-medium rounded-full">
+                🚀 Coming Soon
+              </span>
+              <span className="text-gray-500 dark:text-gray-400 text-sm">
+                Expected Q1 2026
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Planned Features */}
+        {/* Upcoming Features */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white dark:bg-slate-700 rounded-xl p-6 border border-gray-200 dark:border-gray-600">
             <div className="flex items-center space-x-3 mb-4">
@@ -128,122 +121,91 @@ export default function PaymentsPage() {
               </div>
               <h4 className="font-semibold text-gray-900 dark:text-white">Payment Collection</h4>
             </div>
-            <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-              <li className="flex items-center space-x-2">
-                <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                <span>Generate payment links for invoices</span>
+            <ul className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
+              <li className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span>Secure payment links for invoices</span>
               </li>
-              <li className="flex items-center space-x-2">
-                <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                <span>Accept card payments globally</span>
+              <li className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span>Multiple payment methods support</span>
               </li>
-              <li className="flex items-center space-x-2">
-                <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                <span>Mobile money integration (MTN, Airtel)</span>
+              <li className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span>International payment processing</span>
               </li>
-              <li className="flex items-center space-x-2">
-                <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                <span>Bank transfer options</span>
+              <li className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span>Automated payment reminders</span>
               </li>
             </ul>
           </div>
 
           <div className="bg-white dark:bg-slate-700 rounded-xl p-6 border border-gray-200 dark:border-gray-600">
             <div className="flex items-center space-x-3 mb-4">
-              <div className="bg-purple-100 dark:bg-purple-900/30 rounded-full p-2">
-                <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-blue-100 dark:bg-blue-900/30 rounded-full p-2">
+                <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
               </div>
-              <h4 className="font-semibold text-gray-900 dark:text-white">Payment Tracking</h4>
+              <h4 className="font-semibold text-gray-900 dark:text-white">Payment Management</h4>
             </div>
-            <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-              <li className="flex items-center space-x-2">
-                <div className="w-1.5 h-1.5 bg-purple-500 rounded-full"></div>
-                <span>Real-time payment status updates</span>
+            <ul className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
+              <li className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span>Real-time transaction monitoring</span>
               </li>
-              <li className="flex items-center space-x-2">
-                <div className="w-1.5 h-1.5 bg-purple-500 rounded-full"></div>
-                <span>Automatic invoice status updates</span>
+              <li className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span>Detailed payment analytics</span>
               </li>
-              <li className="flex items-center space-x-2">
-                <div className="w-1.5 h-1.5 bg-purple-500 rounded-full"></div>
-                <span>Payment history and receipts</span>
+              <li className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span>Automated reconciliation</span>
               </li>
-              <li className="flex items-center space-x-2">
-                <div className="w-1.5 h-1.5 bg-purple-500 rounded-full"></div>
-                <span>Webhook integration</span>
+              <li className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span>Comprehensive reporting</span>
               </li>
             </ul>
           </div>
         </div>
 
-        {/* Integration Preview */}
-        <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-6 border border-gray-200 dark:border-gray-600">
-          <h4 className="font-semibold text-gray-900 dark:text-white mb-4">
-            🔧 Developer Preview
-          </h4>
-          <div className="bg-gray-800 rounded-lg p-4 font-mono text-sm overflow-x-auto">
-            <div className="text-green-400">{`// /lib/payments/flutterwave.js`}</div>
-            <div className="text-gray-300 mt-2">
-              <span className="text-blue-400">import</span> {`{ FlutterwaveCheckout }`} <span className="text-blue-400">from</span> <span className="text-yellow-300">&apos;flutterwave-react-v3&apos;</span>;<br/>
-              <br/>
-              <span className="text-purple-400">export</span> <span className="text-blue-400">const</span> <span className="text-white">createPaymentLink</span> = <span className="text-yellow-300">async</span> (invoiceData) {`=> {`}<br/>
-              &nbsp;&nbsp;<span className="text-gray-500">{`// Generate secure payment link`}</span><br/>
-              &nbsp;&nbsp;<span className="text-blue-400">const</span> config = {`= {`}<br/>
-              &nbsp;&nbsp;&nbsp;&nbsp;public_key: <span className="text-yellow-300">&apos;FLW_PUBLIC_KEY&apos;</span>,<br/>
-              &nbsp;&nbsp;&nbsp;&nbsp;tx_ref: invoiceData.id,<br/>
-              &nbsp;&nbsp;&nbsp;&nbsp;amount: invoiceData.amount,<br/>
-              &nbsp;&nbsp;&nbsp;&nbsp;currency: invoiceData.currency,<br/>
-              &nbsp;&nbsp;&nbsp;&nbsp;customer: {`{`}<br/>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;email: invoiceData.customer_email,<br/>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name: invoiceData.customer_name<br/>
-              &nbsp;&nbsp;&nbsp;&nbsp;{`}`}<br/>
-              &nbsp;&nbsp;{`};`}<br/>
-              {`};`}
+
+
+        {/* Current State */}
+        <div className="bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-900/20 dark:to-yellow-900/20 rounded-xl p-6 border border-orange-200 dark:border-orange-800">
+          <div className="flex items-start space-x-4">
+            <div className="bg-orange-100 dark:bg-orange-900/30 rounded-full p-3">
+              <svg className="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
+                Manual Payment Processing
+              </h4>
+              <p className="text-gray-700 dark:text-gray-300 text-sm mb-3">
+                Currently, PayRush operates with manual payment processing. You can mark invoices as paid manually once you receive payments through your preferred payment methods (bank transfers, mobile money, etc.).
+              </p>
+              <div className="flex items-center space-x-4">
+                <span className="text-xs text-gray-600 dark:text-gray-400">
+                  💡 Tip: Use the "Mark as Paid" button on your invoice dashboard when payments are received
+                </span>
+              </div>
             </div>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
-            Payment infrastructure is being prepared. Integration will include secure webhooks, automatic status updates, and comprehensive transaction tracking.
-          </p>
         </div>
-
-        {/* Quick Start Guide */}
-        <div className="bg-white dark:bg-slate-700 rounded-xl p-6 border border-gray-200 dark:border-gray-600">
-          <h4 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-            <svg className="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Getting Started with Payments
+        {/* Notification Signup */}
+        <div className="bg-white dark:bg-slate-700 rounded-xl p-6 border border-gray-200 dark:border-gray-600 text-center">
+          <h4 className="font-semibold text-gray-900 dark:text-white mb-3">
+            Stay Updated on Payment Features
           </h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex items-start space-x-3">
-              <div className="bg-blue-100 dark:bg-blue-900/30 rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
-                <span className="text-blue-600 dark:text-blue-400 font-bold text-sm">1</span>
-              </div>
-              <div>
-                <p className="font-medium text-gray-900 dark:text-white text-sm">Setup Flutterwave Account</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400">Create merchant account and get API keys</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="bg-blue-100 dark:bg-blue-900/30 rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
-                <span className="text-blue-600 dark:text-blue-400 font-bold text-sm">2</span>
-              </div>
-              <div>
-                <p className="font-medium text-gray-900 dark:text-white text-sm">Configure Webhooks</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400">Set up payment status notifications</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="bg-blue-100 dark:bg-blue-900/30 rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
-                <span className="text-blue-600 dark:text-blue-400 font-bold text-sm">3</span>
-              </div>
-              <div>
-                <p className="font-medium text-gray-900 dark:text-white text-sm">Start Accepting Payments</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400">Generate links and track transactions</p>
-              </div>
-            </div>
+          <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">
+            We'll notify you as soon as payment processing features become available.
+          </p>
+          <div className="text-gray-500 dark:text-gray-400 text-sm">
+            📧 Automatic updates will be sent to your registered email address
           </div>
         </div>
       </div>

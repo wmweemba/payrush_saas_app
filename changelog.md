@@ -2,6 +2,105 @@
 
 All notable changes to the PayRush SaaS application will be documented in this file.
 
+## 📋 **Payment System Clarification (November 2025)**
+
+**Important Note**: PayRush uses a **manual payment processing approach** for customer invoices:
+- **Customer Invoice Payments**: Manual processing via bank transfer, cash, mobile money with "Mark as Paid" functionality
+- **PayRush Subscription Billing**: DPO payment gateway integration for PayRush's own SaaS subscription payments
+- **Historical References**: Earlier changelog entries mentioning Flutterwave for invoice payments reflect the previous approach - these have been replaced with manual payment processing
+
+---
+
+## [1.9.29] - 2025-11-19
+
+### Enhanced
+#### Marketing & Product Positioning - Invoicing Solution Focus
+
+- **🏠 Homepage Copy Transformation**
+  - **Strategic Repositioning**: Updated homepage from "Fast & Secure Payment Processing" to "Professional Invoice Management"
+  - **Accurate Value Proposition**: Changed messaging to reflect PayRush as "a simple yet powerful invoicing solution that helps you create, track, and deliver professional invoices to your clients with ease and confidence"
+  - **Feature Alignment**: Updated feature cards to highlight actual capabilities:
+    - **Professional Invoices**: Custom branding, templates, automated numbering schemes
+    - **Client Management**: Contact organization, communication logs, payment preferences  
+    - **Track & Monitor**: Invoice status tracking, payment monitoring, comprehensive analytics
+  - **Enhanced Features Section**: Added comprehensive feature showcase highlighting:
+    - Custom Branding with logo and color integration
+    - Invoice Templates with professional designs
+    - Numbering Schemes with automated organization
+    - Notes & Comments for better communication
+  - **Call-to-Action Updates**: Changed buttons from "Start Free Trial" to "Start Creating Invoices" for clarity
+
+- **💳 Payments Page Modernization**
+  - **Removed Outdated Content**: Eliminated Flutterwave-specific integration details that referenced future payment processing
+  - **Coming Soon Messaging**: Replaced specific payment gateway references with professional "Payment Gateway Integration - Coming Soon (Q1 2026)" messaging
+  - **Current State Clarity**: Added comprehensive section explaining current manual payment processing approach
+  - **Future Roadmap**: Updated planned features to be more generic and focused on payment processing capabilities
+  - **User Expectations**: Added notification signup section for payment feature updates
+  - **Professional Presentation**: Enhanced design with better color coordination and clear messaging hierarchy
+
+- **📝 Documentation Alignment**
+  - **Consistent Messaging**: All marketing copy now accurately reflects PayRush as an invoicing solution rather than payment processor
+  - **Feature Accuracy**: Updated feature descriptions to match actual implemented capabilities
+  - **Value Proposition**: Clear positioning as invoice management and client relationship tool
+  - **Realistic Expectations**: Set appropriate user expectations for current manual payment approach
+
+### Business Impact
+- **🎯 Clear Product Positioning**: Homepage now accurately represents PayRush's current capabilities as an invoicing solution
+- **💼 Professional Credibility**: Consistent messaging across all pages builds trust and sets proper expectations
+- **📈 User Onboarding**: Clear value proposition helps users understand what PayRush can do for their business today
+- **🔮 Future Planning**: Professional roadmap presentation for payment processing features maintains user interest
+- **✨ Enhanced User Experience**: Cohesive product narrative from homepage through dashboard experience
+
+### Technical Implementation
+- **Homepage Updates**: Complete homepage redesign with invoicing-focused features and benefits
+- **Payments Page**: Comprehensive update removing outdated content and adding appropriate coming soon messaging
+- **Consistent Theming**: Enhanced visual design with proper color coordination and professional styling
+- **Responsive Design**: All updates maintain mobile-responsive behavior and accessibility standards
+
+---
+
+## [1.9.29] - 2025-11-19
+
+### Enhanced
+#### Marketing & Product Positioning - Invoicing Solution Focus
+
+- **🏠 Homepage Copy Transformation**
+  - **Strategic Repositioning**: Updated homepage from "Fast & Secure Payment Processing" to "Professional Invoice Management"
+  - **Accurate Value Proposition**: Changed messaging to reflect PayRush as "a simple yet powerful invoicing solution that helps you create, track, and deliver professional invoices to your clients with ease and confidence"
+  - **Feature Alignment**: Updated feature cards to highlight actual capabilities:
+    - **Professional Invoices**: Custom branding, templates, automated numbering schemes
+    - **Client Management**: Contact organization, communication logs, payment preferences  
+    - **Track & Monitor**: Invoice status tracking, payment monitoring, comprehensive analytics
+  - **Enhanced Features Section**: Added comprehensive feature showcase highlighting:
+    - Custom Branding with logo and color integration
+    - Invoice Templates with professional designs
+    - Numbering Schemes with automated organization
+    - Notes & Comments for better communication
+  - **Call-to-Action Updates**: Changed buttons from "Start Free Trial" to "Start Creating Invoices" for clarity
+
+- **💳 Payments Page Modernization**
+  - **Removed Outdated Content**: Eliminated Flutterwave-specific integration details that referenced future payment processing
+  - **Coming Soon Messaging**: Replaced specific payment gateway references with professional "Payment Gateway Integration - Coming Soon (Q1 2026)" messaging
+  - **Current State Clarity**: Added comprehensive section explaining current manual payment processing approach
+  - **Future Roadmap**: Updated planned features to be more generic and focused on payment processing capabilities
+  - **User Expectations**: Added notification signup section for payment feature updates
+  - **Professional Presentation**: Enhanced design with better color coordination and clear messaging hierarchy
+
+### Business Impact
+- **🎯 Clear Product Positioning**: Homepage now accurately represents PayRush's current capabilities as an invoicing solution
+- **💼 Professional Credibility**: Consistent messaging across all pages builds trust and sets proper expectations
+- **📈 User Onboarding**: Clear value proposition helps users understand what PayRush can do for their business today
+- **🔮 Future Planning**: Professional roadmap presentation for payment processing features maintains user interest
+- **✨ Enhanced User Experience**: Cohesive product narrative from homepage through dashboard experience
+
+### Technical Implementation
+- **Homepage Updates**: Complete homepage redesign with invoicing-focused features and benefits
+- **Payments Page**: Comprehensive update removing outdated content and adding appropriate coming soon messaging
+- **Consistent Theming**: Enhanced visual design with proper color coordination and professional styling
+- **Responsive Design**: All updates maintain mobile-responsive behavior and accessibility standards
+
+---
+
 ## [1.9.28] - 2025-11-11
 
 ### 🏗️ **Architecture Cleanup & Single-User Focus**
@@ -3039,7 +3138,7 @@ The system is transitioning from **backend infrastructure** (complete) to **fron
 - Official PayRush database schema with three core tables
 - **profiles** table extending Supabase auth.users with business_name
 - **invoices** table for customer billing with status tracking (draft|sent|paid|overdue)  
-- **payments** table for payment gateway integration with provider tracking
+- **payments** table for manual payment tracking with method and reference tracking
 - Row Level Security (RLS) policies for data protection
 - Foreign key relationships with cascade delete protection
 - Database indexes for optimized query performance

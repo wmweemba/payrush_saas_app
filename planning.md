@@ -8,7 +8,7 @@ Email Service: Resend.com (MVP phase with free tier - 3,000 emails/month) — re
 
 WhatsApp Integration: Twilio WhatsApp Business API (Phase 2) — invoice delivery and payment notifications via WhatsApp.
 
-Payments: Manual bank transfer processing (MVP) → Future: Flutterwave integration for automatic payment processing.
+Payments: Manual payment processing (MVP) for all payment methods → Future: Enhanced payment tracking and reporting.
 
 Notifications: Email-first approach (MVP) → Multi-channel communication (Email + WhatsApp) in Phase 2.
 
@@ -22,9 +22,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 SUPABASE_SERVICE_ROLE_KEY (server-side only)
 
-FLW_SECRET_KEY (Flutterwave secret)
+DPO_COMPANY_TOKEN (DPO for PayRush subscription billing)
 
-FLW_PUBLIC_KEY (Flutterwave public)
+DPO_SERVICE_TYPE (DPO service configuration)
+
+DPO_API_URL (DPO API endpoint)
 
 RESEND_API_KEY (Resend.com for email delivery)
 
@@ -70,16 +72,20 @@ payment_webhooks: id, raw_payload, received_at, processed_at, status
 - `currency` text NOT NULL
 - `status` text CHECK (Pending|Sent|Paid|Overdue|Cancelled) DEFAULT 'Pending'
 - `due_date` date
+- `paid_at` timestamptz
+- `payment_method` text (bank_transfer, cash, mobile_money, etc.)
+- `payment_notes` text
 - `created_at` timestamptz DEFAULT now()
 
-**payments**
+**payments** (for manual payment tracking)
 - `id` uuid PRIMARY KEY DEFAULT gen_random_uuid()
 - `invoice_id` uuid → references invoices(id)
 - `amount` numeric(12,2) NOT NULL
 - `currency` text NOT NULL
-- `provider` text NOT NULL (Flutterwave, etc.)
-- `status` text CHECK (pending|completed|failed) DEFAULT 'pending'
-- `reference` text (payment gateway reference)
+- `method` text NOT NULL (bank_transfer, cash, mobile_money, etc.)
+- `status` text CHECK (completed) DEFAULT 'completed'
+- `reference` text (manual payment reference)
+- `notes` text
 - `created_at` timestamptz DEFAULT now()
 
 ### Security & Relationships
@@ -102,7 +108,9 @@ POST /api/invoices/:id/send — send invoice via email with PDF attachment
 
 PUT /api/invoices/:id/status — update invoice status (DRAFT → SENT → PAID)
 
-GET /api/invoices/:id — public invoice page for customer viewing
+PUT /api/invoices/:id/mark-paid — mark invoice as paid with manual payment details
+
+GET /api/invoices/:id — public invoice page for customer viewing (view-only)
 
 GET /api/branding — get business branding and payment information
 
@@ -111,8 +119,8 @@ PUT /api/branding — update payment details (bank account, etc.)
 POST /api/numbering-schemes — create custom invoice numbering patterns
 
 Future Endpoints (Phase 2):
-POST /api/create-payment — create payment link via gateway
-POST /api/webhook/flutterwave — webhook receiver for automatic payment updates
+POST /api/subscriptions/create — create PayRush subscription via DPO
+POST /api/webhook/dpo — webhook receiver for subscription payment updates
 
 Security & compliance
 

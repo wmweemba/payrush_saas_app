@@ -15,7 +15,7 @@ This comprehensive testing guide validates all implemented features from user on
 - **Frontend:** http://localhost:3000
 - **Backend:** http://localhost:5000
 - **Database:** Supabase (Live connection)
-- **Payment Gateway:** Flutterwave (Test mode)
+- **Payment Processing:** Manual payment tracking with "Mark as Paid" functionality
 
 **Testing Approach:**
 - Sequential testing following user journey
@@ -905,7 +905,7 @@ Template: Classic Business
 
 ## Phase 6: Payment Processing Integration 💳
 
-### ✅ Test 6.1: Flutterwave Payment Processing
+### ✅ Test 6.1: Manual Payment Processing
 
 **Test Data - Flutterwave Test Card:**
 ```

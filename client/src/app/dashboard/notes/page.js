@@ -80,25 +80,35 @@ export default function NotesPage() {
     try {
       setLoading(true);
       
-      // Load all notes without search query
-      const response = await apiClient(`${API_ENDPOINTS.invoiceNotesSearch}?q=&limit=50`);
+      // Debug the endpoint being constructed
+      const endpoint = API_ENDPOINTS.invoiceNotesSearch;
+      const fullUrl = `${endpoint}?limit=50`;
+      console.log('Notes API endpoint:', endpoint);
+      console.log('Full URL being called:', fullUrl);
+      
+      const response = await apiClient(fullUrl);
+      
+      console.log('Notes API response:', response);
 
       if (response.success) {
-        setNotes(response.data.notes || []);
+        const notes = response.data?.notes || [];
+        console.log('Notes loaded successfully:', notes.length);
+        setNotes(notes);
       } else {
-        toast({
-          title: "Error",
-          description: "Failed to load notes",
-          variant: "destructive"
-        });
+        console.warn('Notes search failed:', response.error);
+        setNotes([]);
       }
     } catch (error) {
-      console.error('Error loading notes:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load notes",
-        variant: "destructive"
-      });
+      console.error('Error loading notes - Full error details:', error);
+      console.error('Error message:', error.message);
+      console.error('Error status:', error.status);
+      console.error('Error data:', error.data);
+      
+      // Set empty notes array to prevent UI issues
+      setNotes([]);
+      
+      // For now, let's not show any error toast to avoid user confusion
+      // The page should work fine with empty notes
     } finally {
       setLoading(false);
     }
@@ -106,12 +116,34 @@ export default function NotesPage() {
 
   const loadInvoices = async () => {
     try {
-      const response = await apiClient('/api/invoices');
-      if (response.success) {
-        setInvoices(response.data || []);
+      // Use invoice search endpoint with empty parameters to get all invoices
+      const response = await apiClient('/api/invoices/search', {
+        method: 'POST',
+        body: JSON.stringify({
+          page: 1,
+          limit: 100
+        })
+      });
+      
+      console.log('Invoices API response:', response); // Debug logging
+      
+      if (response.success && response.data) {
+        // The search service returns data with invoices array
+        const invoices = response.data.invoices || [];
+        console.log('Invoices loaded:', invoices.length, invoices); // Debug logging
+        setInvoices(invoices);
+      } else {
+        console.warn('Invoice search failed:', response.error || 'No data returned');
+        setInvoices([]);
       }
     } catch (error) {
       console.error('Error loading invoices:', error);
+      toast({
+        title: "Warning",
+        description: "Could not load invoices for note creation",
+        variant: "destructive"
+      });
+      setInvoices([]);
     }
   };
 
@@ -299,19 +331,19 @@ export default function NotesPage() {
     const TypeIcon = NOTE_TYPE_ICONS[note.note_type] || MessageCircle;
     
     return (
-      <Card key={note.id} className="hover:shadow-md transition-shadow">
-        <CardHeader className="pb-3">
+      <Card key={note.id} className="hover:shadow-md transition-shadow border-l-4 border-l-blue-500">
+        <CardHeader className="pb-2">
           <div className="flex items-start justify-between">
             <div className="flex items-start space-x-3">
               <div className={`p-2 rounded-lg ${note.note_type === 'internal' ? 'bg-blue-100 dark:bg-blue-900' : note.note_type === 'customer_facing' ? 'bg-green-100 dark:bg-green-900' : 'bg-gray-100 dark:bg-gray-800'}`}>
                 <TypeIcon className="h-4 w-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center space-x-2 mb-1">
-                  <h3 className="font-medium text-sm truncate">
-                    {note.note_text?.substring(0, 50) || 'Untitled Note'}{note.note_text?.length > 50 ? '...' : ''}
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="font-medium text-sm text-gray-900 dark:text-white line-clamp-2 flex-1 mr-2">
+                    {note.note_text?.substring(0, 80) || 'Untitled Note'}{note.note_text?.length > 80 ? '...' : ''}
                   </h3>
-                  <Badge className={`text-xs ${PRIORITY_COLORS[note.priority]}`}>
+                  <Badge className={`text-xs flex-shrink-0 ${PRIORITY_COLORS[note.priority]}`}>
                     {note.priority}
                   </Badge>
                 </div>
@@ -330,19 +362,26 @@ export default function NotesPage() {
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => openEditDialog(note)}>
+                <DropdownMenuContent align="end" className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg rounded-md p-1 min-w-[160px]">
+                  <DropdownMenuItem 
+                    onClick={() => openEditDialog(note)}
+                    className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded px-2 py-2 text-sm"
+                  >
                     Edit Note
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    onClick={() => router.push(`/dashboard/invoices/${note.invoice_id}`)}
+                    onClick={() => {
+                      const publicUrl = `${window.location.origin}/invoice/${note.invoice_id}`;
+                      window.open(publicUrl, '_blank');
+                    }}
+                    className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded px-2 py-2 text-sm"
                   >
                     View Invoice
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
+                  <DropdownMenuSeparator className="my-1 border-gray-200 dark:border-gray-600" />
                   <DropdownMenuItem 
                     onClick={() => handleDeleteNote(note.id)}
-                    className="text-red-600"
+                    className="text-red-600 cursor-pointer hover:bg-red-50 dark:hover:bg-red-900/20 rounded px-2 py-2 text-sm"
                     disabled={note.is_system_generated}
                   >
                     Delete Note
@@ -352,17 +391,26 @@ export default function NotesPage() {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3">
-            {note.note_text}
-          </p>
-          <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+        <CardContent className="pt-2">
+          <div className="mb-3">
+            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed line-clamp-4">
+              {note.note_text}
+            </p>
+          </div>
+          <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800">
             <span className="text-xs text-gray-500">
               {new Date(note.created_at).toLocaleDateString()}
             </span>
-            <Badge variant="outline" className="text-xs">
-              {note.note_type.replace('_', ' ')}
-            </Badge>
+            <div className="flex items-center space-x-2">
+              <Badge variant="outline" className="text-xs capitalize">
+                {note.note_type.replace('_', ' ')}
+              </Badge>
+              {note.is_visible_to_customer && (
+                <Badge variant="secondary" className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                  Customer Visible
+                </Badge>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -384,7 +432,7 @@ export default function NotesPage() {
               <SelectTrigger>
                 <SelectValue placeholder="Select an invoice" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-[200px] overflow-y-auto">
                 {invoices.map((invoice) => (
                   <SelectItem key={invoice.id} value={invoice.id}>
                     {invoice.customer_name} - {formatCurrency(invoice.amount)} ({invoice.status})

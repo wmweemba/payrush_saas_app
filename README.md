@@ -4,11 +4,14 @@ A comprehensive client management and invoicing platform built with Next.js and 
 
 ## 🏢 Business Architecture
 
-**PayRush is a B2B SaaS platform designed for business owners and freelancers:**
-- ✅ **Business Users**: Create PayRush accounts, manage invoices and clients
-- ✅ **End Customers**: Receive invoices via email, pay through public payment pages (no PayRush account required)
-- ✅ **Payment Processing**: DPO payment gateway integration for Zambian market, Flutterwave as alternative
-- ✅ **Single-User Model**: Currently designed for individual business owners (one user per business account)
+**PayRush is a professional invoicing solution designed for business owners and freelancers:**
+- ✅ **Invoicing Platform**: Simple yet powerful invoice creation, tracking, and delivery system
+- ✅ **Client Management**: Comprehensive client relationship management with contact details and communication logs
+- ✅ **Professional Presentation**: Custom branding, templates, and automated numbering for professional invoices
+- ✅ **Manual Payment Processing**: "Mark as Paid" functionality for tracking payments received through traditional methods
+- ✅ **Email Delivery**: Professional invoice delivery via email with PDF attachments and payment instructions
+- ✅ **Business Focus**: Designed for individual business owners managing client invoicing and payments
+- ✅ **Subscription Billing**: DPO payment gateway integration for PayRush's own SaaS subscription payments
 
 ## 👥 Multi-User Features (Future Enhancement)
 
@@ -21,21 +24,29 @@ A comprehensive client management and invoicing platform built with Next.js and 
 
 ## 🚀 Features
 
-### Core Functionality
-- **Client Management**: Complete CRUD operations for client data
+### Professional Invoicing
+- **Invoice Creation**: Create beautiful, professional invoices with customizable templates and branding
+- **Template System**: Multiple invoice templates (Modern, Classic, Professional, Minimal) with visual editor
+- **Custom Branding**: Add your logo, colors, and business information for consistent brand presentation
+- **Numbering Schemes**: Flexible invoice numbering with prefixes, suffixes, and date components
+- **Line Items Management**: Detailed line items with descriptions, quantities, and pricing
+- **Email Delivery**: Send invoices directly to clients via email with professional PDF attachments
+- **Payment Tracking**: Manual payment processing with "Mark as Paid" functionality and status tracking
+
+### Client Management
+- **Client Database**: Complete CRUD operations for client information and relationship management
 - **Contact Management**: Multiple contacts per client with roles and communication preferences
-- **Address Management**: Multiple addresses (billing, shipping, office) per client
-- **Invoice Management**: Create, edit, and track client invoices with professional PDF generation
-- **Email Invoice Delivery**: Send invoices directly to clients via email with PDF attachments
-- **Financial Dashboard**: Comprehensive financial overview and analytics
+- **Address Management**: Multiple addresses (billing, shipping, office) per client with proper organization
+- **Communication System**: Notes, timeline tracking, and reminders for better client relationships
+- **Financial Dashboard**: Comprehensive financial overview, analytics, and invoice aging reports
 
 ### Invoice & Payment Features
 - **Professional Invoice Templates**: Customizable branding, colors, and layouts
 - **Numbering Schemes**: Flexible invoice numbering with prefixes, suffixes, and date components
 - **Email Integration**: Resend.com integration for reliable invoice delivery
-- **Payment Tracking**: Simple invoice status management (Draft → Sent → Paid)
-- **Manual Payment Processing**: Mark as Paid functionality with payment confirmation emails
-- **Payment Method Support**: Bank transfer, cash, check, and other traditional payment methods
+- **Manual Payment Processing**: Complete manual payment tracking with "Mark as Paid" functionality
+- **Payment Method Support**: Bank transfer, cash, check, mobile money, and traditional payment methods
+- **Payment Instructions**: Bank details included in invoices for customer payments
 
 ### Advanced Features
 - **Currency Preferences**: Client-specific currency settings with automatic conversion
@@ -123,7 +134,7 @@ RESEND_API_KEY=your_resend_api_key
 DPO_COMPANY_TOKEN=your_dpo_company_token
 DPO_SERVICE_TYPE=your_dpo_service_type
 DPO_API_URL=https://secure.3gdirectpay.com
-FLUTTERWAVE_PUBLIC_KEY=your_flutterwave_public_key
+# DPO is used for PayRush's own subscription billing, not customer invoice payments
 ```
 
 #### Client (.env.local)
@@ -212,7 +223,7 @@ payrush_saas_app/
 ### Phase 2 Features (Coming Soon)
 - [ ] Multi-user business accounts with role-based access control
 - [ ] Advanced approval workflows (requires multi-user accounts)
-- [ ] DPO payment gateway integration (primary for Zambian market)
+- [ ] Enhanced subscription billing with multiple plans and pricing tiers
 - [ ] WhatsApp invoice delivery and payment notifications
 - [ ] Multiple email templates and customization
 - [ ] Multi-channel communication dashboard (Email + WhatsApp)
@@ -222,14 +233,14 @@ payrush_saas_app/
 
 ## 🚀 Pre-Deployment Tasks
 
-### Critical Payment Gateway Migration
-- [ ] **Switch from Flutterwave to DPO as primary payment gateway**
+### Critical Subscription Billing Integration
+- [ ] **Implement DPO for PayRush's own subscription billing**
   - [ ] Set up DPO merchant account and obtain API credentials
-  - [ ] Implement DPO payment integration for Zambian market
-  - [ ] Update public invoice payment pages to use DPO
-  - [ ] Configure DPO webhook handlers for automatic payment confirmation
-  - [ ] Test complete payment flow with DPO in production environment
-  - [ ] Keep Flutterwave as backup/alternative payment option
+  - [ ] Implement DPO payment integration for PayRush subscription payments
+  - [ ] Create subscription management interface for PayRush users
+  - [ ] Configure DPO webhook handlers for subscription payment processing
+  - [ ] Test complete subscription billing flow with DPO in production environment
+  - [ ] Remove unused Flutterwave integration (legacy invoice payment system)
 
 ### Production Readiness
 - [ ] Configure production environment variables for DPO

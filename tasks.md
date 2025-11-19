@@ -66,26 +66,23 @@ How to use: Edit this file as work progresses. Mark tasks as - [x] when done.
   - [x] Add profile overview in dashboard settings tab
   - [x] Create database migration for new profile fields
 
-## Milestone 3 — Live Payment Processing (COMPLETED ✅)
+## Milestone 3 — Manual Payment Processing System (COMPLETED ✅)
 
-- [x] **Flutterwave Integration Implementation**
-  - [x] Set up Flutterwave environment variables and API keys
-  - [x] Create payments database table with comprehensive schema
-  - [x] Build Flutterwave payment utilities (lib/payments/flutterwave.js)
-  - [x] Implement payment link generation and verification
-  - [x] Build payment processing API endpoint (/api/payments/verify)
-  - [x] Create webhook handler for automatic payment processing
-  - [x] Add Pay Now buttons to invoice UI for Pending, Sent, and Overdue invoices
-  - [x] Implement secure payment verification with transaction matching
-  - [x] Add automatic invoice status updates upon successful payment
+- [x] **Manual Payment Processing Implementation**
+  - [x] Create "Mark as Paid" functionality for manual payment tracking
+  - [x] Build comprehensive manual payment workflow (Draft → Sent → Paid)
+  - [x] Implement payment method selection (bank transfer, cash, mobile money, etc.)
+  - [x] Create payment confirmation email system
+  - [x] Add payment date and reference tracking
+  - [x] Build payment details dialog with form validation
 
-- [x] **Payment Management System**
+- [x] **Payment Tracking System**
   - [x] Build comprehensive payment tracking with database records
-  - [x] Implement real-time payment status synchronization
-  - [x] Add payment method support (cards, mobile money, bank transfers, USSD)
-  - [x] Create secure webhook processing with signature verification
-  - [x] Add payment history tracking and transaction records
-  - [x] Implement payment failures and error handling
+  - [x] Implement manual payment status management
+  - [x] Add payment method support (bank transfer, cash, mobile money, check, card, other)
+  - [x] Create payment audit trail and history tracking
+  - [x] Add payment confirmation workflows
+  - [x] Implement payment validation and error handling
 
 - [x] **Critical Bug Fixes & Database Issues**
   - [x] Resolve invoice creation database constraint violations
@@ -410,7 +407,7 @@ How to use: Edit this file as work progresses. Mark tasks as - [x] when done.
 
 ## **MILESTONE — Email Invoice System MVP (COMPLETED ✅)**
 
-### **Phase 1: Email Service & Manual Payment Processing** ✅ COMPLETED (v1.9.25)
+### **Phase 1: Email Service & Manual Payment Tracking** ✅ COMPLETED (v1.9.25)
 
 - [x] **Email Infrastructure Setup** ✅ COMPLETED
   - [x] Install and configure Resend.com service (resend npm package)
@@ -479,27 +476,26 @@ How to use: Edit this file as work progresses. Mark tasks as - [x] when done.
 
 ## PRE-DEPLOYMENT CRITICAL TASKS 🚀
 
-### **Payment Gateway Migration to DPO (CRITICAL BEFORE DEPLOYMENT)**
-- [ ] **DPO Integration Setup**
-  - [ ] Set up DPO merchant account and obtain API credentials for Zambian operations
-  - [ ] Replace Flutterwave as primary payment gateway with DPO
-  - [ ] Implement DPO payment processing service (services/dpoService.js)
-  - [ ] Update public invoice payment pages to use DPO payment URLs
-  - [ ] Configure DPO webhook handlers for automatic payment confirmation
-  - [ ] Test complete payment flow with DPO in staging environment
+### **Subscription Billing Integration with DPO (CRITICAL BEFORE DEPLOYMENT)**
+- [ ] **DPO Integration Setup for PayRush Billing**
+  - [ ] Set up DPO merchant account and obtain API credentials for PayRush's subscription billing
+  - [ ] Implement DPO payment processing service for PayRush subscription payments
+  - [ ] Create subscription management interface for PayRush users to pay for platform usage
+  - [ ] Configure DPO webhook handlers for subscription payment processing
+  - [ ] Test complete subscription billing flow with DPO in staging environment
 
-- [ ] **Flutterwave Migration to Secondary**
-  - [ ] Keep Flutterwave integration as alternative/backup payment option
-  - [ ] Update payment gateway selection logic to prioritize DPO
-  - [ ] Maintain Flutterwave webhook handlers for existing transactions
-  - [ ] Update environment variables and configuration for dual gateway support
+- [ ] **Remove Legacy Payment Gateway Code**
+  - [ ] Remove Flutterwave integration (no longer needed for invoice payments)
+  - [ ] Clean up unused payment gateway code for customer invoices
+  - [ ] Remove public invoice payment pages (customers pay manually via bank transfer)
+  - [ ] Update environment variables to remove unused payment gateway configurations
 
 - [ ] **Production Environment Setup**
-  - [ ] Configure production DPO API credentials
-  - [ ] Set up production webhook endpoints with proper SSL
-  - [ ] Test payment processing with real DPO account
-  - [ ] Validate automatic invoice status updates via DPO webhooks
-  - [ ] Ensure payment confirmation emails work with DPO transactions
+  - [ ] Configure production DPO API credentials for subscription billing
+  - [ ] Set up production webhook endpoints for subscription payments
+  - [ ] Test subscription payment processing with real DPO account
+  - [ ] Implement subscription management dashboard for PayRush billing
+  - [ ] Set up automated subscription renewal and billing cycles
 
 ### **Phase 2: Multi-User Business Accounts & Advanced Features**
 - [ ] **Multi-User Account System**
@@ -516,7 +512,9 @@ How to use: Edit this file as work progresses. Mark tasks as - [x] when done.
 
 - [ ] **Enhanced Features**
   - [ ] Multiple email templates and customization
-  - [ ] Client portal for invoice viewing and payments (NO customer accounts, public pages only)
+  - [ ] Client portal for invoice viewing (NO payment processing, view-only)
+  - [ ] Advanced reporting and analytics dashboard
+  - [ ] Automated payment reminders via email and WhatsApp
 
 ### **Phase 2.5: WhatsApp Integration & Enhanced Communication**
 - [ ] **WhatsApp Invoice Delivery**

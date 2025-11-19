@@ -52,6 +52,41 @@ router.get('/invoice/:invoiceId', async (req, res, next) => {
 });
 
 /**
+ * GET /api/notes/search
+ * Search notes across all user's invoices
+ */
+router.get('/search', async (req, res, next) => {
+  try {
+    const userId = req.userId;
+    const { q: searchQuery, noteType, priority, invoiceId } = req.query;
+    const { page, limit, offset } = parsePaginationParams(req);
+
+    // Make search query optional - if empty, return all notes
+    const finalSearchQuery = searchQuery && searchQuery.trim() ? searchQuery.trim() : '';
+
+    const options = {
+      noteType,
+      priority,
+      invoiceId,
+      limit,
+      offset
+    };
+
+    const result = await invoiceNotesService.searchNotes(userId, finalSearchQuery, options);
+
+    if (!result.success) {
+      return res.status(result.statusCode || 500).json(
+        createErrorResponse(result.error, result.statusCode || 500)
+      );
+    }
+
+    res.json(createApiResponse(true, result.data, 'Notes search completed successfully'));
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * GET /api/notes/:id
  * Get a specific note by ID
  */
@@ -240,41 +275,6 @@ router.get('/invoice/:invoiceId/customer', async (req, res, next) => {
     }
 
     res.json(createApiResponse(true, result.data, 'Customer notes retrieved successfully'));
-  } catch (error) {
-    next(error);
-  }
-});
-
-/**
- * GET /api/notes/search
- * Search notes across all user's invoices
- */
-router.get('/search', async (req, res, next) => {
-  try {
-    const userId = req.userId;
-    const { q: searchQuery, noteType, priority, invoiceId } = req.query;
-    const { page, limit, offset } = parsePaginationParams(req);
-
-    // Make search query optional - if empty, return all notes
-    const finalSearchQuery = searchQuery && searchQuery.trim() ? searchQuery.trim() : '';
-
-    const options = {
-      noteType,
-      priority,
-      invoiceId,
-      limit,
-      offset
-    };
-
-    const result = await invoiceNotesService.searchNotes(userId, finalSearchQuery, options);
-
-    if (!result.success) {
-      return res.status(result.statusCode || 500).json(
-        createErrorResponse(result.error, result.statusCode || 500)
-      );
-    }
-
-    res.json(createApiResponse(true, result.data, 'Notes search completed successfully'));
   } catch (error) {
     next(error);
   }

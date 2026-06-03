@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/currency/currencies";
-import { processPayment } from "@/lib/payments/flutterwave";
 import { 
   FileText, 
   Calendar, 
@@ -397,9 +396,6 @@ export default function PublicInvoicePage() {
                       )}
                     </Button>
 
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Secured by Flutterwave • Cards, Mobile Money, Bank Transfer
-                    </p>
                   </div>
                 </CardContent>
               </Card>

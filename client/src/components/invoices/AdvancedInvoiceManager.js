@@ -923,7 +923,6 @@ const PaymentDetailsDialog = ({ open, onOpenChange, invoice, onConfirm, loading 
     { value: 'cash', label: '💵 Cash Payment' },
     { value: 'mobile_money', label: '📱 Mobile Money' },
     { value: 'card', label: '💳 Credit/Debit Card' },
-    { value: 'flutterwave', label: '🌊 Flutterwave Payment' },
     { value: 'stripe', label: '💙 Stripe Payment' },
     { value: 'paypal', label: '🅿️ PayPal' },
     { value: 'other', label: '📋 Other Method' }

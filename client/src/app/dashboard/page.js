@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabaseClient";
-import { processPayment } from "@/lib/payments/flutterwave";
 import { CurrencySelect, CurrencyInput, CurrencyDisplay } from "@/components/ui/CurrencySelect";
 import { getDefaultCurrency, formatCurrency } from "@/lib/currency/currencies";
 import { downloadInvoicePDF, previewInvoicePDF } from "@/lib/pdf/invoicePDF";

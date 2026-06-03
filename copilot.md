@@ -1,39 +1,38 @@
-Purpose: Help GitHub Copilot / Copilot Chat understand repository goals, coding conventions, and how to generate code and tests in a way that matches our project style.
+# Copilot Instructions — PayRush
 
-Repo conventions
+> Primary context is in CLAUDE.md at the project root. Load that first before any session.
 
-Language: JavaScript (ES Modules) — no TypeScript.
+## Quick reference
 
-Framework: Next.js (app or pages directory allowed) — prefer pages/ for simplest free-tier compatibility unless migrating to Next 13+ app router intentionally.
+- Language: JavaScript (ES Modules only — no TypeScript, no CommonJS)
+- Framework: Next.js 15 (App Router)
+- Styling: Tailwind CSS v4 + shadcn/ui (new-york style)
+- Database: Drizzle ORM + PostgreSQL (self-hosted on Coolify)
+- Auth: Better Auth (embedded in Next.js, cookie sessions)
+- Icons: Tabler Icons (@tabler/icons-react, outline only)
+- Forms: React Hook Form + Zod
 
-Styling: Tailwind CSS.
+## Architecture
 
-DB/Auth: Supabase (server-side @supabase/supabase-js).
+Single Next.js application — no separate Express server.
+All API logic lives in `app/api/` Route Handlers.
+Database queries go through Drizzle in `lib/db/`.
+Auth is handled by Better Auth in `lib/auth.js`.
 
-APIs: Next.js API routes under pages/api/*.js.
+## What not to build
 
-Lint & format: ESLint + Prettier (recommended settings in .eslintrc / .prettierrc).
+Do not suggest Supabase, Flutterwave, JWT middleware, or Express patterns.
+Do not suggest features outside the current build phase (see CLAUDE.md).
 
-File layout expectation (example)
+## File output convention
 
+When asked to modify a file, output the complete file.
+When asked for SQL or migrations, output only the SQL.
+When asked for API route handlers, include auth session check at the top.
 
+## Commit convention
 
-Copilot behavioral tips
-
-When asked to modify a file, output a single code block containing the whole file.
-
-When asked for SQL, return only the SQL script without extra commentary.
-
-When asked for API handlers, include comments explaining each step and list required environment variables at the top.
-
-Prefer small, testable functions with JSDoc style comments.
-
-Commit message convention
-
-feat: add invoice creation UI
-
-fix: handle webhook idempotency
-
-chore: update deps
-
-docs: update copilot.md
+feat: description
+fix: description
+chore: description
+docs: description

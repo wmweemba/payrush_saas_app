@@ -13,7 +13,6 @@ export const SUPPORTED_CURRENCIES = {
     decimal_separator: '.',
     symbol_position: 'before', // before or after
     supported_payment_methods: ['card', 'mobile_money', 'bank_transfer', 'ussd'],
-    flutterwave_supported: true,
     country: 'United States',
     flag: '🇺🇸'
   },
@@ -26,7 +25,6 @@ export const SUPPORTED_CURRENCIES = {
     decimal_separator: '.',
     symbol_position: 'before',
     supported_payment_methods: ['card', 'mobile_money', 'bank_transfer', 'ussd'],
-    flutterwave_supported: true,
     country: 'Zambia',
     flag: '🇿🇲'
   },
@@ -39,7 +37,6 @@ export const SUPPORTED_CURRENCIES = {
     decimal_separator: '.',
     symbol_position: 'before',
     supported_payment_methods: ['card', 'bank_transfer'],
-    flutterwave_supported: true,
     country: 'European Union',
     flag: '🇪🇺'
   },
@@ -52,7 +49,6 @@ export const SUPPORTED_CURRENCIES = {
     decimal_separator: '.',
     symbol_position: 'before',
     supported_payment_methods: ['card', 'bank_transfer'],
-    flutterwave_supported: true,
     country: 'United Kingdom',
     flag: '🇬🇧'
   },
@@ -65,7 +61,6 @@ export const SUPPORTED_CURRENCIES = {
     decimal_separator: '.',
     symbol_position: 'before',
     supported_payment_methods: ['card', 'mobile_money', 'bank_transfer', 'ussd'],
-    flutterwave_supported: true,
     country: 'Nigeria',
     flag: '🇳🇬'
   },
@@ -78,7 +73,6 @@ export const SUPPORTED_CURRENCIES = {
     decimal_separator: '.',
     symbol_position: 'before',
     supported_payment_methods: ['card', 'mobile_money', 'bank_transfer'],
-    flutterwave_supported: true,
     country: 'Kenya',
     flag: '🇰🇪'
   },
@@ -91,7 +85,6 @@ export const SUPPORTED_CURRENCIES = {
     decimal_separator: '.',
     symbol_position: 'before',
     supported_payment_methods: ['card', 'mobile_money', 'bank_transfer'],
-    flutterwave_supported: true,
     country: 'Ghana',
     flag: '🇬🇭'
   },
@@ -104,7 +97,6 @@ export const SUPPORTED_CURRENCIES = {
     decimal_separator: '.',
     symbol_position: 'before',
     supported_payment_methods: ['card', 'bank_transfer'],
-    flutterwave_supported: true,
     country: 'South Africa',
     flag: '🇿🇦'
   }

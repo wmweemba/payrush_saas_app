@@ -64,12 +64,6 @@ export const API_ENDPOINTS = {
   paymentVerify: '/api/payments/verify',
   paymentHistory: '/api/payments/history',
   
-  // Webhook endpoints
-  webhooks: {
-    flutterwave: '/api/webhooks/flutterwave',
-    stripe: '/api/webhooks/stripe'
-  },
-  
   // Health check
   health: '/health'
 };

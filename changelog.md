@@ -37,6 +37,39 @@ Format: [version] — date — description
 
 ---
 
+## [2.0.3] — 2026-06-04 — Phase 2 Completion: Auth Flow Verified
+
+### Auth Schema — Drizzle Definitions Added
+- Created `src/lib/db/schema/auth.js` — Drizzle schema definitions for all 4 Better Auth tables:
+  `user`, `session`, `account`, `verification` (plain `pgTable`, no schema prefix — Better Auth
+  manages these directly)
+- `user` table includes `businessName text` column matching the `additionalFields` config
+- `session.userId`, `account.userId` carry `onDelete: cascade` FK to `user.id`
+- Fixes the runtime error: "model 'user' was not found in the schema object"
+
+### Drizzle DB Instance Updated
+- `src/lib/db/index.js` — added `authSchema` import and spread into the drizzle schema object
+- Renamed existing schema imports to `*Schema` convention for clarity
+  (`users` → `usersSchema`, etc.)
+- `drizzle.config.js` glob `./src/lib/db/schema/*` already covers `auth.js` — no config change needed
+
+### Better Auth Adapter Fix
+- `src/lib/auth.js` — added `import * as authSchema` and passed `schema: authSchema` explicitly
+  to `drizzleAdapter`. This is required when using a custom Drizzle instance.
+
+### Migration — profiles.id uuid → text
+- Applied migration `0001_alter_profiles_id_to_text`: changed `profiles.id` from `uuid` to `text`
+  to match Better Auth's string user IDs (Better Auth uses nanoid strings, not UUIDs)
+- Migration journal and snapshot files committed
+
+### Verified
+- `POST /api/auth/sign-up/email` → `200 OK`, session cookies set (`better-auth.session_token`,
+  `better-auth.session_data`), user + `businessName` written to `payrush."user"` ✓
+- `GET /api/auth/get-session` → `200 null` (no session without cookie) ✓
+- `GET /dashboard` → `307 → /login` (middleware redirect) ✓
+
+---
+
 ## [2.0.2] — 2026-06-04 — Phase 2: Better Auth Setup
 
 ### Auth Infrastructure

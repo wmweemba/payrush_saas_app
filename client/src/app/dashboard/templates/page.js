@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Plus, Edit, Copy, Trash2, Star, Download, Settings, Eye, Search, Filter, Upload, Palette, Image as ImageIcon, Save, RefreshCw, Zap, FileImage, Globe, Type, Paintbrush, Hash, Calendar, CreditCard } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -1710,7 +1710,7 @@ const BrandingTabContent = () => {
   );
 };
 
-export default function TemplatesPage() {
+function TemplatesPageInner() {
   const searchParams = useSearchParams();
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -2290,4 +2290,12 @@ export default function TemplatesPage() {
       </div>
     </DashboardLayout>
   );
+}
+
+export default function TemplatesPage() {
+  return (
+    <Suspense fallback={null}>
+      <TemplatesPageInner />
+    </Suspense>
+  )
 }

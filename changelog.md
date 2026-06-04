@@ -37,6 +37,34 @@ Format: [version] — date — description
 
 ---
 
+## [2.0.4] — 2026-06-04 — Phase 4: Login and Signup Pages
+
+### Auth Pages
+- Created `src/app/(auth)/login/page.js` — Better Auth `signIn.email` with
+  `callbackURL: '/dashboard'`, inline error display, link to `/signup`
+- Created `src/app/(auth)/signup/page.js` — Better Auth `signUp.email` with
+  `name`, `businessName`, `email`, `password` fields, `callbackURL: '/dashboard'`
+- Deleted legacy Supabase-based `login/page.js` and `signup/page.js`
+
+### Styling
+- Follows `ui_spec.md` tokens: `#F0F2F5` page background, white card with 16px
+  border-radius, `#185FA5` primary button, 11px uppercase labels, `#A32D2D` error state
+- No external component dependencies — plain HTML elements with inline styles
+
+### Route Group
+- Pages placed in `src/app/(auth)/` route group — URLs remain `/login` and `/signup`
+- `src/app/(dashboard)/page.js` not created — would conflict with existing
+  `dashboard/page.js`; deferred to Phase 7 UI rebuild
+
+### Smoke Test Results
+- `GET /dashboard` (unauthenticated) → `307 → /login` ✓
+- `GET /signup` → `200 OK` ✓
+- Signup `will@payrush.test` → `200`, session cookies set, `businessName` written to DB ✓
+- `GET /dashboard` (authenticated) → `200 OK`, no redirect ✓
+- `payrush."user"` table → user row present with correct `businessName` ✓
+
+---
+
 ## [2.0.3] — 2026-06-04 — Phase 2 Completion: Auth Flow Verified
 
 ### Auth Schema — Drizzle Definitions Added

@@ -37,6 +37,39 @@ Format: [version] — date — description
 
 ---
 
+## [2.0.1] — 2026-06-04 — Phase 1: Infrastructure & Database Setup
+
+### Dependencies
+- Installed: `better-auth`, `drizzle-orm`, `postgres`, `zod`, `resend`, `@aws-sdk/client-s3`
+- Installed dev: `drizzle-kit`
+- Removed: `@supabase/supabase-js`, `axios`
+
+### Database
+- Created `drizzle.config.js` — points to `payrush` schema on self-hosted Postgres
+- Created Drizzle schema files:
+  - `src/lib/db/schema/users.js` — `profiles` table (extends Better Auth user)
+  - `src/lib/db/schema/clients.js` — `clients` table
+  - `src/lib/db/schema/invoices.js` — `invoices`, `invoice_items`, `email_logs` tables
+  - `src/lib/db/schema/branding.js` — `branding` table
+- Created `src/lib/db/index.js` — Drizzle client with all schemas loaded
+- Generated initial migration: `drizzle/migrations/0000_outstanding_iceman.sql`
+- Applied migration to live Coolify Postgres — all 6 tables created in `payrush` schema:
+  `profiles`, `clients`, `invoices`, `invoice_items`, `branding`, `email_logs`
+- Created `payrush.__drizzle_migrations` tracking table
+
+### Known Issues & Notes
+- `drizzle-kit migrate` hangs indefinitely on this Coolify/Postgres configuration — root
+  cause unknown (likely a connection pool or SSL negotiation quirk in drizzle-kit's internal
+  client). Workaround: migrations are applied by running the SQL directly via the `postgres`
+  Node.js driver. This approach works reliably and will be used for all future migrations.
+- Coolify Postgres was initially only accessible via internal Docker hostname — required
+  exposing port `5433:5432` in Coolify service config and adding a TCP inbound rule for
+  port 5433 in the Hetzner Cloud firewall.
+- `payrush` schema was auto-created by a partial first migration attempt; subsequent run
+  skipped schema creation and applied only the table statements idempotently.
+
+---
+
 ## [1.9.28] — 2025-11-xx — Pre-Rebuild State
 
 ### Last stable state before foundation rebuild

@@ -37,6 +37,35 @@ Format: [version] — date — description
 
 ---
 
+## [2.2.0] — 2026-06-05 — Invoice Route Handlers
+
+### API
+- Created `app/api/invoices/route.js` — GET (list with items), POST (create
+  with line items, Zod validation)
+- Created `app/api/invoices/[id]/route.js` — GET (single with items),
+  PUT (update with item replacement), DELETE (cascade via FK)
+- Created `app/api/invoices/[id]/mark-paid/route.js` — POST sets status=paid,
+  records paidAt, paymentMethod, paymentNotes
+
+### Verified
+- Unauthenticated requests return 401 ✅
+- Invoice creation returns 201 with nested items array ✅
+- `amount` column computed by Postgres (`quantity * unit_price`) ✅
+- mark-paid sets correct status and paidAt timestamp ✅
+- DELETE returns `{ data: { id } }` and cascades to invoice_items ✅
+
+---
+
+## [2.1.1] — 2026-06-05 — Schema Fix: userId columns
+
+### Database
+- Migration `0002_mushy_sage` applied: changed `userId` column type from `uuid`
+  to `text` on `invoices`, `clients`, `branding`, and `email_logs` tables
+- Matches Better Auth `user.id` type (text) — required for FK constraints
+  to be added in a future migration
+
+---
+
 ## [2.0.4] — 2026-06-04 — Phase 4: Login and Signup Pages
 
 ### Auth Pages

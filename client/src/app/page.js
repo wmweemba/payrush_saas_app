@@ -1,60 +1,7 @@
-"use client";
-
-import Image from "next/image";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabaseClient";
 
 export default function Home() {
-  const router = useRouter();
-  
-  // Auth state
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  // Session handling on component mount
-  useEffect(() => {
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user || null);
-      setLoading(false);
-      
-      // Redirect authenticated users to dashboard
-      if (session?.user) {
-        router.push('/dashboard');
-      }
-    };
-
-    getSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setUser(session?.user || null);
-        
-        if (session?.user) {
-          router.push('/dashboard');
-        }
-        setLoading(false);
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, [router]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300">Loading PayRush...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800">
       {/* Navigation */}
@@ -74,19 +21,7 @@ export default function Home() {
               Contact
             </a>
           </div>
-          {user ? (
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600 dark:text-gray-300">
-                {user.email}
-              </span>
-              <Link href="/dashboard">
-                <Button className="payrush-gradient text-white">
-                  Dashboard
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4">
               <Link href="/login">
                 <Button variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400">
                   Sign In
@@ -98,7 +33,6 @@ export default function Home() {
                 </Button>
               </Link>
             </div>
-          )}
         </div>
       </nav>
 

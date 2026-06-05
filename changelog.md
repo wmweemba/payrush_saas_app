@@ -5,6 +5,36 @@ Format: [version] — date — description
 
 ---
 
+## [2.4.0] — 2026-06-05 — Legacy Cleanup
+
+### Deleted
+- src/lib/supabaseClient.js — Supabase client removed
+- src/lib/apiConfig.js — Express-era API config (hardcoded localhost:5000)
+- src/lib/clientService.js — Express-era service layer
+- src/lib/pdf/templateService.js — imported deleted apiConfig, dead code
+- src/hooks/useUserProfile.js — Supabase-dependent hook
+- src/components/templates/ (5 files) — all legacy, being rebuilt in Phase 7
+- src/components/clients/ (8 files) — all legacy, being rebuilt in Phase 7
+- src/components/invoices/ (11 files) — all legacy, being rebuilt in Phase 7
+- src/components/layout/DashboardLayout.js — imported Supabase
+- src/app/dashboard/payments/page.js — not in target spec
+- src/app/dashboard/notes/page.js — not in target spec
+- src/app/dashboard/templates/page.js + editor/[id]/page.js — not in target spec
+
+### Import fixes applied to surviving files
+- src/app/page.js — removed Supabase auth state, simplified to static nav
+- src/app/dashboard/clients/page.js — replaced with Phase 7 placeholder
+- src/app/dashboard/profile-settings/page.js — replaced with Phase 7 placeholder
+- src/app/dashboard/page.js — removed useSession import causing SSR crash
+- src/lib/pdf/invoicePDF.js — removed templateService import, collapsed to
+  static-template-only path, stripped dead testing code
+
+### Verified
+- npm run build passes clean — 13/13 static pages, zero errors ✅
+- All 8 API routes confirmed present and dynamic ✅
+
+---
+
 ## [2.0.0] — 2026-06-03 — Foundation Rebuild
 
 ### Architecture

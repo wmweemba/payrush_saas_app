@@ -37,6 +37,30 @@ Format: [version] — date — description
 
 ---
 
+## [2.3.0] — 2026-06-05 — Clients, Branding & Public Invoice Route Handlers
+
+### API
+- Created `app/api/clients/route.js` — GET (active clients only), POST (create)
+- Created `app/api/clients/[id]/route.js` — GET, PUT (update), DELETE (soft
+  delete sets status=archived, no hard delete)
+- Created `app/api/branding/route.js` — GET (returns null if no record),
+  PUT (upsert via `onConflictDoUpdate` on `user_id`)
+- Created `app/api/invoice/[token]/route.js` — public route, no auth required,
+  returns invoice + items + branding; `user_id` stripped from both invoice
+  and branding objects before response
+
+### Security
+- Fixed: branding object on public invoice route was initially exposing
+  `user_id` — caught and fixed before commit
+
+### Verified
+- Soft delete correctly excludes archived clients from GET list ✅
+- Branding upsert creates on first PUT, updates on subsequent PUTs ✅
+- Public invoice route returns full render data with no auth required ✅
+- `user_id` absent from both invoice and branding in public response ✅
+
+---
+
 ## [2.2.0] — 2026-06-05 — Invoice Route Handlers
 
 ### API

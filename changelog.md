@@ -37,6 +37,18 @@ Format: [version] — date — description
 
 ---
 
+## [2.3.1] — 2026-06-05 — Dashboard Placeholder
+
+### Dashboard
+- Replaced legacy `dashboard/page.js` with a minimal Better Auth placeholder
+- Old page used `useUserProfile` hook → `supabase.auth.getSession()` → stub
+  returned null → hook redirected to `/login` immediately after dashboard load
+- Placeholder uses `useSession` from `auth-client.js` — shows signed-in user's
+  name, email, and businessName; no redirect loop
+- Full dashboard UI deferred to Phase 7 (UI rebuild)
+
+---
+
 ## [2.3.0] — 2026-06-05 — Clients, Branding & Public Invoice Route Handlers
 
 ### API

@@ -4,7 +4,7 @@ export const payrushSchema = pgSchema('payrush')
 
 export const branding = payrushSchema.table('branding', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').unique(),
+  userId: text('user_id').unique(),
   logoUrl: text('logo_url'),
   primaryColor: text('primary_color').default('#185FA5'),
   businessName: text('business_name'),

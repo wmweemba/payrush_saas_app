@@ -15,6 +15,13 @@
       "when": 1780599129617,
       "tag": "0001_alter_profiles_id_to_text",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780640054624,
+      "tag": "0002_mushy_sage",
+      "breakpoints": true
     }
   ]
 }

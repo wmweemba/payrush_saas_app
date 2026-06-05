@@ -5,7 +5,7 @@ export const payrushSchema = pgSchema('payrush')
 
 export const invoices = payrushSchema.table('invoices', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull(),
+  userId: text('user_id').notNull(),
   clientId: uuid('client_id'),
   invoiceNumber: text('invoice_number').notNull(),
   customerName: text('customer_name').notNull(),
@@ -34,7 +34,7 @@ export const invoiceItems = payrushSchema.table('invoice_items', {
 export const emailLogs = payrushSchema.table('email_logs', {
   id: uuid('id').primaryKey().defaultRandom(),
   invoiceId: uuid('invoice_id'),
-  userId: uuid('user_id'),
+  userId: text('user_id'),
   recipientEmail: text('recipient_email'),
   subject: text('subject'),
   status: text('status'),

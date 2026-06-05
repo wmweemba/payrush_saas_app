@@ -4,7 +4,7 @@ export const payrushSchema = pgSchema('payrush')
 
 export const clients = payrushSchema.table('clients', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull(),
+  userId: text('user_id').notNull(),
   name: text('name').notNull(),
   email: text('email'),
   phone: text('phone'),

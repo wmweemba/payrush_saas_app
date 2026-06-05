@@ -5,6 +5,55 @@ Format: [version] — date — description
 
 ---
 
+## [3.0.0] — 2026-06-05 — Phase 5: UI Rebuild (Steps 1–6)
+
+### Design system
+- globals.css — full rewrite: CSS custom properties for all colours, spacing, radius, and typography tokens per ui_spec.md
+- Added `.card`, `.badge`, `.badge-{status}`, `.section-label`, `.focus-ring`, `.skeleton`, `.no-scrollbar`, `.invoice-form-panel` global utility classes
+- `@keyframes pulse` animation for skeleton loading states
+- Inter font loaded via Google Fonts (weights 400, 500 only)
+- Root layout updated: Inter via `next/font/google`, metadata updated to "PayRush — Invoice faster. Get paid sooner."
+
+### App shell
+- `app/dashboard/layout.js` — authenticated shell with sidebar (desktop) + bottom nav (mobile)
+- `components/shared/Sidebar.js` — 220px `#0C447C` sidebar, sticky, `usePathname` active state, Tabler icons
+- `components/shared/BottomNav.js` — fixed bottom nav, 64px, 4 items, `lg:hidden`
+- Installed `@tabler/icons-react@^3.44.0`
+
+### Dashboard home
+- `app/dashboard/page.js` — `next/dynamic ssr:false` shell (Better Auth `useSession` is incompatible with Next.js 15 SSR pass)
+- `components/dashboard/DashboardHome.js` — greeting with time-of-day logic, hero card (collected this month + 3 stat pills), 7-day bar chart, recent invoices list (5 rows with skeleton + empty state), full-width "New Invoice" CTA
+
+### Invoice list
+- `app/dashboard/invoices/page.js` — dynamic shell
+- `components/invoices/InvoiceList.js` — filter tabs (All/Sent/Paid/Overdue/Draft), client-side filtering, summary bar (Total/Paid/Pending) on All tab, invoice card rows with avatar/status badge, empty states, 5-row skeleton
+
+### Invoice creation
+- `app/dashboard/invoices/new/page.js` — dynamic shell
+- `components/invoices/InvoiceForm.js` — mobile: sticky top bar + scrollable form + fixed bottom submit; desktop: 360px form panel (sticky) + live preview panel; client autocomplete from `/api/clients`; line items with add/delete; live totals; currency selector; collapsible notes; validation with inline errors; POST to `/api/invoices`; on success navigates to invoice detail
+- `app/globals.css` — added `.invoice-form-panel` (360px desktop width) and `.no-scrollbar`
+
+### Invoice detail
+- `app/dashboard/invoices/[id]/page.js` — dynamic shell
+- `components/invoices/InvoiceDetail.js` — full detail view: invoice summary card (logo/initials, status badge, total due, line items table), payment details card (with copy-to-clipboard for account number and reference), notes card, "Mark as Paid" inline confirmation, "Download PDF" (using existing `downloadInvoicePDF` with camelCase→snake_case mapping), share row (WhatsApp/Telegram/Email deep links using `publicToken`), action sheet with cancel confirmation
+- Skeleton loading state for all cards and action buttons
+
+### Shared utilities
+- `lib/utils.js` — added `formatAmount`, `getInitials`, `formatDate`, `getInvoiceTotal` as named exports (shared across all invoice components)
+
+### Routes added
+- `/dashboard` — home dashboard
+- `/dashboard/invoices` — invoice list
+- `/dashboard/invoices/new` — invoice creation
+- `/dashboard/invoices/[id]` — invoice detail
+- `/dashboard/clients` — stub (Phase 5 next)
+- `/dashboard/settings` — stub (Phase 5 next)
+
+### Build
+- All 19 routes compile clean, zero errors
+
+---
+
 ## [2.4.0] — 2026-06-05 — Legacy Cleanup
 
 ### Deleted

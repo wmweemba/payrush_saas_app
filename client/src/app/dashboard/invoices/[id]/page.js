@@ -2,8 +2,8 @@
 
 import dynamic from 'next/dynamic'
 
-const DashboardHome = dynamic(
-  () => import('@/components/dashboard/DashboardHome'),
+const InvoiceDetail = dynamic(
+  () => import('@/components/invoices/InvoiceDetail'),
   {
     ssr: false,
     loading: () => (
@@ -12,6 +12,6 @@ const DashboardHome = dynamic(
   }
 )
 
-export default function DashboardPage() {
-  return <DashboardHome />
+export default function InvoiceDetailPage() {
+  return <InvoiceDetail />
 }

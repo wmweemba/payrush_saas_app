@@ -5,24 +5,27 @@ export function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
-/**
- * Format currency values with proper symbols and localization
- * @param {number} amount - The amount to format
- * @param {string} currency - Currency code (USD, EUR, GBP, etc.)
- * @returns {string} Formatted currency string
- */
-export function formatCurrency(amount, currency = 'USD') {
-  const currencyFormatters = {
-    USD: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }),
-    EUR: new Intl.NumberFormat('en-EU', { style: 'currency', currency: 'EUR' }),
-    GBP: new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }),
-    ZMW: new Intl.NumberFormat('en-ZM', { style: 'currency', currency: 'ZMW' }),
-    NGN: new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }),
-    KES: new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES' }),
-    GHS: new Intl.NumberFormat('en-GH', { style: 'currency', currency: 'GHS' }),
-    ZAR: new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }),
-  };
+// ─── Invoice helpers ──────────────────────────────────────────────────────────
 
-  const formatter = currencyFormatters[currency] || currencyFormatters.USD;
-  return formatter.format(amount || 0);
+export function formatAmount(amount, currency = 'ZMW') {
+  const num = Number(amount) || 0
+  return `${currency} ${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
+export function getInitials(name) {
+  if (!name) return '?'
+  return name.trim().charAt(0).toUpperCase()
+}
+
+export function formatDate(dateStr) {
+  if (!dateStr) return ''
+  return new Date(dateStr).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
+export function getInvoiceTotal(invoice) {
+  return (invoice.items || []).reduce((sum, item) => sum + parseFloat(item.amount || 0), 0)
 }

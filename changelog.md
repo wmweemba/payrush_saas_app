@@ -5,6 +5,60 @@ Format: [version] — date — description
 
 ---
 
+## [3.5.0] — 2026-06-07 — Phase 6 Step 1: Brand Assets (Favicon, App Icons, Logo Mark)
+
+### Icon generator
+- `client/scripts/generate-icons.mjs` — new Node script that procedurally
+  draws the PayRush brand mark on canvas and exports the full icon set:
+  a `#185FA5` rounded-rectangle tile (≈22% corner radius) containing a
+  white geometric "P" lettermark built as vector paths (vertical stem +
+  "D"-shaped bowl, drawn as a ring with `destination-out` compositing
+  and the stem overlaid to close the join) — crisp at every size, no
+  text rendering involved
+- 16px/32px use a simplified white rounded-square dot instead of the full
+  lettermark, since the "P" doesn't read cleanly at favicon sizes
+- Generates `icon-16.png`, `icon-32.png`, `icon-192.png`, `icon-512.png`,
+  `apple-touch-icon.png` (180×180) into `client/public/`, plus
+  `favicon.ico` (16+32 combined) into `client/src/app/`
+
+### Dependency swap: `canvas` → `@napi-rs/canvas`
+- Originally speced with `canvas` + `png-to-ico`, but `canvas` requires
+  native compilation against Cairo/Pango/pixman/FreeType, and Homebrew
+  has no precompiled bottles for this machine's macOS version (Ventura,
+  now Tier 3) — `brew install` was about to compile the entire Cairo
+  toolchain from source (30–60+ min). Swapped to `@napi-rs/canvas`
+  (prebuilt N-API binaries, identical Canvas 2D surface) and `to-ico`
+  (buffer-based ICO encoder) — same visual result, zero native deps
+
+### Favicon placement fix
+- Generated `favicon.ico` initially landed in `client/public/`, but
+  Next.js App Router already owns `app/favicon.ico` as a convention
+  route; having both triggered "A conflicting public file and page file
+  was found for path /favicon.ico" (500). Replaced the existing
+  `src/app/favicon.ico` (the stock Next.js default) with the generated
+  one and pointed the script there directly instead
+
+### Metadata
+- `app/layout.js` — replaced the placeholder `metadata` export with the
+  full title/description copy ("Invoice faster. Get paid sooner." /
+  WhatsApp share blurb) and an `icons` block wiring up the 16px/32px PNG
+  favicons and the 180px Apple touch icon
+
+### Verified
+- `pnpm build` passes clean — 16/16 routes compile, route count and
+  sizes unchanged ✅
+- Browser-driven (`pnpm dev` + `curl`): `/favicon.ico`, `/icon-16.png`,
+  `/icon-32.png`, `/apple-touch-icon.png` all return 200; rendered
+  `<head>` emits the new `<link rel="icon">` / `<link rel="apple-touch-icon">`
+  tags; `.ico` verified to contain both 16×16 and 32×32 frames; browser
+  tab shows the PayRush mark instead of the default Next.js favicon ✅
+- Cleaned up ~10.7 MB of stale Homebrew download-cache residue (formula
+  definitions, bottle manifests, incomplete source tarballs) left behind
+  by the aborted `canvas` native-build attempt — confirmed no packages
+  were actually installed before removing
+
+---
+
 ## [3.4.0] — 2026-06-07 — Phase 5 Step 10: Auth Pages Polish Pass
 
 ### Login & signup

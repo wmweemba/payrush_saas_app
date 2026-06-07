@@ -5,6 +5,50 @@ Format: [version] — date — description
 
 ---
 
+## [3.2.0] — 2026-06-07 — Phase 5 Step 8: Clients List + Client Detail
+
+### Client list
+- `app/dashboard/clients/page.js` — dynamic shell (`next/dynamic ssr:false`)
+- `components/clients/ClientList.js` — top bar with "+ New Client", search bar
+  (client-side filter on name/email/phone), summary pills (Total/Active/
+  Archived), client rows with avatar initials, email-or-phone fallback,
+  currency badge, "Archived" label, empty state, skeleton rows, toast on save
+- `components/clients/ClientFormModal.js` — shared centered-modal form
+  (Name*/Email/Phone/Address/Currency, Zod-style inline validation) extracted
+  for reuse across the new-client and edit-client flows
+
+### Client detail
+- `app/dashboard/clients/[id]/page.js` — dynamic shell
+- `components/clients/ClientDetail.js` — mobile sticky top bar (back/name/edit)
+  and desktop breadcrumb header; client info card (avatar, contact detail
+  rows, "Client Since"); invoice history card with count badge, summary stats,
+  and empty state — invoices fetched from `/api/invoices` and filtered
+  client-side by `clientId` (the endpoint has no query-param support); danger
+  zone card with inline archive confirm (`PUT /api/clients/[id]` →
+  `status: 'archived'`), hidden for already-archived clients
+
+### API
+- `app/api/clients/route.js` — added `?status=all` query param to `GET` so the
+  client list can show archived clients without changing the default
+  active-only behaviour relied on by `InvoiceForm`'s client autocomplete
+
+### Fixed
+- `components/clients/ClientDetail.js` — mobile sticky top bar rendered
+  alongside the desktop breadcrumb at ≥1024px (an inline `display: 'flex'`
+  was overriding the `lg:hidden` Tailwind class via specificity); moved
+  `flex` into the className (`flex lg:hidden`) on both the live bar and its
+  loading-skeleton variant so the responsive toggle works as intended
+
+### Verified
+- `pnpm build` passes clean — 21/21 routes compile, route count unchanged
+  from the prior release ✅
+- Browser-driven verification (mobile 390×844 + desktop 1440×900): list
+  search/summary/rows/modal, detail info/invoice-history/archive-confirm all
+  match spec; confirmed via `getComputedStyle` that the desktop header now
+  shows only the breadcrumb (`display: none` on the mobile bar) ✅
+
+---
+
 ## [3.1.0] — 2026-06-07 — Phase 5 Step 7: Public Invoice View
 
 ### Public invoice view

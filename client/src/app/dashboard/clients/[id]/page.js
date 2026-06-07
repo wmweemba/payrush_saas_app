@@ -2,8 +2,8 @@
 
 import dynamic from 'next/dynamic'
 
-const ClientList = dynamic(
-  () => import('@/components/clients/ClientList'),
+const ClientDetail = dynamic(
+  () => import('@/components/clients/ClientDetail'),
   {
     ssr: false,
     loading: () => (
@@ -12,6 +12,6 @@ const ClientList = dynamic(
   }
 )
 
-export default function ClientsPage() {
-  return <ClientList />
+export default function ClientDetailPage() {
+  return <ClientDetail />
 }

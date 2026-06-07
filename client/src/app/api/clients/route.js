@@ -17,10 +17,17 @@ export async function GET(request) {
   if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
+    const { searchParams } = new URL(request.url)
+    const showAll = searchParams.get('status') === 'all'
+
+    const where = showAll
+      ? eq(clients.userId, session.user.id)
+      : and(eq(clients.userId, session.user.id), eq(clients.status, 'active'))
+
     const result = await db
       .select()
       .from(clients)
-      .where(and(eq(clients.userId, session.user.id), eq(clients.status, 'active')))
+      .where(where)
       .orderBy(asc(clients.name))
 
     return Response.json({ data: result })

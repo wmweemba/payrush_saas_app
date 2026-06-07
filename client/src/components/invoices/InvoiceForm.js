@@ -23,8 +23,8 @@ function defaultDueDate() {
   return d.toISOString().slice(0, 10)
 }
 
-function makeInvoiceNumber() {
-  return `INV-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 900) + 100)}`
+function makeNumberSuffix() {
+  return `${new Date().getFullYear()}-${String(Math.floor(Math.random() * 900) + 100)}`
 }
 
 function makeItem() {
@@ -70,6 +70,30 @@ const ghostBtn = {
   fontFamily: 'inherit',
 }
 
+const toggleOptionBase = {
+  border: 'none',
+  borderRadius: 9999,
+  padding: '6px 20px',
+  fontSize: 13,
+  fontFamily: 'inherit',
+  cursor: 'pointer',
+  transition: 'background 150ms ease',
+}
+
+const toggleOptionActive = {
+  ...toggleOptionBase,
+  background: '#185FA5',
+  color: '#FFFFFF',
+  fontWeight: 500,
+}
+
+const toggleOptionInactive = {
+  ...toggleOptionBase,
+  background: 'transparent',
+  color: '#6B7280',
+  fontWeight: 400,
+}
+
 const primaryBtn = (disabled) => ({
   width: '100%',
   height: 48,
@@ -101,7 +125,8 @@ export default function InvoiceForm() {
   const router = useRouter()
   const { data: session } = useSession()
 
-  const [invoiceNumber] = useState(makeInvoiceNumber)
+  const [numberSuffix] = useState(makeNumberSuffix)
+  const [documentType, setDocumentType] = useState('invoice')
 
   const [form, setForm] = useState({
     customerName: '',
@@ -153,6 +178,12 @@ export default function InvoiceForm() {
   )
   const total = subtotal
 
+  const isQuote = documentType === 'quote'
+  const invoiceNumber = (isQuote ? 'QT-' : 'INV-') + numberSuffix
+  const pageTitle = isQuote ? 'New Quote' : 'New Invoice'
+  const dueDateLabel = isQuote ? 'Valid Until' : 'Due Date'
+  const submitLabel = isQuote ? 'Save quote' : 'Save invoice'
+
   const businessName = branding?.businessName || session?.user?.name || 'Your Business'
   const hasPaymentDetails = branding && (branding.bankName || branding.accountNumber || branding.mobileMoneyNumber)
 
@@ -200,6 +231,7 @@ export default function InvoiceForm() {
         body: JSON.stringify({
           customerName: form.customerName,
           customerEmail: form.customerEmail || undefined,
+          documentType,
           currency: form.currency,
           dueDate: form.dueDate || undefined,
           paymentNotes: form.notes || undefined,
@@ -376,7 +408,7 @@ export default function InvoiceForm() {
           </select>
         </div>
         <div>
-          <label style={labelBase}>Due Date</label>
+          <label style={labelBase}>{dueDateLabel}</label>
           <input
             type="date"
             style={inputBase}
@@ -429,7 +461,7 @@ export default function InvoiceForm() {
         </span>
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Invoice
+            {isQuote ? 'Quotation' : 'Invoice'}
           </div>
           <div style={{ fontSize: 13, color: 'var(--color-text-primary)', marginTop: 2 }}>
             {invoiceNumber}
@@ -568,7 +600,7 @@ export default function InvoiceForm() {
             whiteSpace: 'nowrap',
           }}
         >
-          New Invoice
+          {pageTitle}
         </span>
       </div>
 
@@ -593,12 +625,37 @@ export default function InvoiceForm() {
             </span>
           </div>
 
+          {/* Document type toggle */}
+          <div
+            style={{
+              display: 'inline-flex',
+              padding: 3,
+              border: '0.5px solid rgba(0,0,0,0.12)',
+              borderRadius: 9999,
+              background: '#F0F2F5',
+              marginBottom: 24,
+            }}
+          >
+            <button
+              onClick={() => setDocumentType('invoice')}
+              style={documentType === 'invoice' ? toggleOptionActive : toggleOptionInactive}
+            >
+              Invoice
+            </button>
+            <button
+              onClick={() => setDocumentType('quote')}
+              style={documentType === 'quote' ? toggleOptionActive : toggleOptionInactive}
+            >
+              Quote
+            </button>
+          </div>
+
           {formFields}
 
           {/* Desktop submit button (inline, not sticky) */}
           <div className="hidden lg:block" style={{ marginTop: 8 }}>
             <button onClick={handleSubmit} disabled={submitting} style={primaryBtn(submitting)}>
-              {submitting ? 'Sending…' : 'Send Invoice'}
+              {submitting ? 'Saving…' : submitLabel}
             </button>
           </div>
         </div>
@@ -630,7 +687,7 @@ export default function InvoiceForm() {
         }}
       >
         <button onClick={handleSubmit} disabled={submitting} style={primaryBtn(submitting)}>
-          {submitting ? 'Sending…' : 'Send Invoice'}
+          {submitting ? 'Saving…' : submitLabel}
         </button>
       </div>
 

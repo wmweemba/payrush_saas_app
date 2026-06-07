@@ -5,6 +5,45 @@ Format: [version] — date — description
 
 ---
 
+## [3.9.0] — 2026-06-07 — Phase 6.5 Step 2: Quote/Invoice Toggle on Creation Form
+
+### `components/invoices/InvoiceForm.js`
+- Added a `documentType` state (`'invoice' | 'quote'`, defaults to
+  `'invoice'`) and a pill-shaped toggle rendered above the form
+  fields (visible on both mobile and desktop): `#F0F2F5` background,
+  `0.5px solid rgba(0,0,0,0.12)` border, `9999px` radius, `3px`
+  padding, inline-flex/content-width; active option `#185FA5`/white
+  with `background 150ms ease` transition, inactive `#6B7280` on
+  transparent — matches ui_spec.md pill conventions
+- Wired `documentType` through every conditional surface: page
+  title ("New Invoice" / "New Quote"), due-date field label
+  ("Due Date" / "Valid Until"), submit button label ("Save invoice"
+  / "Save quote", replacing the old "Send Invoice"/"Sending…" copy
+  with "Saving…" to match the new verb), the live preview panel's
+  document-type header ("Invoice" / "Quotation", rendered uppercase
+  via existing CSS), and the client-side preview number prefix
+  (`QT-`/`INV-` — split the random suffix from the prefix so it
+  reacts live to the toggle without changing the underlying preview
+  scheme)
+- Included `documentType` in the `POST /api/invoices` request body
+  so the server (updated in Step 1) receives the user's choice
+
+### Verified
+- `pnpm build` passes clean — all 17 routes compile ✅
+- Live Playwright run (headless Chromium via the cached
+  `playwright-core` package — logged in as a fresh test user,
+  navigated to `/dashboard/invoices/new`): confirmed by screenshot
+  that clicking "Quote" flips the active pill to `#185FA5`/white and
+  updates every conditional label simultaneously (title → "New
+  Quote", due-date label → "VALID UNTIL", submit → "Save quote",
+  preview header → "QUOTATION", preview number → `QT-2026-818`);
+  clicking back to "Invoice" reverts all of it exactly (→ "New
+  Invoice" / "DUE DATE" / "Save invoice" / "INVOICE" /
+  `INV-2026-818`) ✅
+- Test user, session, and screenshots cleaned up afterward
+
+---
+
 ## [3.8.0] — 2026-06-07 — Phase 6.5 Step 1: Quotes Support (schema, API, sequential numbering)
 
 ### Schema migration

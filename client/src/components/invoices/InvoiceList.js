@@ -15,7 +15,7 @@ function Skel({ width, height, style = {} }) {
 
 // ─── Filter tab definitions ───────────────────────────────────────────────────
 
-const TABS = ['All', 'Sent', 'Paid', 'Overdue', 'Draft']
+const TABS = ['All', 'Sent', 'Paid', 'Overdue', 'Draft', 'Quotes']
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -40,18 +40,21 @@ export default function InvoiceList() {
     (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
   )
 
-  const filtered = activeTab === 'All'
-    ? sorted
-    : sorted.filter(inv => inv.status === activeTab.toLowerCase())
+  const filtered = activeTab === 'Quotes'
+    ? sorted.filter(inv => inv.documentType === 'quote')
+    : activeTab === 'All'
+    ? sorted.filter(inv => inv.documentType !== 'quote')
+    : sorted.filter(inv => inv.documentType !== 'quote' && inv.status === activeTab.toLowerCase())
 
-  // ── Summary metrics (All tab only) ─────────────────────────────────────────
-  const currency = invoices[0]?.currency || 'ZMW'
+  // ── Summary metrics (All tab only, invoices only) ──────────────────────────
+  const invoiceOnly = invoices.filter(inv => inv.documentType !== 'quote')
+  const currency = invoiceOnly[0]?.currency || 'ZMW'
 
-  const totalCount = invoices.length
-  const paidTotal = invoices
+  const totalCount = invoiceOnly.length
+  const paidTotal = invoiceOnly
     .filter(inv => inv.status === 'paid')
     .reduce((s, inv) => s + getInvoiceTotal(inv), 0)
-  const pendingTotal = invoices
+  const pendingTotal = invoiceOnly
     .filter(inv => inv.status === 'sent' || inv.status === 'overdue')
     .reduce((s, inv) => s + getInvoiceTotal(inv), 0)
 
@@ -135,7 +138,7 @@ export default function InvoiceList() {
       </div>
 
       {/* ── Summary bar (All tab, has invoices) ─────────────────────────────── */}
-      {!loading && activeTab === 'All' && invoices.length > 0 && (
+      {!loading && activeTab === 'All' && invoiceOnly.length > 0 && (
         <div style={{ ...px, display: 'flex', gap: 8, marginBottom: 16 }}>
           {[
             { label: 'Total', value: totalCount },

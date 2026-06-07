@@ -16,7 +16,7 @@ const updateInvoiceSchema = z.object({
   clientId: z.string().uuid().optional(),
   currency: z.string().optional(),
   dueDate: z.string().optional(),
-  status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled']).optional(),
+  status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled', 'accepted', 'declined']).optional(),
   paymentMethod: z.string().optional(),
   paymentNotes: z.string().optional(),
   items: z.array(itemSchema).min(1).optional(),

@@ -139,6 +139,16 @@ a {
   color: var(--color-sent-text);
 }
 
+.badge-accepted {
+  background: #EAF3DE;
+  color: #3B6D11;
+}
+
+.badge-declined {
+  background: #F1EFE8;
+  color: #5F5E5A;
+}
+
 /* Section label */
 .section-label {
   font-size: 11px;

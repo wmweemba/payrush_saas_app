@@ -12,6 +12,7 @@ import {
   IconBrandTelegram,
   IconMail,
   IconFileInvoice,
+  IconArrowRight,
 } from '@tabler/icons-react'
 import { useSession } from '@/lib/auth-client'
 import { formatAmount, getInitials, formatDate, getInvoiceTotal } from '@/lib/utils'
@@ -170,6 +171,8 @@ export default function InvoiceDetail() {
   const [copied, setCopied] = useState(null)
   const [toast, setToast] = useState(null)
   const [pdfLoading, setPdfLoading] = useState(false)
+  const [statusUpdating, setStatusUpdating] = useState(false)
+  const [converting, setConverting] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -247,6 +250,44 @@ export default function InvoiceDetail() {
       }
     } catch {
       fireToast('Failed to cancel invoice.')
+    }
+  }
+
+  async function handleQuoteStatusUpdate(status) {
+    setStatusUpdating(true)
+    try {
+      const res = await fetch(`/api/invoices/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
+      const json = await res.json()
+      if (res.ok && json.data) {
+        setInvoice(json.data)
+      } else {
+        fireToast(`Failed to mark quote as ${status}.`)
+      }
+    } catch {
+      fireToast(`Failed to mark quote as ${status}.`)
+    } finally {
+      setStatusUpdating(false)
+    }
+  }
+
+  async function handleConvertToInvoice() {
+    setConverting(true)
+    try {
+      const res = await fetch(`/api/invoices/${id}/convert`, { method: 'POST' })
+      const json = await res.json()
+      if (res.ok && json.data?.id) {
+        router.push(`/dashboard/invoices/${json.data.id}`)
+      } else {
+        fireToast(json.error || 'Failed to convert quote to invoice.')
+        setConverting(false)
+      }
+    } catch {
+      fireToast('Failed to convert quote to invoice.')
+      setConverting(false)
     }
   }
 
@@ -331,6 +372,7 @@ export default function InvoiceDetail() {
   }
 
   const isPaid = invoice.status === 'paid'
+  const isQuote = invoice.documentType === 'quote'
 
   return (
     <div style={{ background: 'var(--color-page-bg)', minHeight: '100vh', position: 'relative' }}>
@@ -407,9 +449,14 @@ export default function InvoiceDetail() {
                 {getInitials(businessName)}
               </div>
             )}
-            <span className={`badge badge-${invoice.status || 'draft'}`}>
-              {invoice.status || 'draft'}
-            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+              <span style={{ fontSize: 11, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {isQuote ? 'QUOTATION' : 'INVOICE'}
+              </span>
+              <span className={`badge badge-${invoice.status || 'draft'}`}>
+                {invoice.status || 'draft'}
+              </span>
+            </div>
           </div>
 
           {/* Business name */}
@@ -493,7 +540,7 @@ export default function InvoiceDetail() {
         </div>
 
         {/* ── Card 2: Payment details ────────────────────────────────────── */}
-        {hasPaymentDetails && (
+        {!isQuote && hasPaymentDetails && (
           <div style={{ ...card, marginBottom: 12 }}>
             <p style={{ margin: '0 0 4px', fontSize: 11, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Payment Details
@@ -544,8 +591,66 @@ export default function InvoiceDetail() {
         {/* ── Action buttons ─────────────────────────────────────────────── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingBottom: 24 }}>
 
+          {/* Quote status actions */}
+          {isQuote && (invoice.status === 'sent' || invoice.status === 'draft') && (
+            <div className="flex flex-col sm:flex-row" style={{ gap: 10 }}>
+              <button
+                onClick={() => handleQuoteStatusUpdate('accepted')}
+                disabled={statusUpdating}
+                style={{
+                  flex: 1, height: 44, background: '#EAF3DE', color: '#3B6D11',
+                  border: '0.5px solid rgba(59,109,17,0.2)', borderRadius: 10,
+                  fontSize: 14, fontWeight: 500,
+                  cursor: statusUpdating ? 'default' : 'pointer',
+                  fontFamily: 'inherit', opacity: statusUpdating ? 0.7 : 1,
+                  transition: 'background 150ms ease',
+                }}
+                onMouseEnter={e => { if (!statusUpdating) e.currentTarget.style.background = '#d4edbc' }}
+                onMouseLeave={e => { e.currentTarget.style.background = '#EAF3DE' }}
+              >
+                Mark as accepted
+              </button>
+              <button
+                onClick={() => handleQuoteStatusUpdate('declined')}
+                disabled={statusUpdating}
+                style={{
+                  flex: 1, height: 44, background: '#F1EFE8', color: '#5F5E5A',
+                  border: '0.5px solid rgba(0,0,0,0.12)', borderRadius: 10,
+                  fontSize: 14, fontWeight: 500,
+                  cursor: statusUpdating ? 'default' : 'pointer',
+                  fontFamily: 'inherit', opacity: statusUpdating ? 0.7 : 1,
+                  transition: 'background 150ms ease',
+                }}
+                onMouseEnter={e => { if (!statusUpdating) e.currentTarget.style.background = '#e5e2da' }}
+                onMouseLeave={e => { e.currentTarget.style.background = '#F1EFE8' }}
+              >
+                Mark as declined
+              </button>
+            </div>
+          )}
+
+          {/* Convert to invoice */}
+          {isQuote && invoice.status !== 'declined' && invoice.status !== 'cancelled' && (
+            <button
+              onClick={handleConvertToInvoice}
+              disabled={converting}
+              className="w-full sm:w-auto"
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                height: 44, padding: '0 20px', background: 'var(--color-action)',
+                color: '#fff', border: 'none', borderRadius: 10,
+                fontSize: 14, fontWeight: 500,
+                cursor: converting ? 'default' : 'pointer',
+                fontFamily: 'inherit', opacity: converting ? 0.7 : 1,
+              }}
+            >
+              {converting ? 'Converting…' : 'Convert to invoice'}
+              <IconArrowRight size={16} stroke={1.5} style={{ color: '#fff' }} />
+            </button>
+          )}
+
           {/* Primary action */}
-          {!isPaid ? (
+          {!isQuote && (!isPaid ? (
             confirming ? (
               <div style={{
                 background: '#fff', borderRadius: 12, padding: '14px 16px',
@@ -603,7 +708,7 @@ export default function InvoiceDetail() {
             >
               {pdfLoading ? 'Generating…' : 'Download PDF'}
             </button>
-          )}
+          ))}
 
           {/* Share row */}
           <div style={{ display: 'flex', gap: 10 }}>

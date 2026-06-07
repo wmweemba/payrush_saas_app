@@ -5,6 +5,67 @@ Format: [version] — date — description
 
 ---
 
+## [3.10.0] — 2026-06-07 — Phase 6.5 Step 3: Quotes Tab & Quote-Mode Detail View
+
+### `components/invoices/InvoiceList.js`
+- Added a "Quotes" tab as the last entry in the filter row
+  (`All, Sent, Paid, Overdue, Draft, Quotes`)
+- Reworked filter logic: the `All`/`Sent`/`Paid`/`Overdue`/`Draft`
+  tabs now exclude `documentType === 'quote'` records, while the new
+  `Quotes` tab shows only quotes regardless of status; quote rows
+  reuse the existing invoice row component (same avatar, name,
+  amount, date) — no separate component needed
+- Summary metrics (Total / Paid / Pending) now compute from
+  invoice-only records so quotes don't skew the totals
+
+### `app/globals.css`
+- Added `.badge-accepted` (`#EAF3DE` / `#3B6D11`) and `.badge-declined`
+  (`#F1EFE8` / `#5F5E5A`) status badge styles for quote statuses
+
+### `components/invoices/InvoiceDetail.js`
+- Derived `isQuote = invoice.documentType === 'quote'` and gated all
+  quote-mode behaviour on it without touching existing invoice flows
+- Added a "QUOTATION" / "INVOICE" caption-style label above the
+  status badge on the summary card (this label didn't previously
+  exist on the detail view — added it to match the convention already
+  used in `InvoiceForm.js`'s live preview)
+- Replaced the "Mark as Paid" action with "Mark as accepted" /
+  "Mark as declined" buttons (shown only while status is `sent` or
+  `draft`) that `PUT /api/invoices/[id]` with the new status — styled
+  per spec (`#EAF3DE`/`#3B6D11` and `#F1EFE8`/`#5F5E5A` with matching
+  hover states)
+- Added a "Convert to invoice" primary button (full-width on mobile,
+  auto-width on desktop, `IconArrowRight`, "Converting…" loading
+  state) shown unless the quote is `declined` or `cancelled`; posts to
+  `POST /api/invoices/[id]/convert` and redirects to the new invoice
+  on success
+- Hid the payment details card entirely for quotes (quotes aren't
+  payment requests); kept WhatsApp/Telegram/email share buttons
+  visible
+
+### `app/api/invoices/[id]/route.js`
+- Extended the `status` Zod enum with `'accepted'` and `'declined'`
+  so the new quote-status actions validate correctly
+
+### Verified
+- `pnpm build` passes clean — all routes compile ✅
+- Live Playwright run against the dev server + DB (fresh test
+  account): confirmed the Quotes tab appears last and that
+  All/Sent/Paid/Overdue/Draft all exclude a test quote; created a
+  quote and confirmed "QUOTATION" label, `QT-` number, accept/decline
+  buttons, no "Mark as Paid", no payment details card, and "Convert
+  to invoice" all render correctly; clicked "Mark as accepted" and
+  confirmed the badge switched to green `badge-accepted`; created a
+  second quote, declined it, and confirmed "Convert to invoice"
+  disappeared; ran the full convert flow and confirmed redirect to a
+  new `INV-001` record with `documentType: 'invoice'`,
+  `status: 'draft'`, while the source quote retained
+  `converted_from_quote_id` ✅
+- All test accounts, invoices, and sessions cleaned up from the DB
+  afterward; temp verification scripts removed
+
+---
+
 ## [3.9.0] — 2026-06-07 — Phase 6.5 Step 2: Quote/Invoice Toggle on Creation Form
 
 ### `components/invoices/InvoiceForm.js`

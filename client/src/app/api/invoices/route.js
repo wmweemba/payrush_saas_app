@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { eq, desc, inArray } from 'drizzle-orm'
+import { eq, desc, inArray, sql } from 'drizzle-orm'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { invoices, invoiceItems } from '@/lib/db/schema/invoices'
@@ -17,6 +17,7 @@ const createInvoiceSchema = z.object({
   currency: z.string().default('ZMW'),
   dueDate: z.string().optional(),
   status: z.enum(['draft', 'sent']).default('draft'),
+  documentType: z.enum(['invoice', 'quote']).default('invoice'),
   paymentMethod: z.string().optional(),
   paymentNotes: z.string().optional(),
   items: z.array(itemSchema).min(1),
@@ -71,7 +72,18 @@ export async function POST(request) {
       return Response.json({ error: parsed.error.flatten() }, { status: 400 })
     }
 
-    const { items, customerEmail, clientId, dueDate, ...invoiceFields } = parsed.data
+    const { items, customerEmail, clientId, dueDate, documentType, ...invoiceFields } = parsed.data
+
+    // Get count of all invoices for this user to derive next number
+    const [{ count }] = await db
+      .select({ count: sql`count(*)` })
+      .from(invoices)
+      .where(eq(invoices.userId, session.user.id))
+
+    const nextNumber = parseInt(count) + 1
+    const paddedNumber = String(nextNumber).padStart(3, '0')
+    const prefix = documentType === 'quote' ? 'QT-' : 'INV-'
+    const invoiceNumber = prefix + paddedNumber
 
     const [newInvoice] = await db
       .insert(invoices)
@@ -81,7 +93,8 @@ export async function POST(request) {
         customerEmail: customerEmail || null,
         clientId: clientId || null,
         dueDate: dueDate || null,
-        invoiceNumber: 'INV-' + Date.now(),
+        documentType,
+        invoiceNumber,
       })
       .returning()
 

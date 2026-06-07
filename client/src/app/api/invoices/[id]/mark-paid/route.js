@@ -15,6 +15,13 @@ export async function POST(request, { params }) {
       .where(and(eq(invoices.id, id), eq(invoices.userId, session.user.id)))
     if (!existing) return Response.json({ error: 'Not found' }, { status: 404 })
 
+    if (existing.documentType === 'quote') {
+      return Response.json(
+        { error: 'Cannot mark a quote as paid. Convert to invoice first.' },
+        { status: 400 }
+      )
+    }
+
     let paymentMethod = null
     let paymentNotes = null
     try {

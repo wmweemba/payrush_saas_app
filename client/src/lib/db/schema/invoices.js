@@ -8,6 +8,9 @@ export const invoices = payrushSchema.table('invoices', {
   userId: text('user_id').notNull(),
   clientId: uuid('client_id'),
   invoiceNumber: text('invoice_number').notNull(),
+  documentType: text('document_type').notNull().default('invoice'),
+  convertedFromQuoteId: uuid('converted_from_quote_id')
+    .references(() => invoices.id),
   customerName: text('customer_name').notNull(),
   customerEmail: text('customer_email'),
   currency: text('currency').notNull().default('ZMW'),

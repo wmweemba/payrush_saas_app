@@ -5,6 +5,67 @@ Format: [version] — date — description
 
 ---
 
+## [3.8.0] — 2026-06-07 — Phase 6.5 Step 1: Quotes Support (schema, API, sequential numbering)
+
+### Schema migration
+- `drizzle/migrations/0004_add_quotes_support.sql` — new: adds
+  `document_type` (text, not null, default `'invoice'`, check
+  constraint `IN ('invoice', 'quote')`) and `converted_from_quote_id`
+  (uuid, FK → `invoices.id` ON DELETE SET NULL) to `payrush.invoices`.
+  Applied directly via the `postgres` driver (psql isn't available in
+  this environment); both columns verified present before continuing
+- `lib/db/schema/invoices.js` — added `documentType` and
+  `convertedFromQuoteId` fields to the Drizzle table definition
+
+### API — create & list
+- `app/api/invoices/route.js` — `POST` now accepts an optional
+  `documentType` (`'invoice' | 'quote'`, default `'invoice'`) in the
+  Zod schema. `GET` (list) and `GET /[id]` required no changes — both
+  already `select()` all columns, so the new fields are returned
+  automatically
+- Replaced timestamp-based number generation (`'INV-' + Date.now()`,
+  e.g. `INV-1780852380602` — not viable for professional invoicing)
+  with **sequential numbering**: count of all existing invoice rows
+  for the user + 1, zero-padded to 3 digits, prefixed by document
+  type (`INV-001`, `QT-002`, naturally extending to `INV-1000` past
+  999). Single counter shared across invoices and quotes per William's
+  confirmed spec — simple and correct for a single-user SaaS at this
+  stage
+
+### API — mark-paid guard
+- `app/api/invoices/[id]/mark-paid/route.js` — added a guard:
+  quotes (`document_type === 'quote'`) cannot be marked paid; returns
+  `400 { error: 'Cannot mark a quote as paid. Convert to invoice
+  first.' }`
+
+### API — convert (new route)
+- `app/api/invoices/[id]/convert/route.js` — new `POST` handler:
+  validates ownership and that the source is a quote, rejects
+  double-conversion (`400` if any invoice already references this
+  quote via `converted_from_quote_id`), copies the quote and its
+  `invoice_items` into a new `invoice` record (`status: 'draft'`,
+  fresh `public_token`, `converted_from_quote_id` set to the source),
+  and swaps the number prefix (`'INV-' + sourceNumber.replace(/^QT-/,
+  '')`) so the sequential digits carry over — e.g. `QT-002` → `INV-002`
+
+### Verified
+- `pnpm build` passes clean — all 17 routes compile, including the
+  new `/api/invoices/[id]/convert` ✅
+- Live endpoint tests against the dev DB (test user created, then
+  fully cleaned up afterward): created `INV-001`, created `QT-002`,
+  converted it to `INV-002` (digits preserved, prefix swapped,
+  `converted_from_quote_id` linked correctly, items copied, fresh
+  `public_token`); re-converting the same quote correctly returned
+  `400 "already converted"`; calling mark-paid on a quote correctly
+  returned `400` with the guard message ✅
+- Found and removed one pre-existing invoice record
+  (`INV-1780641050375`, timestamp-based number, `will@payrush.test`)
+  after confirming with William — the DB was empty of invoice rows
+  before sequential-numbering tests began, and empty again after
+  cleanup
+
+---
+
 ## [3.7.0] — 2026-06-07 — Phase 6 Step 3: PWA Hardening
 
 ### Manifest & metadata

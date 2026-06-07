@@ -5,6 +5,33 @@ Format: [version] — date — description
 
 ---
 
+## [3.1.0] — 2026-06-07 — Phase 5 Step 7: Public Invoice View
+
+### Public invoice view
+- `app/invoice/[token]/page.js` — new async server component fetching from
+  `app/api/invoice/[token]/route.js`; includes `generateMetadata` for
+  share-link OG previews and a `NotFound` fallback for invalid/missing tokens
+- `components/invoices/PublicInvoiceView.js` — new component built to
+  ui_spec.md design tokens: business identity (logo or initials), status
+  badge, invoice/date meta, billed-to with copy-to-clipboard, line items,
+  payment details card, share row (WhatsApp/Telegram/Email deep links via
+  `publicToken`), "Download PDF" wired to existing `downloadInvoicePDF` via a
+  camelCase→snake_case `mapInvoiceForPDF` adapter
+
+### Removed
+- `app/invoice/[id]/page.js` — deleted legacy public invoice page (478 lines);
+  it called the dead Express endpoint `localhost:5000/api/public/invoice/:id`
+  (removed in Phase 4) and used pre-design-system styling (lucide-react,
+  shadcn cards). Superseded by `[token]`, matching the API route and the
+  `invoices.public_token` shareable-link convention.
+
+### Verified
+- `pnpm build` passes clean — 20/20 routes compile, zero errors ✅
+- Public route returns full invoice + items + branding for live test token
+  (`f101cb6e-028d-4479-9723-0e58994149a6`) — INV-1780641050375, ZMW 6,000 ✅
+
+---
+
 ## [3.0.0] — 2026-06-05 — Phase 5: UI Rebuild (Steps 1–6)
 
 ### Design system

@@ -5,6 +5,52 @@ Format: [version] — date — description
 
 ---
 
+## [3.4.0] — 2026-06-07 — Phase 5 Step 10: Auth Pages Polish Pass
+
+### Login & signup
+- `app/(auth)/login/page.js` and `app/(auth)/signup/page.js` — visual-only
+  rework to match the spec card (`20px` radius, `32px 28px` padding,
+  left-aligned "PayRush" wordmark + "Invoice faster. Get paid sooner."
+  tagline); inputs/labels switched to the `section-label` class and CSS
+  custom properties (`--color-action`, `--color-border`, etc.) instead of
+  hard-coded hex values
+- Login — added "Forgot password?" ghost link (→ `#`, post-launch feature)
+  on the password label row; error block restyled to the overdue/danger
+  semantic colours with `IconAlertCircle` and the spec's exact copy
+  ("Invalid email or password. Please try again.")
+- Signup — collapsed the old "Full name" + "Business name" pair into a
+  single **Business name** field plus **Confirm password**; added
+  client-side validation on submit (all fields required, passwords match,
+  password ≥ 8 chars) with scroll-to-error and clear-on-typing, matching
+  ui_spec.md's "validate on submit, never disable the button" pattern
+- Both — submit buttons resized to full-width 48px / 12px radius / 15px
+  font with "Signing in..." / "Creating account..." loading copy; footer
+  links restyled to 13px secondary/action colours
+
+### Auth call adjustment
+- `signUp.email` now sends `name: businessName` **and** `businessName`.
+  The new design has no separate "full name" field, but `lib/auth.js`
+  declares `businessName` as a required additional field distinct from
+  Better Auth's core `name` — sending only one would leave the other
+  required column null and fail the signup. Sending both from the single
+  input satisfies both schema requirements while matching the simplified
+  4-field design
+
+### Verified
+- `pnpm build` passes clean — 16/16 routes compile, route count unchanged,
+  `/login` 1.49 kB and `/signup` 1.76 kB, both static ✅
+- Browser-driven (`pnpm dev`, mobile 375px + desktop 1280px): centred card,
+  wordmark, correct field labels, "Forgot password?" link, footer links,
+  no sidebar/bottom nav all render as specified; triggered the
+  passwords-do-not-match validation path and confirmed the inline error
+  block renders with the icon and exact copy; zero console errors across
+  all interactions ✅
+- Had to clear a stale `.next` Turbopack cache left over from the prior
+  `pnpm build` run before `pnpm dev` would serve without 500s — unrelated
+  to the code change, just a local dev-server artifact
+
+---
+
 ## [3.3.0] — 2026-06-07 — Phase 5 Step 9: Settings / Branding Page
 
 ### Settings page

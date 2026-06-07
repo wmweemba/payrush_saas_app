@@ -8,6 +8,8 @@ const brandingSchema = z.object({
   logoUrl: z.string().url().optional().or(z.literal('')),
   primaryColor: z.string().optional(),
   businessName: z.string().optional(),
+  phone: z.string().optional(),
+  website: z.string().optional(),
   bankName: z.string().optional(),
   accountName: z.string().optional(),
   accountNumber: z.string().optional(),

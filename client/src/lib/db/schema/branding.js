@@ -8,6 +8,8 @@ export const branding = payrushSchema.table('branding', {
   logoUrl: text('logo_url'),
   primaryColor: text('primary_color').default('#185FA5'),
   businessName: text('business_name'),
+  phone: text('phone'),
+  website: text('website'),
   bankName: text('bank_name'),
   accountName: text('account_name'),
   accountNumber: text('account_number'),

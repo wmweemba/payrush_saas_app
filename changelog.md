@@ -5,6 +5,57 @@ Format: [version] — date — description
 
 ---
 
+## [3.3.0] — 2026-06-07 — Phase 5 Step 9: Settings / Branding Page
+
+### Settings page
+- `app/dashboard/settings/page.js` — replaced Phase-7 placeholder stub with
+  the standard dynamic shell (`next/dynamic ssr:false`)
+- `components/settings/SettingsPage.js` — four independent save units per
+  ui_spec.md, each with its own local state and loading flag (no giant form
+  state):
+  - **Business profile** — Business name*/Phone/Website, `PUT /api/branding`,
+    toast "Profile saved"
+  - **Business logo** — dashed dropzone, client-side type (PNG/JPG) and size
+    (≤2MB) validation, local `URL.createObjectURL` preview with "Remove";
+    actual upload to Cloudflare R2 deferred (TODO comment) — R2 is a
+    post-launch feature per claude.md
+  - **Payment details** — bank name/account name/account number/mobile money
+    number/payment instructions, `PUT /api/branding`, toast "Payment details
+    saved"
+  - **Account** — email + member-since (read-only), "Sign out" button via
+    `authClient.signOut()` → redirect to `/login`
+- Mobile sticky "Settings" header (no back arrow — top-level page) and
+  desktop page title, toggled with `flex lg:hidden` / `hidden lg:flex`
+  classes only (no inline `display`, learned from the Step 8 header bug)
+
+### Database
+- `lib/db/schema/branding.js` — added `phone` and `website` text columns.
+  The spec called for these fields to round-trip through `PUT /api/branding`,
+  but the table/Zod schema had no columns for them — saving would have
+  silently dropped the values (Zod strips unknown keys) while still showing
+  a success toast. Added the columns (migration
+  `0003_add_branding_phone_website.sql`, applied directly as additive
+  `ALTER TABLE ... ADD COLUMN` since the live `__drizzle_migrations` tracking
+  table was out of sync with actual schema state) and extended the route's
+  Zod schema to accept them
+- `app/api/branding/route.js` — `phone`/`website` added to `brandingSchema`
+
+### Verified
+- `pnpm build` passes clean — 21/21 routes compile, route count unchanged ✅
+- Browser-driven (mobile 390×844 + desktop 1440×900): all 4 cards render and
+  pre-fill; Save Profile / Save Payment Details persist across reload
+  (confirmed via `inputValue` after `page.reload()`); logo upload shows a
+  live preview and rejects non-image files with an inline toast; Sign out
+  redirects to `/login` and clears the session (revisiting `/dashboard/*`
+  redirects back to login) ✅
+- Caught and fixed a recurrence of the Step 8 specificity bug: both Save
+  buttons rendered full-width on desktop because inline `width: '100%'` beat
+  `lg:w-auto`; moved width fully into className (`w-full lg:w-auto`) —
+  confirmed via bounding-box measurement (desktop ~120px auto-width,
+  right-aligned; mobile ~308px full-width)
+
+---
+
 ## [3.2.0] — 2026-06-07 — Phase 5 Step 8: Clients List + Client Detail
 
 ### Client list

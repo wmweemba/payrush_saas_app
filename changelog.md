@@ -5,6 +5,42 @@ Format: [version] — date — description
 
 ---
 
+## [3.6.0] — 2026-06-07 — Phase 6 Step 2: Landing Page Rebuild
+
+### `app/page.js` — full rewrite
+- Replaced the legacy landing page (hardcoded blue-indigo gradients,
+  dark-mode classes, generic "Features / Pricing / Contact" SaaS
+  template copy) entirely — zero code carried over. Rebuilt against
+  ui_spec.md tokens only: `#F0F2F5` page background, white sections,
+  no gradients, no dark-mode variants
+- Sticky white nav (56px, PayRush wordmark + "Sign in" ghost link +
+  "Get started" primary button at 36px) replacing the old anchor-link
+  nav
+- Hero — two-line headline ("You just finished the job. Now get
+  paid."), subline, primary/secondary CTA row, trust note, and a new
+  `PhoneIllustration` component: a div-based stylised phone frame
+  (`#1A1F2E`, 260×480, camera-pill notch) showing a simplified
+  invoice card (avatar, PAID badge, amount, line items, "View
+  invoice" pill), with two rotated floating notification chips
+  ("Payment received" / "Invoice opened") overlapping the bottom
+  corners — all inline SVG-free, pure styled divs
+- Problem-statement section, "How it works" (3 cards —
+  `IconFilePlus` / `IconBrandWhatsapp` / `IconCircleCheck`),
+  positioning line, pricing (`Free` vs `Pro` cards with `IconCheck`
+  feature lists), navy final-CTA band, and footer — all built to the
+  exact copy, spacing, and colour values in the spec
+
+### Verified
+- `pnpm build` passes clean — 16/16 routes compile, `/` route size
+  unchanged ✅
+- Browser-driven (Playwright headless, 375px + 1280px): every section
+  renders as specified (nav, hero + phone illustration, how-it-works,
+  pricing, navy final CTA, footer); confirmed zero `gradient`/`dark:`
+  classes remain in the rendered HTML; `console --errors` reported no
+  console errors on either viewport ✅
+
+---
+
 ## [3.5.0] — 2026-06-07 — Phase 6 Step 1: Brand Assets (Favicon, App Icons, Logo Mark)
 
 ### Icon generator

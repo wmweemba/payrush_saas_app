@@ -5,6 +5,47 @@ Format: [version] — date — description
 
 ---
 
+## [3.7.0] — 2026-06-07 — Phase 6 Step 3: PWA Hardening
+
+### Manifest & metadata
+- `public/manifest.json` — new: name/short_name, `start_url: /dashboard`,
+  `display: standalone`, portrait orientation, `#185FA5` theme color,
+  192/512 icons registered for both `any` and `maskable` purposes
+  (reusing the existing solid-background brand icons — acceptable for
+  launch since no separate maskable asset is needed)
+- `app/layout.js` — wired `manifest: '/manifest.json'` and `openGraph`
+  into `metadata`; split `themeColor`/`viewport` out into a dedicated
+  `export const viewport = {...}` per Next.js 15 convention (placing
+  them inside `metadata` triggered "Unsupported metadata" build
+  warnings and would have prevented the `theme-color` meta tag from
+  rendering)
+
+### Service worker & offline support
+- `public/sw.js` — new: cache-first-on-failure strategy. Caches `/`,
+  `/offline`, icons, and `manifest.json` on install; skips `/api/*` and
+  `/_next/*` requests; on fetch failure falls back to the cached
+  request or the `/offline` page; cleans up stale `payrush-*` caches
+  on activate
+- `app/offline/page.js` — new client-component offline fallback (matches
+  ui_spec.md tokens: `#F0F2F5` background, `#185FA5` accent, "You're
+  offline" / "Try again" reload button)
+- `components/providers/ServiceWorkerProvider.js` — new: registers
+  `/sw.js` on mount, mounted alongside `ToastProvider` in the root layout
+
+### Verified
+- `pnpm build` passes clean — `/offline` route compiles (806 B), zero
+  "Unsupported metadata" warnings after the viewport export split ✅
+- Lighthouse 13.x has fully removed the standalone `pwa` audit category
+  (`installable-manifest`, `service-worker`, `splash-screen`,
+  `themed-omnibox`, `maskable-icon` no longer exist as audits) — no
+  numeric PWA score could be produced. Substituted direct Chrome
+  DevTools Protocol verification instead: manifest detected and
+  loading correctly, service worker reaches `activated` state, cache
+  `payrush-v1` populated with all static assets, and the cached
+  `/offline` entry returns `200` with the expected fallback markup ✅
+
+---
+
 ## [3.6.0] — 2026-06-07 — Phase 6 Step 2: Landing Page Rebuild
 
 ### `app/page.js` — full rewrite

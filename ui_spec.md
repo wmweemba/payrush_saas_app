@@ -251,6 +251,13 @@ Border radius: 9999px (full pill)
 
 See semantic colours table for per-status colours.
 
+**Quote-specific statuses (Phase 6.5):**
+
+| State | Background | Text | Usage |
+|-------|-----------|------|-------|
+| Accepted / Quote positive | `#EAF3DE` | `#3B6D11` | Quote status badge |
+| Declined / Quote negative | `#F1EFE8` | `#5F5E5A` | Quote status badge |
+
 ### Navigation
 
 **Mobile bottom nav**
@@ -311,6 +318,12 @@ Actions (bottom, below cards):
 1. Primary: "Download PDF" (full-width primary button)
 2. Secondary row: "Share via WhatsApp" (WhatsApp green icon) | "Telegram" (Telegram blue icon) | "Send email" (mail icon) — these three as equal-width outlined buttons
 
+**Quotes (Phase 6.5):** When `document_type` is `'quote'`: header label
+shows "QUOTATION", payment details card is hidden, status actions show
+"Mark as accepted" / "Mark as declined" instead of "Mark as paid", and a
+"Convert to invoice" button is shown (hidden if status is `declined` or
+`cancelled`).
+
 ### Mobile Invoice Creation
 
 Full-screen form, clean white background. Top bar with back arrow + "New invoice" title.
@@ -322,6 +335,31 @@ Fields in order:
 4. Currency selector + Due date (2-column row)
 5. Notes (optional, collapsible)
 6. "Send invoice" — full-width primary button (sticky at bottom on mobile)
+
+### Invoice/Quote Toggle (Creation Form)
+
+A pill-shaped two-option toggle displayed at the top of the invoice
+creation form, below the breadcrumb.
+
+```
+Container: border 0.5px solid rgba(0,0,0,0.12), border-radius 9999px,
+  background #F0F2F5, display inline-flex, padding 3px. Width: content.
+
+Active option: background #185FA5, color #FFFFFF, border-radius 9999px,
+  padding 6px 20px, font 13px/500, transition background 150ms ease.
+
+Inactive option: background transparent, color #6B7280,
+  padding 6px 20px, font 13px/400, cursor pointer.
+```
+
+Options: "Invoice" (default active) | "Quote"
+
+Conditional behaviour when Quote is active:
+- Form title: "New Quote"
+- Number preview prefix: `QT-`
+- Due date label: "Valid until" (not required)
+- Submit button: "Save quote"
+- Preview panel header: "QUOTATION"
 
 ### Desktop Invoice Creation (Split Panel)
 
@@ -372,6 +410,11 @@ Card contents:
 - Download PDF / Share buttons
 
 Footer: "Powered by PayRush" (soft, unobtrusive)
+
+**Quotes (Phase 6.5):** When `document_type` is `'quote'`: document label
+shows "Quotation", payment details section is hidden, a validity note
+appears at the bottom: "This quotation is valid for 30 days from the
+issue date.", and the download button reads "Download quotation".
 
 ---
 
@@ -497,6 +540,11 @@ Sections (top to bottom):
 6. Footer: "Thank you for your business." + business website
 
 Colour accent in PDF: user's primary colour from branding settings (default `#185FA5`). Used on table header row background and total row label.
+
+**Quotes (Phase 6.5):** When `document_type` is `'quote'`: PDF header reads
+"QUOTATION" (template-specific: e.g. "MODERN QUOTATION", "CLASSIC
+QUOTATION" etc.), payment details block is omitted, and a validity note
+is added after the totals section.
 
 ---
 

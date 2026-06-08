@@ -18,17 +18,20 @@ PayRush is a professional invoicing SaaS for solopreneurs, freelancers, and smal
 
 ## Current Build Phase
 
-**Phase: Foundation rebuild before public launch.**
+**Phase: Foundation rebuild — complete through Phase 6.5 (quotes). Launch prep underway.**
 
 Order of operations:
 1. ✅ UI direction locked (see `ui_spec.md`)
-2. 🔄 Infra setup — Coolify Postgres (multi-schema), Better Auth
-3. 🔄 Architecture consolidation — Next.js only (no Express server)
-4. 🔄 DB migration — Supabase → self-hosted Postgres via Drizzle ORM
-5. 🔄 Auth migration — Supabase Auth → Better Auth
-6. 🔄 Legacy cleanup — remove Flutterwave, approval routes, dead code
-7. 🔄 UI rebuild — implement ui_spec.md across all screens
-8. 🔄 PWA hardening — manifest, service worker, offline states
+2. ✅ Infra setup — Coolify Postgres (multi-schema), Better Auth
+3. ✅ Architecture consolidation — Next.js only (no Express server)
+4. ✅ DB migration — Supabase → self-hosted Postgres via Drizzle ORM
+5. ✅ Auth migration — Supabase Auth → Better Auth
+6. ✅ Legacy cleanup — remove Flutterwave, approval routes, dead code
+7. ✅ UI rebuild — implement ui_spec.md across all screens
+8. ✅ PWA hardening — manifest, service worker, offline states
+8.5 ✅ Quotes support (Phase 6.5) — schema, sequential numbering, creation
+    toggle, list/detail/public views, PDF, convert-to-invoice flow
+    (see "Quotes Feature" section below)
 9. 🔄 Launch prep — shareable invoice links, WhatsApp/Telegram/email share
 
 Do not suggest or build features outside this order until the current phase is complete.
@@ -226,6 +229,45 @@ sent_at (timestamptz)
 
 ---
 
+## Quotes Feature (Phase 6.5)
+
+PayRush supports quotes alongside invoices. Quotes and invoices share the
+`invoices` table, the list page, and most surrounding UI — they are
+distinguished by `document_type`.
+
+### Schema additions
+- `invoices.document_type` — text, not null, default `'invoice'`,
+  values: `'invoice'` | `'quote'`
+- `invoices.converted_from_quote_id` — uuid, nullable, FK → `invoices.id`
+
+### Invoice numbering (Phase 6.5 fix)
+- Numbers are sequential, zero-padded to 3 digits: `INV-001`, `INV-002`, etc.
+- A single counter is shared across invoices and quotes
+- Prefix is determined by `document_type` at creation time: `INV-` or `QT-`
+- On convert (quote → invoice): the number's digits are preserved, the
+  prefix swaps from `QT-` to `INV-`
+- The counter is derived from the count of all invoices for the user
+
+### Status values
+- `invoice`: `draft` | `sent` | `paid` | `overdue` | `cancelled`
+- `quote`: `draft` | `sent` | `accepted` | `declined` | `cancelled`
+
+### Routes added
+- `POST /api/invoices/[id]/convert` — converts a quote to a new invoice
+  record, copies all fields and line items, returns
+  `{ data: { id: newInvoiceId } }`
+
+### Key behaviours
+- Quotes and invoices share the `invoices` table and the list page
+- The "Quotes" tab on the list page filters to `document_type = 'quote'`
+- All other tabs filter to `document_type = 'invoice'`
+- Dashboard stats exclude quotes (invoices only)
+- Payment details are hidden on quotes (detail view, public view, PDF)
+- The PDF header switches between `INVOICE` and `QUOTATION` per template
+- The "Convert to invoice" button is hidden on `declined` or `cancelled` quotes
+
+---
+
 ## API Route Conventions
 
 - All protected routes check session via `auth.api.getSession()` from Better Auth
@@ -361,6 +403,16 @@ If a session starts drifting toward these, flag it and redirect to the current p
 - **Primary share channels:** WhatsApp, Telegram, Email — all three on invoice view
 - **Primary currency:** ZMW (Zambian Kwacha) as default, full multi-currency support
 - **Shareable invoice link:** `/invoice/[public_token]` — no auth required to view
+
+---
+
+## Known Issues / Recurring Gotchas
+
+- **Dev server returns 500 for all routes after `pnpm build` runs while
+  `pnpm dev` is active** — the two share the `.next/` directory and clobber
+  each other's build artifacts. Fix: kill the dev server, `rm -rf .next`,
+  then `pnpm dev`. This has occurred in every phase — always restart this
+  way if 500s appear on a fresh session.
 
 ---
 

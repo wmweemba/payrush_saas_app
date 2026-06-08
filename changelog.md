@@ -5,6 +5,39 @@ Format: [version] — date — description
 
 ---
 
+## [3.12.0] — 2026-06-08 — Phase 7 Step 7.1: Dockerfile & Standalone Build Config
+
+### `client/next.config.mjs`
+- Added `output: 'standalone'` so `next build` emits a self-contained
+  `.next/standalone` bundle (with its own `server.js` and minimal
+  `node_modules`) suitable for a slim Docker runtime image
+- Removed the stale "Pre-existing ESLint issues in legacy components
+  — will be fixed in Phase 3 rewrites" comment above the
+  `eslint: { ignoreDuringBuilds: true }` line; the setting itself is
+  unchanged
+
+### `Dockerfile` (new, repo root)
+- Multi-stage build: `base` installs pnpm and dependencies from
+  `client/package.json` + `client/pnpm-lock.yaml`, `builder` copies
+  the client source and runs `pnpm build`, `runner` is a slim
+  `node:20-alpine` image that copies only `.next/standalone`,
+  `.next/static`, and `public/` from the builder and runs
+  `node server.js` on port 3000
+
+### `.dockerignore` (new, repo root)
+- Excludes `node_modules`, `.next`, `.git`, `README.md`, `.DS_Store`,
+  and `package-lock.json` (npm lockfile — the project standardizes on
+  pnpm) from the Docker build context
+
+### Verified
+- `pnpm build` from `client/` completes clean — all 17 routes
+  generated, no errors
+- `client/.next/standalone/` contains `server.js`, confirming the
+  standalone output is produced as expected for the Docker runtime
+  stage
+
+---
+
 ## [3.11.0] — 2026-06-08 — Phase 6.5 Step 4: Public View & PDF Updates for Quotes
 
 ### `app/invoice/[token]/page.js`

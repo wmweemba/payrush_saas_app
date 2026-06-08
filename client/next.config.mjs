@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   serverExternalPackages: ['better-auth', 'postgres', 'drizzle-orm'],
-  // Pre-existing ESLint issues in legacy components — will be fixed in Phase 3 rewrites
   eslint: { ignoreDuringBuilds: true },
 };
 

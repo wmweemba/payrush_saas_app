@@ -5,6 +5,71 @@ Format: [version] — date — description
 
 ---
 
+## [3.11.0] — 2026-06-08 — Phase 6.5 Step 4: Public View & PDF Updates for Quotes
+
+### `app/invoice/[token]/page.js`
+- `generateMetadata` now derives `isQuote = data.documentType === 'quote'`
+  and sets the browser tab title/OG tags to `Quotation {number}` vs
+  `Invoice {number}` accordingly
+
+### `components/invoices/PublicInvoiceView.js`
+- Derived `isQuote = invoice.documentType === 'quote'`
+- Document-type label on the card switches between "Quotation" /
+  "Invoice" (kept title-case to match the surrounding "Date Issued" /
+  "Billed To" labels rather than introducing all-caps)
+- Payment Details section now hidden for quotes (`!isQuote &&
+  hasPaymentDetails`) — quotes aren't payment requests
+- Added a centered validity note ("This quotation is valid for 30
+  days from the issue date.") below the card, quotes only
+- Download button label switches to "Download quotation" for quotes
+- `mapInvoiceForPDF` now passes `document_type` through so the PDF
+  generator can detect quotes
+
+### `components/invoices/InvoiceDetail.js`
+- `mapInvoiceForPDF` now also passes `document_type` through (same
+  reason — needed for the PDF generator to see it from this view too)
+
+### `lib/pdf/templates.js` (the live PDF rendering path —
+`generateInvoicePDF` routes here, not through the legacy function in
+`invoicePDF.js`)
+- All four templates (professional, minimal, modern, classic) now
+  compute a `docTypeLabel`/`isQuote` from `invoice.document_type ??
+  invoice.documentType` and render "QUOTATION"/"Quotation" in place
+  of the hardcoded "INVOICE"/"Invoice" header text (including the
+  "MODERN INVOICE" banner and the boxed classic-template label, with
+  a reduced font size there so the longer word still fits its box)
+- Added a quotation validity note (9px, `#9CA3AF`, left-aligned)
+  positioned where a payment-details block would normally sit — after
+  totals/currency, before the footer — shown only for quotes
+
+### `lib/pdf/invoicePDF.js`
+- Updated the hardcoded "INVOICE" header in
+  `generateDatabaseTemplatedPDF` for consistency, even though this
+  function is currently dead code (not imported anywhere outside this
+  file) — the live path is `generateTemplatedPDF` in `templates.js`
+
+### Notes
+- No payment-details block exists anywhere in the live PDF rendering
+  path today (only the public-view React component renders bank /
+  mobile-money details) — so there was nothing to conditionally wrap
+  there; building one is a separate feature outside this step's scope
+
+### Verified
+- `pnpm build` passes clean (fresh `.next`) ✅
+- Live Playwright run against the dev server + DB: created a test
+  quote (`QT-TEST-001`) and a test invoice (`INV-TEST-001`) with
+  branding/payment details populated; confirmed via rendered HTML
+  that the quote shows "Quotation" label, `Quotation QT-TEST-001 —
+  PayRush` tab title, hidden Payment Details, the validity note, and
+  "Download quotation"; confirmed the invoice is unaffected (label,
+  title, Payment Details, no validity note, "Download PDF"); clicked
+  the download button on both and text-extracted the resulting PDFs —
+  quote PDF reads "...QUOTATION ... This quotation is valid for 30
+  days from the issue date...", invoice PDF reads "...INVOICE..."
+  with no validity note; deleted both test records afterward
+
+---
+
 ## [3.10.0] — 2026-06-07 — Phase 6.5 Step 3: Quotes Tab & Quote-Mode Detail View
 
 ### `components/invoices/InvoiceList.js`

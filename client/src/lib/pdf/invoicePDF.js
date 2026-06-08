@@ -120,10 +120,11 @@ export const generateDatabaseTemplatedPDF = async (invoice, profileData = {}, te
   }
   
   // Invoice title with template colors
+  const docTypeLabel = (invoice.document_type ?? invoice.documentType) === 'quote' ? 'QUOTATION' : 'INVOICE';
   pdf.setTextColor(255, 255, 255);  // White text on blue background
   pdf.setFontSize(templateConfig.fonts.heading.size + 8);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('INVOICE', pageWidth - templateConfig.layout.marginX, 20, { align: 'right' });
+  pdf.text(docTypeLabel, pageWidth - templateConfig.layout.marginX, 20, { align: 'right' });
   
   // Invoice Details Box (positioned on blue background with proper spacing)
   pdf.setTextColor(255, 255, 255);  // White text for visibility

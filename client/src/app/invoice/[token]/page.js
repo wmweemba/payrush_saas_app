@@ -8,12 +8,14 @@ export async function generateMetadata({ params }) {
     const res = await fetch(`${baseUrl}/api/invoice/${token}`, { cache: 'no-store' })
     const { data } = await res.json()
     if (!data) return { title: 'Invoice — PayRush' }
+    const isQuote = data.documentType === 'quote'
+    const docLabel = isQuote ? 'Quotation' : 'Invoice'
     return {
-      title: `Invoice ${data.invoiceNumber} — PayRush`,
-      description: `Invoice for ${data.customerName}.`,
+      title: `${docLabel} ${data.invoiceNumber} — PayRush`,
+      description: `${docLabel} for ${data.customerName}.`,
       openGraph: {
-        title: `Invoice ${data.invoiceNumber}`,
-        description: `Invoice for ${data.customerName} — view and download via PayRush.`,
+        title: `${docLabel} ${data.invoiceNumber}`,
+        description: `${docLabel} for ${data.customerName} — view and download via PayRush.`,
       },
     }
   } catch {

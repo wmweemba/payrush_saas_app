@@ -24,6 +24,7 @@ function mapInvoiceForPDF(invoice, branding) {
     status: invoice.status,
     due_date: invoice.dueDate,
     created_at: invoice.createdAt,
+    document_type: invoice.documentType,
     amount: getInvoiceTotal(invoice),
     line_items: (invoice.items || []).map(i => ({
       description: i.description,
@@ -98,6 +99,7 @@ export function PublicInvoiceView({ invoice, branding }) {
   const total = getInvoiceTotal(invoice)
   const subtotal = total
   const isOverdue = invoice.status === 'overdue'
+  const isQuote = invoice.documentType === 'quote'
   const hasPaymentDetails = branding && (branding.bankName || branding.accountNumber || branding.mobileMoneyNumber)
 
   function copyToClipboard(value, key) {
@@ -186,7 +188,7 @@ export function PublicInvoiceView({ invoice, branding }) {
           {/* Invoice / date meta */}
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <div>
-              <span className="section-label">Invoice</span>
+              <span className="section-label">{isQuote ? 'Quotation' : 'Invoice'}</span>
               <p style={{ margin: '2px 0 0', fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)' }}>
                 {invoice.invoiceNumber}
               </p>
@@ -257,7 +259,7 @@ export function PublicInvoiceView({ invoice, branding }) {
           </div>
 
           {/* Payment details */}
-          {hasPaymentDetails && (
+          {!isQuote && hasPaymentDetails && (
             <div style={{ background: 'var(--color-page-bg)', borderRadius: 10, padding: 14, marginTop: 20 }}>
               <span className="section-label" style={{ display: 'block', marginBottom: 10 }}>Payment Details</span>
 
@@ -288,6 +290,17 @@ export function PublicInvoiceView({ invoice, branding }) {
               )}
             </div>
           )}
+
+          {isQuote && (
+            <p style={{
+              fontSize: '11px',
+              color: '#9CA3AF',
+              textAlign: 'center',
+              marginTop: '16px',
+            }}>
+              This quotation is valid for 30 days from the issue date.
+            </p>
+          )}
         </div>
 
         {/* Action buttons */}
@@ -303,7 +316,7 @@ export function PublicInvoiceView({ invoice, branding }) {
             }}
           >
             <IconDownload size={16} stroke={1.5} />
-            {pdfLoading ? 'Generating…' : 'Download PDF'}
+            {pdfLoading ? 'Generating…' : (isQuote ? 'Download quotation' : 'Download PDF')}
           </button>
 
           <div style={{ display: 'flex', gap: 10 }}>

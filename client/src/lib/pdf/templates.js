@@ -216,6 +216,7 @@ export const generateTemplatedPDF = async (invoice, profileData = {}, templateId
  */
 const generateProfessionalTemplate = (pdf, invoice, profileData, template, currency, pageWidth, pageHeight, logoImage, brandingData) => {
   const primaryRgb = hexToRgb(template.colors.primary);
+  const docTypeLabel = (invoice.document_type ?? invoice.documentType) === 'quote' ? 'QUOTATION' : 'INVOICE';
   
   console.log('💼 PROFESSIONAL template rendering');
   console.log('💼 Logo available:', !!logoImage);
@@ -261,8 +262,8 @@ const generateProfessionalTemplate = (pdf, invoice, profileData, template, curre
   pdf.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
   pdf.setFontSize(32);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('INVOICE', pageWidth - template.layout.marginX, 25, { align: 'right' });
-  
+  pdf.text(docTypeLabel, pageWidth - template.layout.marginX, 25, { align: 'right' });
+
   // Continue with rest of the invoice...
   renderInvoiceContent(pdf, invoice, profileData, template, currency, pageWidth, pageHeight);
   
@@ -273,6 +274,8 @@ const generateProfessionalTemplate = (pdf, invoice, profileData, template, curre
  * Minimal Template
  */
 const generateMinimalTemplate = (pdf, invoice, profileData, template, currency, pageWidth, pageHeight, logoImage, brandingData) => {
+  const isQuote = (invoice.document_type ?? invoice.documentType) === 'quote';
+  const docTypeLabel = isQuote ? 'Quotation' : 'Invoice';
   console.log('⚪ MINIMAL template rendering');
   console.log('⚪ Logo available:', !!logoImage);
   
@@ -306,10 +309,10 @@ const generateMinimalTemplate = (pdf, invoice, profileData, template, currency, 
   pdf.setFont('helvetica', 'normal');
   pdf.text(profileData.business_name || 'Your Business', textStartX, 30);
   
-  // Ultra-minimal "Invoice" text
+  // Ultra-minimal document type text
   pdf.setTextColor(150, 150, 150);
   pdf.setFontSize(10);
-  pdf.text('Invoice', 30, 55);
+  pdf.text(docTypeLabel, 30, 55);
   
   // Customer with lots of space
   let currentY = 80;
@@ -389,7 +392,16 @@ const generateMinimalTemplate = (pdf, invoice, profileData, template, currency, 
   pdf.setTextColor(160, 160, 160);
   pdf.setFontSize(7);
   pdf.text(`${currency.code}`, 30, currentY);
-  
+
+  // Quotation validity note
+  if (isQuote) {
+    currentY += 12;
+    pdf.setTextColor(156, 163, 175);
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text('This quotation is valid for 30 days from the issue date.', 30, currentY);
+  }
+
   // Ultra-minimal footer
   const footerY = pageHeight - 30;
   pdf.setTextColor(180, 180, 180);
@@ -405,7 +417,9 @@ const generateMinimalTemplate = (pdf, invoice, profileData, template, currency, 
 const generateModernTemplate = (pdf, invoice, profileData, template, currency, pageWidth, pageHeight, logoImage, brandingData) => {
   const primaryRgb = hexToRgb(template.colors.primary);
   const secondaryRgb = hexToRgb(template.colors.secondary);
-  
+  const isQuote = (invoice.document_type ?? invoice.documentType) === 'quote';
+  const docTypeLabel = isQuote ? 'QUOTATION' : 'INVOICE';
+
   console.log('🎨 MODERN template colors:', template.colors);
   console.log('🎨 Logo available:', !!logoImage);
   
@@ -450,7 +464,7 @@ const generateModernTemplate = (pdf, invoice, profileData, template, currency, p
   pdf.setTextColor(255, 255, 255);
   pdf.setFontSize(36); // Much larger
   pdf.setFont('helvetica', 'bold');
-  pdf.text('MODERN INVOICE', textStartX, 35);
+  pdf.text(`MODERN ${docTypeLabel}`, textStartX, 35);
   
   // MODERN template label
   pdf.setFontSize(10);
@@ -472,7 +486,7 @@ const generateModernTemplate = (pdf, invoice, profileData, template, currency, p
   pdf.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
   pdf.setFontSize(18);
   pdf.setFont('helvetica', 'bold');
-  pdf.text(`INVOICE #${invoice.id?.slice(0, 8) || 'N/A'}`, pageWidth - template.layout.marginX, currentY + 15, { align: 'right' });
+  pdf.text(`${docTypeLabel} #${invoice.id?.slice(0, 8) || 'N/A'}`, pageWidth - template.layout.marginX, currentY + 15, { align: 'right' });
   
   currentY += 35;
   
@@ -548,7 +562,16 @@ const generateModernTemplate = (pdf, invoice, profileData, template, currency, p
   pdf.setTextColor(100, 100, 100);
   pdf.setFontSize(8);
   pdf.text(`Currency: ${currency.name} (${currency.code})`, template.layout.marginX, currentY);
-  
+
+  // Quotation validity note
+  if (isQuote) {
+    currentY += 10;
+    pdf.setTextColor(156, 163, 175);
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text('This quotation is valid for 30 days from the issue date.', template.layout.marginX, currentY);
+  }
+
   // MODERN: Purple footer
   const footerY = pageHeight - 40;
   pdf.setFillColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
@@ -567,6 +590,8 @@ const generateModernTemplate = (pdf, invoice, profileData, template, currency, p
  * Classic Template
  */
 const generateClassicTemplate = (pdf, invoice, profileData, template, currency, pageWidth, pageHeight, logoImage, brandingData) => {
+  const isQuote = (invoice.document_type ?? invoice.documentType) === 'quote';
+  const docTypeLabel = isQuote ? 'QUOTATION' : 'INVOICE';
   console.log('📜 CLASSIC template rendering - SHOULD HAVE DOUBLE BORDERS!');
   console.log('📜 Classic template parameters:', { pageWidth, pageHeight, customerName: invoice.customer_name });
   console.log('📜 Logo available:', !!logoImage);
@@ -630,9 +655,9 @@ const generateClassicTemplate = (pdf, invoice, profileData, template, currency, 
   pdf.rect(pageWidth - 80, 25, 55, 20, 'F');
   
   pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(16);
+  pdf.setFontSize(isQuote ? 13 : 16);
   pdf.setFont('times', 'bold');
-  pdf.text('INVOICE', pageWidth - 75, 38);
+  pdf.text(docTypeLabel, pageWidth - 75, 38);
   
   console.log('📜 Classic template header complete');
   
@@ -748,7 +773,15 @@ const generateClassicTemplate = (pdf, invoice, profileData, template, currency, 
   // Currency info
   pdf.setFontSize(8);
   pdf.text(`Currency: ${currency.name} (${currency.code})`, 25, currentY + 40);
-  
+
+  // Quotation validity note
+  if (isQuote) {
+    pdf.setTextColor(156, 163, 175);
+    pdf.setFont('times', 'normal');
+    pdf.setFontSize(9);
+    pdf.text('This quotation is valid for 30 days from the issue date.', 25, currentY + 50);
+  }
+
   // CLASSIC: Formal footer with border
   const footerY = pageHeight - 40;
   pdf.setLineWidth(1);
@@ -801,7 +834,16 @@ const renderInvoiceContent = (pdf, invoice, profileData, template, currency, pag
   pdf.setFontSize(template.fonts.heading.size);
   pdf.setFont('helvetica', template.fonts.heading.weight);
   pdf.text('Total: ' + formatCurrency(invoice.amount, invoice.currency), pageWidth - template.layout.marginX, currentY, { align: 'right' });
-  
+
+  // Quotation validity note
+  if ((invoice.document_type ?? invoice.documentType) === 'quote') {
+    currentY += 12;
+    pdf.setTextColor(156, 163, 175);
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text('This quotation is valid for 30 days from the issue date.', template.layout.marginX, currentY);
+  }
+
   // Footer
   const footerY = pageHeight - 30;
   pdf.setTextColor(secondaryRgb.r, secondaryRgb.g, secondaryRgb.b);

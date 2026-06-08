@@ -79,6 +79,7 @@ function mapInvoiceForPDF(invoice, branding, sessionUser) {
     status: invoice.status,
     due_date: invoice.dueDate,
     created_at: invoice.createdAt,
+    document_type: invoice.documentType,
     amount: getInvoiceTotal(invoice),
     line_items: (invoice.items || []).map(i => ({
       description: i.description,

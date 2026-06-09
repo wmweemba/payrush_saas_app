@@ -59,7 +59,7 @@ export const generateDatabaseTemplatedPDF = async (invoice, profileData = {}, te
   
   // Load logo if available
   let logoImage = null;
-  if (templateConfig.branding.logoUrl && templateConfig.branding.showLogo) {
+  if (templateConfig.branding?.logoUrl) {
     try {
       logoImage = await loadImageFromUrl(templateConfig.branding.logoUrl);
     } catch (error) {
@@ -71,7 +71,7 @@ export const generateDatabaseTemplatedPDF = async (invoice, profileData = {}, te
   pdf.rect(0, 0, pageWidth, templateConfig.layout.headerHeight, 'F');
   
   // Logo placement (if available)
-  if (logoImage && templateConfig.branding.showLogo) {
+  if (logoImage) {
     try {
       const logoSize = 24; // Fixed logo height
       const logoX = templateConfig.layout.marginX;
@@ -132,7 +132,7 @@ export const generateDatabaseTemplatedPDF = async (invoice, profileData = {}, te
   const invoiceDetailsX = pageWidth - 80;  // Moved further left to prevent cutoff
   const invoiceDetailsY = 22;  // Moved higher to ensure all text fits within header
   
-  pdf.text(`Invoice ID: #${invoice.id?.slice(0, 8) || 'N/A'}`, invoiceDetailsX, invoiceDetailsY);
+  pdf.text(`Invoice #${invoice.invoice_number || invoice.invoiceNumber || 'N/A'}`, invoiceDetailsX, invoiceDetailsY);
   pdf.text(`Date: ${new Date(invoice.created_at || new Date()).toLocaleDateString()}`, invoiceDetailsX, invoiceDetailsY + 3.5);
   pdf.text(`Due Date: ${new Date(invoice.due_date).toLocaleDateString()}`, invoiceDetailsX, invoiceDetailsY + 7);
   pdf.text(`Status: ${(invoice.status || 'draft').toUpperCase()}`, invoiceDetailsX, invoiceDetailsY + 10.5);
@@ -355,7 +355,7 @@ export const downloadInvoicePDF = async (invoice, profileData = {}, templateId =
   try {
     const finalTemplateId = templateId || invoice.template_id || 'professional';
     const pdf = await generateInvoicePDF(invoice, profileData, finalTemplateId);
-    const filename = `invoice-${invoice.id?.slice(0, 8) || 'draft'}.pdf`;
+    const filename = `invoice-${invoice.invoice_number || invoice.invoiceNumber || 'draft'}.pdf`;
     pdf.save(filename);
     return { success: true, filename };
   } catch (error) {

@@ -178,9 +178,9 @@ export const generateTemplatedPDF = async (invoice, profileData = {}, templateId
   const brandingData = await loadBrandingData();
   let logoImage = null;
   
-  if (brandingData?.logoUrl && brandingData?.showLogo) {
+  if (brandingData?.data?.logoUrl) {
     try {
-      logoImage = await loadImageFromUrl(brandingData.logoUrl);
+      logoImage = await loadImageFromUrl(brandingData.data.logoUrl);
     } catch (error) {
     }
   }
@@ -201,56 +201,243 @@ export const generateTemplatedPDF = async (invoice, profileData = {}, templateId
 
 /**
  * Professional Template
+ * Self-contained, brand-aware invoice/quote layout.
+ * Reads branding from brandingData.data (the /api/branding wrapper).
  */
 const generateProfessionalTemplate = (pdf, invoice, profileData, template, currency, pageWidth, pageHeight, logoImage, brandingData) => {
-  const primaryRgb = hexToRgb(template.colors.primary);
-  const docTypeLabel = (invoice.document_type ?? invoice.documentType) === 'quote' ? 'QUOTATION' : 'INVOICE';
-  
-  
-  // Header with gradient effect - BLUE theme
-  pdf.setFillColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
-  pdf.rect(0, 0, pageWidth, template.layout.headerHeight, 'F');
-  
-  // Add logo if available
-  let logoWidth = 0;
-  if (logoImage && brandingData?.showLogo) {
+  // ---- Data resolution (snake_case with camelCase fallback) ----
+  const branding = brandingData?.data ?? {};
+  const primary = hexToRgb(branding.primaryColor || '#185FA5');
+
+  const isQuote = (invoice.document_type ?? invoice.documentType) === 'quote';
+  const docTypeLabel = isQuote ? 'QUOTATION' : 'INVOICE';
+
+  const invoiceNumber = invoice.invoice_number || invoice.invoiceNumber || '';
+  const customerName = invoice.customer_name || invoice.customerName || 'Customer';
+  const customerEmail = invoice.customer_email || invoice.customerEmail || '';
+  const dueDateRaw = invoice.due_date || invoice.dueDate;
+  const createdRaw = invoice.created_at || invoice.createdAt;
+  const lineItems = invoice.line_items || invoice.lineItems || [];
+  const currencyCode = invoice.currency || 'ZMW';
+
+  const businessName = branding.businessName || profileData.business_name || profileData.businessName || 'Your Business';
+  const phone = branding.phone || profileData.phone || '';
+  const website = branding.website || profileData.website || '';
+  const address = profileData.address || '';
+
+  const fmtDate = (d) => (d ? new Date(d).toLocaleDateString() : '—');
+
+  // ---- Layout constants (A4 = 210 x 297 mm) ----
+  const marginX = 20;
+  const rightX = pageWidth - marginX;            // 190
+  const contentWidth = pageWidth - marginX * 2;  // 170
+  const descX = marginX + 4;                     // 24
+  const qtyX = 118;
+  const unitX = 156;
+  const amountX = rightX - 4;                     // 186
+
+  // ---- Header: logo + business info (left) ----
+  let logoBottom = 20;
+  if (logoImage) {
     try {
-      const logoSize = 24;
-      const logoX = template.layout.marginX;
-      const logoY = 8;
-      logoWidth = (logoImage.width / logoImage.height) * logoSize;
-      
-      pdf.addImage(logoImage.data, 'PNG', logoX, logoY, logoWidth, logoSize);
+      const logoH = 20; // max height 20mm
+      const logoW = (logoImage.width / logoImage.height) * logoH; // proportional
+      pdf.addImage(logoImage.data, 'PNG', marginX, 20, logoW, logoH);
+      logoBottom = 20 + logoH;
     } catch (error) {
     }
   }
-  
-  // Add "PROFESSIONAL" label
-  const textStartX = logoWidth > 0 ? template.layout.marginX + logoWidth + 10 : template.layout.marginX;
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(8);
-  pdf.text('PROFESSIONAL TEMPLATE', textStartX, 10);
-  
-  // Company name
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(template.fonts.heading.size);
-  pdf.setFont('helvetica', template.fonts.heading.weight);
-  pdf.text('PayRush', template.layout.marginX, 25);
-  
-  // Business name
-  pdf.setFontSize(template.fonts.body.size);
-  pdf.setFont('helvetica', template.fonts.body.weight);
-  pdf.text(profileData.business_name || 'Your Business', template.layout.marginX, 35);
-  
-  // Invoice title with styling
-  pdf.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
-  pdf.setFontSize(32);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text(docTypeLabel, pageWidth - template.layout.marginX, 25, { align: 'right' });
 
-  // Continue with rest of the invoice...
-  renderInvoiceContent(pdf, invoice, profileData, template, currency, pageWidth, pageHeight);
-  
+  let infoY = logoImage ? logoBottom + 6 : 26;
+  pdf.setTextColor(17, 24, 39);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(14);
+  pdf.text(businessName, marginX, infoY);
+  infoY += 6;
+
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(9);
+  pdf.setTextColor(107, 114, 128);
+  [address, phone, website].forEach((line) => {
+    if (line) {
+      pdf.text(line, marginX, infoY);
+      infoY += 5;
+    }
+  });
+
+  // ---- Header: document type + meta (right) ----
+  pdf.setTextColor(primary.r, primary.g, primary.b);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(26);
+  pdf.text(docTypeLabel, rightX, 28, { align: 'right' });
+
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(10);
+  pdf.setTextColor(107, 114, 128);
+  let metaY = 38;
+  pdf.text(invoiceNumber, rightX, metaY, { align: 'right' });
+  metaY += 5;
+  pdf.text(`Issue Date: ${fmtDate(createdRaw)}`, rightX, metaY, { align: 'right' });
+  metaY += 5;
+  pdf.text(`Due Date: ${fmtDate(dueDateRaw)}`, rightX, metaY, { align: 'right' });
+
+  // ---- Full-width divider after header ----
+  const dividerY = Math.max(infoY, metaY, 56) + 6;
+  pdf.setDrawColor(229, 231, 235);
+  pdf.setLineWidth(0.4);
+  pdf.line(marginX, dividerY, rightX, dividerY);
+  let currentY = dividerY + 12;
+
+  // ---- Bill To ----
+  pdf.setTextColor(107, 114, 128);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(9);
+  pdf.text('BILL TO', marginX, currentY);
+  currentY += 6;
+  pdf.setTextColor(17, 24, 39);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(11);
+  pdf.text(customerName, marginX, currentY);
+  if (customerEmail) {
+    currentY += 5;
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(9);
+    pdf.setTextColor(107, 114, 128);
+    pdf.text(customerEmail, marginX, currentY);
+  }
+  currentY += 14;
+
+  // ---- Line items table ----
+  const headerH = 10;
+  const rowH = 9;
+  pdf.setFillColor(primary.r, primary.g, primary.b);
+  pdf.rect(marginX, currentY, contentWidth, headerH, 'F');
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(9);
+  const headerTextY = currentY + 6.5;
+  pdf.text('DESCRIPTION', descX, headerTextY);
+  pdf.text('QTY', qtyX, headerTextY, { align: 'center' });
+  pdf.text('UNIT PRICE', unitX, headerTextY, { align: 'right' });
+  pdf.text('AMOUNT', amountX, headerTextY, { align: 'right' });
+  currentY += headerH;
+
+  let subtotal = 0;
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(9);
+  lineItems.forEach((item, i) => {
+    const qty = Number(item.quantity ?? 1);
+    const unit = Number(item.unit_price ?? item.unitPrice ?? 0);
+    const amt = item.amount != null ? Number(item.amount) : qty * unit;
+    subtotal += amt;
+
+    if (i % 2 === 1) {
+      pdf.setFillColor(249, 250, 251); // #F9FAFB alternating row
+      pdf.rect(marginX, currentY, contentWidth, rowH, 'F');
+    }
+
+    const textY = currentY + 6;
+    pdf.setTextColor(17, 24, 39);
+    pdf.text(String(item.description || 'Item'), descX, textY);
+    pdf.text(String(qty), qtyX, textY, { align: 'center' });
+    pdf.text(formatCurrency(unit, currencyCode), unitX, textY, { align: 'right' });
+    pdf.text(formatCurrency(amt, currencyCode), amountX, textY, { align: 'right' });
+    currentY += rowH;
+  });
+
+  // ---- Table bottom border ----
+  pdf.setDrawColor(229, 231, 235);
+  pdf.setLineWidth(0.3);
+  pdf.line(marginX, currentY, marginX + contentWidth, currentY);
+
+  // ---- Subtotal ----
+  currentY += 8;
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(10);
+  pdf.setTextColor(107, 114, 128);
+  pdf.text('Subtotal', 124, currentY);
+  pdf.setTextColor(17, 24, 39);
+  pdf.text(formatCurrency(subtotal, currencyCode), amountX, currentY, { align: 'right' });
+  currentY += 6;
+
+  // ---- Total (primary background, white text) ----
+  const totalBoxX = pageWidth - 90;       // 120
+  const totalBoxW = rightX - totalBoxX;   // 70
+  const totalBoxH = 11;
+  pdf.setFillColor(primary.r, primary.g, primary.b);
+  pdf.rect(totalBoxX, currentY, totalBoxW, totalBoxH, 'F');
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(11);
+  pdf.text('TOTAL', totalBoxX + 4, currentY + 7.5);
+  pdf.text(formatCurrency(subtotal, currencyCode), amountX, currentY + 7.5, { align: 'right' });
+  currentY += totalBoxH + 14;
+
+  // ---- Payment details (invoices only; hidden for quotes) ----
+  if (!isQuote) {
+    const payLines = [];
+    if (branding.bankName) payLines.push(`Bank: ${branding.bankName}`);
+    if (branding.accountName) payLines.push(`Account Name: ${branding.accountName}`);
+    if (branding.accountNumber) payLines.push(`Account Number: ${branding.accountNumber}`);
+    if (branding.mobileMoneyNumber) payLines.push(`Mobile Money: ${branding.mobileMoneyNumber}`);
+    if (branding.paymentInstructions) payLines.push(branding.paymentInstructions);
+    payLines.push(`Reference: ${invoiceNumber}`);
+
+    const titleH = 7;
+    const lineH = 5;
+    const boxPad = 6;
+    const boxH = boxPad + titleH + payLines.length * lineH + boxPad - 2;
+
+    pdf.setFillColor(243, 244, 246); // #F3F4F6
+    pdf.rect(marginX, currentY, contentWidth, boxH, 'F');
+
+    let py = currentY + boxPad + 2;
+    pdf.setTextColor(17, 24, 39);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(9);
+    pdf.text('PAYMENT DETAILS', marginX + boxPad, py);
+    py += titleH;
+
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(9);
+    pdf.setTextColor(75, 85, 99);
+    payLines.forEach((l) => {
+      pdf.text(String(l), marginX + boxPad, py);
+      py += lineH;
+    });
+
+    currentY += boxH + 10;
+  }
+
+  // ---- Quote validity note (quotes only) ----
+  if (isQuote) {
+    pdf.setTextColor(107, 114, 128);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(9);
+    pdf.text('This quotation is valid for 30 days from issue date.', marginX, currentY);
+    currentY += 10;
+  }
+
+  // ---- Footer ----
+  const footerY = pageHeight - 25;
+  pdf.setDrawColor(229, 231, 235);
+  pdf.setLineWidth(0.4);
+  pdf.line(marginX, footerY, rightX, footerY);
+
+  pdf.setTextColor(107, 114, 128);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(9);
+  pdf.text('Thank you for your business.', pageWidth / 2, footerY + 7, { align: 'center' });
+
+  if (website) {
+    pdf.setFontSize(8);
+    pdf.text(website, pageWidth / 2, footerY + 12, { align: 'center' });
+  }
+
+  pdf.setTextColor(156, 163, 175);
+  pdf.setFontSize(8);
+  pdf.text('Powered by PayRush', rightX, footerY + 12, { align: 'right' });
+
   return pdf;
 };
 
@@ -271,7 +458,7 @@ const generateMinimalTemplate = (pdf, invoice, profileData, template, currency, 
   
   // Add logo if available (very subtle placement)
   let logoWidth = 0;
-  if (logoImage && brandingData?.showLogo) {
+  if (logoImage) {
     try {
       const logoSize = 18; // Smaller for minimal design
       const logoX = 30;
@@ -423,7 +610,7 @@ const generateModernTemplate = (pdf, invoice, profileData, template, currency, p
   
   // Add logo if available
   let logoWidth = 0;
-  if (logoImage && brandingData?.showLogo) {
+  if (logoImage) {
     try {
       const logoSize = 25;
       const logoX = template.layout.marginX;
@@ -462,7 +649,7 @@ const generateModernTemplate = (pdf, invoice, profileData, template, currency, p
   pdf.setTextColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
   pdf.setFontSize(18);
   pdf.setFont('helvetica', 'bold');
-  pdf.text(`${docTypeLabel} #${invoice.id?.slice(0, 8) || 'N/A'}`, pageWidth - template.layout.marginX, currentY + 15, { align: 'right' });
+  pdf.text(`${docTypeLabel} #${invoice.invoice_number || invoice.invoiceNumber || 'N/A'}`, pageWidth - template.layout.marginX, currentY + 15, { align: 'right' });
   
   currentY += 35;
   
@@ -588,7 +775,7 @@ const generateClassicTemplate = (pdf, invoice, profileData, template, currency, 
   
   // Add logo if available
   let logoWidth = 0;
-  if (logoImage && brandingData?.showLogo) {
+  if (logoImage) {
     try {
       const logoSize = 20;
       const logoX = 25;
@@ -759,62 +946,6 @@ const generateClassicTemplate = (pdf, invoice, profileData, template, currency, 
   pdf.text('Generated by PayRush - Professional Invoice Management', pageWidth / 2, footerY + 18, { align: 'center' });
   
   return pdf;
-};
-
-/**
- * Common invoice content rendering
- */
-const renderInvoiceContent = (pdf, invoice, profileData, template, currency, pageWidth, pageHeight) => {
-  const textRgb = hexToRgb(template.colors.text);
-  const secondaryRgb = hexToRgb(template.colors.secondary);
-  
-  let currentY = template.layout.headerHeight + 30;
-  
-  // Invoice details
-  pdf.setTextColor(textRgb.r, textRgb.g, textRgb.b);
-  pdf.setFontSize(template.fonts.body.size);
-  pdf.setFont('helvetica', template.fonts.body.weight);
-  
-  pdf.text(`Invoice #${invoice.id?.slice(0, 8) || 'DRAFT'}`, pageWidth - template.layout.marginX, currentY, { align: 'right' });
-  pdf.text(`Date: ${new Date(invoice.created_at || new Date()).toLocaleDateString()}`, pageWidth - template.layout.marginX, currentY + 5, { align: 'right' });
-  pdf.text(`Due: ${new Date(invoice.due_date).toLocaleDateString()}`, pageWidth - template.layout.marginX, currentY + 10, { align: 'right' });
-  
-  // Customer details
-  currentY += 20;
-  pdf.setFontSize(template.fonts.subheading.size);
-  pdf.setFont('helvetica', template.fonts.subheading.weight);
-  pdf.text('Bill To:', template.layout.marginX, currentY);
-  
-  currentY += 8;
-  pdf.setFontSize(template.fonts.body.size);
-  pdf.setFont('helvetica', template.fonts.body.weight);
-  pdf.text(invoice.customer_name || 'Customer', template.layout.marginX, currentY);
-  
-  if (invoice.customer_email) {
-    currentY += 5;
-    pdf.text(invoice.customer_email, template.layout.marginX, currentY);
-  }
-  
-  // Invoice total
-  currentY += 30;
-  pdf.setFontSize(template.fonts.heading.size);
-  pdf.setFont('helvetica', template.fonts.heading.weight);
-  pdf.text('Total: ' + formatCurrency(invoice.amount, invoice.currency), pageWidth - template.layout.marginX, currentY, { align: 'right' });
-
-  // Quotation validity note
-  if ((invoice.document_type ?? invoice.documentType) === 'quote') {
-    currentY += 12;
-    pdf.setTextColor(156, 163, 175);
-    pdf.setFontSize(9);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text('This quotation is valid for 30 days from the issue date.', template.layout.marginX, currentY);
-  }
-
-  // Footer
-  const footerY = pageHeight - 30;
-  pdf.setTextColor(secondaryRgb.r, secondaryRgb.g, secondaryRgb.b);
-  pdf.setFontSize(template.fonts.small.size);
-  pdf.text('Thank you for your business!', pageWidth / 2, footerY, { align: 'center' });
 };
 
 /**

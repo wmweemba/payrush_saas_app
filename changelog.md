@@ -5,6 +5,43 @@ Format: [version] — date — description
 
 ---
 
+## [3.15.0] — 2026-06-09 — Phase 7: PDF Redesign + Logo Fix
+
+### `client/src/lib/pdf/templates.js`
+- Replaced `generateProfessionalTemplate` wholesale with a self-contained,
+  brand-aware layout: logo top-left (proportional, 20mm max height), business
+  name + address/phone/website block, brand-coloured `INVOICE`/`QUOTATION`
+  heading with real invoice number and issue/due dates, full-width divider,
+  Bill To section, line items table with brand-coloured header and alternating
+  `#F9FAFB` rows, table bottom border, subtotal row, brand-coloured total
+  block, payment details box (suppressed for quotes), quote validity note
+  (quotes only), footer divider + "Thank you" + website + "Powered by PayRush"
+- Fixed logo never loading: `brandingData?.logoUrl && brandingData?.showLogo`
+  replaced with `brandingData?.data?.logoUrl` in `generateTemplatedPDF` —
+  `loadBrandingData()` returns `{ data: record }` so the previous path was
+  always `undefined`; `showLogo` does not exist in the branding schema
+- Removed the three remaining `if (logoImage && brandingData?.showLogo)` gates
+  in the minimal, modern, and classic templates — replaced with `if (logoImage)`
+- Fixed invoice number shown as UUID fragment in modern template: replaced
+  `invoice.id?.slice(0, 8)` with `invoice.invoice_number || invoice.invoiceNumber`
+- Deleted `renderInvoiceContent` dead stub (its only caller was `generateProfessionalTemplate`)
+
+### `client/src/lib/pdf/invoicePDF.js`
+- Fixed two `showLogo` gates in `generateDatabaseTemplatedPDF`:
+  `templateConfig.branding.logoUrl && templateConfig.branding.showLogo` →
+  `templateConfig.branding?.logoUrl`; second gate `logoImage &&
+  templateConfig.branding.showLogo` → `logoImage`
+- Fixed invoice number in PDF header: `Invoice ID: #${invoice.id?.slice(0,8)}`
+  → `Invoice #${invoice.invoice_number || invoice.invoiceNumber || 'N/A'}`
+- Fixed download filename: `invoice-${invoice.id?.slice(0,8)}` →
+  `invoice-${invoice.invoice_number || invoice.invoiceNumber || 'draft'}`
+
+### Verified
+- All 6 Section 8 verification checks pass ✅
+- `pnpm build` passes clean — all 17 routes, no errors ✅
+
+---
+
 ## [3.14.0] — 2026-06-09 — Phase 7: UI and Workflow Fixes (Session 1)
 
 ### `client/src/components/invoices/InvoiceForm.js`

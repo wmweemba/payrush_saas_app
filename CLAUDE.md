@@ -414,6 +414,11 @@ If a session starts drifting toward these, flag it and redirect to the current p
   then `pnpm dev`. This has occurred in every phase — always restart this
   way if 500s appear on a fresh session.
 
+- **Empty catch blocks in `lib/pdf/templates.js` and `lib/pdf/invoicePDF.js`**
+  (logo loading, branding fetch) — errors swallowed silently after
+  `console.warn` removal in Phase 7 security cleanup. Restore with
+  `console.error` calls post-launch.
+
 ---
 
 ## Per-Session Checklist

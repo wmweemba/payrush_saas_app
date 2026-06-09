@@ -5,6 +5,52 @@ Format: [version] — date — description
 
 ---
 
+## [3.14.0] — 2026-06-09 — Phase 7: UI and Workflow Fixes (Session 1)
+
+### `client/src/components/invoices/InvoiceForm.js`
+- Fixed submit button hidden by the mobile bottom nav: changed
+  `position: fixed; bottom: 0` to `bottom: 72px` (64px nav height +
+  8px clearance) and removed the now-unnecessary 24px bottom safe-area
+  padding on that container
+
+### `client/src/components/dashboard/DashboardHome.js`
+- Added a desktop-only page header (`hidden lg:flex`) with "Dashboard"
+  title on the left and an auto-width "New Invoice" primary button on
+  the right — matches ui_spec.md Desktop Dashboard layout
+- Wrapped the full-width bottom "New Invoice" CTA in `lg:hidden` so it
+  is visible only on mobile; desktop uses the header button instead
+
+### `client/src/components/invoices/InvoiceDetail.js`
+- Line items grid columns replaced fixed-pixel widths (`1fr 40px 80px`)
+  with Tailwind percentage classes (`grid-cols-[1fr_15%_28%]`) on both
+  the header row and each item row — eliminates overflow collision on
+  narrow phones
+- Qty column alignment corrected to `text-align: center` (was
+  `right` in both header and value cell)
+- Added `markingSent` loading state and `handleMarkSent` handler: calls
+  `PUT /api/invoices/[id]` with `{ status: 'sent' }`, updates local
+  invoice state on success, fires toast "Marked as sent"
+- Added "Mark as sent" primary button as the first action, shown when
+  `invoice.status === 'draft'` for both invoices and quotes
+- Tightened quote accepted/declined condition from
+  `(sent || draft)` → `sent` only — draft quotes now use "Mark as sent"
+  first before those actions become available
+- Replaced the catch-all `!isQuote && !isPaid` primary action with two
+  explicit conditions: `status === 'sent' || status === 'overdue'`
+  → Mark as Paid; `status === 'paid'` → Download PDF. Draft and
+  cancelled invoices no longer incorrectly surface "Mark as Paid"
+- Converted invoices (arrive as `draft`) now have the correct
+  "Mark as sent" action available
+
+### API — no changes required
+- `PUT /api/invoices/[id]` already accepted `status` in its Zod enum
+  (`draft | sent | paid | overdue | cancelled | accepted | declined`)
+
+### Verified
+- `pnpm build` passes clean — all 17 routes, no errors ✅
+
+---
+
 ## [3.13.0] — 2026-06-09 — Phase 7: Security Audit + PDF Debug Cleanup
 
 ### Security — infrastructure (out-of-band changes, no code)

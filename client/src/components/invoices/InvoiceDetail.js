@@ -172,6 +172,7 @@ export default function InvoiceDetail() {
   const [copied, setCopied] = useState(null)
   const [toast, setToast] = useState(null)
   const [pdfLoading, setPdfLoading] = useState(false)
+  const [markingSent, setMarkingSent] = useState(false)
   const [statusUpdating, setStatusUpdating] = useState(false)
   const [converting, setConverting] = useState(false)
 
@@ -231,6 +232,28 @@ export default function InvoiceDetail() {
       }
     } catch {
       fireToast('Failed to mark as paid. Please try again.')
+    }
+  }
+
+  async function handleMarkSent() {
+    setMarkingSent(true)
+    try {
+      const res = await fetch(`/api/invoices/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'sent' }),
+      })
+      const json = await res.json()
+      if (res.ok && json.data) {
+        setInvoice(json.data)
+        fireToast('Marked as sent')
+      } else {
+        fireToast('Failed to mark as sent. Please try again.')
+      }
+    } catch {
+      fireToast('Failed to mark as sent. Please try again.')
+    } finally {
+      setMarkingSent(false)
     }
   }
 
@@ -494,12 +517,12 @@ export default function InvoiceDetail() {
               <hr style={{ border: 'none', borderTop: '0.5px solid var(--color-border)', margin: '14px 0' }} />
 
               {/* Items header */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 40px 80px', marginBottom: 4 }}>
+              <div className="grid grid-cols-[1fr_15%_28%]" style={{ marginBottom: 4 }}>
                 {['Description', 'Qty', 'Amount'].map((h, i) => (
                   <span key={h} style={{
                     fontSize: 10, color: 'var(--color-text-secondary)',
                     textTransform: 'uppercase', letterSpacing: '0.05em',
-                    textAlign: i > 0 ? 'right' : 'left',
+                    textAlign: i === 0 ? 'left' : i === 1 ? 'center' : 'right',
                   }}>
                     {h}
                   </span>
@@ -509,14 +532,14 @@ export default function InvoiceDetail() {
               {invoice.items.map((item, idx) => (
                 <div
                   key={item.id}
+                  className="grid grid-cols-[1fr_15%_28%]"
                   style={{
-                    display: 'grid', gridTemplateColumns: '1fr 40px 80px',
                     padding: '8px 0',
                     borderBottom: idx < invoice.items.length - 1 ? '0.5px solid var(--color-border)' : 'none',
                   }}
                 >
                   <span style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>{item.description}</span>
-                  <span style={{ fontSize: 13, color: 'var(--color-text-secondary)', textAlign: 'right' }}>
+                  <span style={{ fontSize: 13, color: 'var(--color-text-secondary)', textAlign: 'center' }}>
                     {parseFloat(item.quantity) || 1}
                   </span>
                   <span style={{ fontSize: 13, color: 'var(--color-text-primary)', textAlign: 'right' }}>
@@ -592,8 +615,25 @@ export default function InvoiceDetail() {
         {/* ── Action buttons ─────────────────────────────────────────────── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingBottom: 24 }}>
 
+          {/* Mark as sent — draft invoices and draft quotes */}
+          {invoice.status === 'draft' && (
+            <button
+              onClick={handleMarkSent}
+              disabled={markingSent}
+              style={{
+                width: '100%', height: 48, background: 'var(--color-action)',
+                color: '#fff', border: 'none', borderRadius: 12,
+                fontSize: 15, fontWeight: 500,
+                cursor: markingSent ? 'default' : 'pointer',
+                fontFamily: 'inherit', opacity: markingSent ? 0.7 : 1,
+              }}
+            >
+              {markingSent ? 'Saving…' : 'Mark as sent'}
+            </button>
+          )}
+
           {/* Quote status actions */}
-          {isQuote && (invoice.status === 'sent' || invoice.status === 'draft') && (
+          {isQuote && invoice.status === 'sent' && (
             <div className="flex flex-col sm:flex-row" style={{ gap: 10 }}>
               <button
                 onClick={() => handleQuoteStatusUpdate('accepted')}
@@ -650,8 +690,8 @@ export default function InvoiceDetail() {
             </button>
           )}
 
-          {/* Primary action */}
-          {!isQuote && (!isPaid ? (
+          {/* Mark as paid — sent or overdue invoices only */}
+          {!isQuote && (invoice.status === 'sent' || invoice.status === 'overdue') && (
             confirming ? (
               <div style={{
                 background: '#fff', borderRadius: 12, padding: '14px 16px',
@@ -695,7 +735,10 @@ export default function InvoiceDetail() {
                 Mark as Paid
               </button>
             )
-          ) : (
+          )}
+
+          {/* Download PDF — paid invoices */}
+          {!isQuote && invoice.status === 'paid' && (
             <button
               onClick={handleDownloadPDF}
               disabled={pdfLoading}
@@ -709,7 +752,7 @@ export default function InvoiceDetail() {
             >
               {pdfLoading ? 'Generating…' : 'Download PDF'}
             </button>
-          ))}
+          )}
 
           {/* Share row */}
           <div style={{ display: 'flex', gap: 10 }}>

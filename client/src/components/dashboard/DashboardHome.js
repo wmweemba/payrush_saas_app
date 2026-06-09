@@ -110,6 +110,33 @@ export default function DashboardHome() {
   return (
     <div style={{ paddingTop: 24, paddingBottom: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
 
+      {/* ── Desktop page header ─────────────────────────────────────────────── */}
+      <div
+        className="hidden lg:flex"
+        style={{ ...px, justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}
+      >
+        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 500, color: 'var(--color-text-primary)' }}>
+          Dashboard
+        </h1>
+        <button
+          onClick={() => router.push('/dashboard/invoices/new')}
+          style={{
+            height: 40,
+            padding: '0 20px',
+            background: 'var(--color-action)',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 10,
+            fontSize: 14,
+            fontWeight: 500,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+          }}
+        >
+          + New Invoice
+        </button>
+      </div>
+
       {/* ── Section 1: Greeting ─────────────────────────────────────────────── */}
       <div style={{ ...px }}>
         {sessionLoading ? (
@@ -317,8 +344,8 @@ export default function DashboardHome() {
         </div>
       </div>
 
-      {/* ── Section 5: New invoice CTA ──────────────────────────────────────── */}
-      <div style={{ ...px, marginTop: 8, marginBottom: 24 }}>
+      {/* ── Section 5: New invoice CTA — mobile only ───────────────────────── */}
+      <div className="lg:hidden" style={{ ...px, marginTop: 8, marginBottom: 24 }}>
         <button
           onClick={() => router.push('/dashboard/invoices/new')}
           style={{

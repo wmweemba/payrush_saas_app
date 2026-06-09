@@ -677,13 +677,13 @@ export default function InvoiceForm() {
         </div>
       </div>
 
-      {/* Mobile sticky submit */}
+      {/* Mobile sticky submit — sits above the 64px bottom nav */}
       <div
         className="lg:hidden"
         style={{
-          position: 'fixed', bottom: 0, left: 0, right: 0,
+          position: 'fixed', bottom: 72, left: 0, right: 0,
           background: '#fff', borderTop: '0.5px solid var(--color-border)',
-          padding: '12px 20px 24px', zIndex: 10,
+          padding: '12px 20px', zIndex: 10,
         }}
       >
         <button onClick={handleSubmit} disabled={submitting} style={primaryBtn(submitting)}>

@@ -129,11 +129,9 @@ const loadBrandingData = async () => {
     const response = await fetch('/api/branding');
     if (response.ok) {
       const branding = await response.json();
-      console.log('🎨 Loaded branding data:', branding);
       return branding;
     }
   } catch (error) {
-    console.warn('Failed to load branding data:', error);
   }
   return null;
 };
@@ -167,7 +165,6 @@ const loadImageFromUrl = async (url) => {
  * Generate PDF with specific template
  */
 export const generateTemplatedPDF = async (invoice, profileData = {}, templateId = 'professional') => {
-  console.log('🎨 generateTemplatedPDF called with templateId:', templateId);
   
   const jsPDF = (await import('jspdf')).default;
   const pdf = new jsPDF('p', 'mm', 'a4');
@@ -184,29 +181,20 @@ export const generateTemplatedPDF = async (invoice, profileData = {}, templateId
   if (brandingData?.logoUrl && brandingData?.showLogo) {
     try {
       logoImage = await loadImageFromUrl(brandingData.logoUrl);
-      console.log('✅ Logo loaded successfully for static template');
     } catch (error) {
-      console.warn('Failed to load logo for static template:', error);
     }
   }
   
-  console.log('📐 Template config:', template);
-  console.log('💰 Currency:', currency);
-  console.log('🖼️ Logo available:', !!logoImage);
   
   // Template-specific rendering
   switch (templateId) {
     case 'minimal':
-      console.log('🎯 Rendering MINIMAL template');
       return generateMinimalTemplate(pdf, invoice, profileData, template, currency, pageWidth, pageHeight, logoImage, brandingData);
     case 'modern':
-      console.log('🎯 Rendering MODERN template');
       return generateModernTemplate(pdf, invoice, profileData, template, currency, pageWidth, pageHeight, logoImage, brandingData);
     case 'classic':
-      console.log('🎯 Rendering CLASSIC template');
       return generateClassicTemplate(pdf, invoice, profileData, template, currency, pageWidth, pageHeight, logoImage, brandingData);
     default:
-      console.log('🎯 Rendering PROFESSIONAL template (default)');
       return generateProfessionalTemplate(pdf, invoice, profileData, template, currency, pageWidth, pageHeight, logoImage, brandingData);
   }
 };
@@ -218,8 +206,6 @@ const generateProfessionalTemplate = (pdf, invoice, profileData, template, curre
   const primaryRgb = hexToRgb(template.colors.primary);
   const docTypeLabel = (invoice.document_type ?? invoice.documentType) === 'quote' ? 'QUOTATION' : 'INVOICE';
   
-  console.log('💼 PROFESSIONAL template rendering');
-  console.log('💼 Logo available:', !!logoImage);
   
   // Header with gradient effect - BLUE theme
   pdf.setFillColor(primaryRgb.r, primaryRgb.g, primaryRgb.b);
@@ -235,9 +221,7 @@ const generateProfessionalTemplate = (pdf, invoice, profileData, template, curre
       logoWidth = (logoImage.width / logoImage.height) * logoSize;
       
       pdf.addImage(logoImage.data, 'PNG', logoX, logoY, logoWidth, logoSize);
-      console.log('💼 Logo added to professional template');
     } catch (error) {
-      console.warn('💼 Failed to add logo to professional template:', error);
     }
   }
   
@@ -276,8 +260,6 @@ const generateProfessionalTemplate = (pdf, invoice, profileData, template, curre
 const generateMinimalTemplate = (pdf, invoice, profileData, template, currency, pageWidth, pageHeight, logoImage, brandingData) => {
   const isQuote = (invoice.document_type ?? invoice.documentType) === 'quote';
   const docTypeLabel = isQuote ? 'Quotation' : 'Invoice';
-  console.log('⚪ MINIMAL template rendering');
-  console.log('⚪ Logo available:', !!logoImage);
   
   // MINIMAL: Absolutely clean design with tons of white space
   pdf.setTextColor(80, 80, 80); // Light gray text for minimal feel
@@ -297,9 +279,7 @@ const generateMinimalTemplate = (pdf, invoice, profileData, template, currency, 
       logoWidth = (logoImage.width / logoImage.height) * logoSize;
       
       pdf.addImage(logoImage.data, 'PNG', logoX, logoY, logoWidth, logoSize);
-      console.log('⚪ Logo added to minimal template');
     } catch (error) {
-      console.warn('⚪ Failed to add logo to minimal template:', error);
     }
   }
   
@@ -420,8 +400,6 @@ const generateModernTemplate = (pdf, invoice, profileData, template, currency, p
   const isQuote = (invoice.document_type ?? invoice.documentType) === 'quote';
   const docTypeLabel = isQuote ? 'QUOTATION' : 'INVOICE';
 
-  console.log('🎨 MODERN template colors:', template.colors);
-  console.log('🎨 Logo available:', !!logoImage);
   
   // MODERN: Purple gradient header - MUCH TALLER
   const headerHeight = 60; // Bigger header
@@ -453,9 +431,7 @@ const generateModernTemplate = (pdf, invoice, profileData, template, currency, p
       logoWidth = (logoImage.width / logoImage.height) * logoSize;
       
       pdf.addImage(logoImage.data, 'PNG', logoX, logoY, logoWidth, logoSize);
-      console.log('🎨 Logo added to modern template');
     } catch (error) {
-      console.warn('🎨 Failed to add logo to modern template:', error);
     }
   }
   
@@ -592,28 +568,21 @@ const generateModernTemplate = (pdf, invoice, profileData, template, currency, p
 const generateClassicTemplate = (pdf, invoice, profileData, template, currency, pageWidth, pageHeight, logoImage, brandingData) => {
   const isQuote = (invoice.document_type ?? invoice.documentType) === 'quote';
   const docTypeLabel = isQuote ? 'QUOTATION' : 'INVOICE';
-  console.log('📜 CLASSIC template rendering - SHOULD HAVE DOUBLE BORDERS!');
-  console.log('📜 Classic template parameters:', { pageWidth, pageHeight, customerName: invoice.customer_name });
-  console.log('📜 Logo available:', !!logoImage);
   
   // CLASSIC: Very distinctive double border frame - BLACK AND THICK
-  console.log('📜 Drawing outer border...');
   pdf.setDrawColor(0, 0, 0);  // Pure black
   pdf.setLineWidth(3);  // Thick border
   pdf.rect(5, 5, pageWidth - 10, pageHeight - 10);
   
   // Inner decorative border
-  console.log('📜 Drawing inner border...');
   pdf.setLineWidth(1);
   pdf.rect(10, 10, pageWidth - 20, pageHeight - 20);
   
   // CLASSIC: Ornate inner border
-  console.log('📜 Drawing ornate border...');
   pdf.setLineWidth(0.5);
   pdf.rect(15, 15, pageWidth - 30, pageHeight - 30);
   
   // CLASSIC: Traditional header section with heavy border
-  console.log('📜 Drawing header section...');
   pdf.setLineWidth(2);
   pdf.rect(20, 20, pageWidth - 40, 60);
   
@@ -627,9 +596,7 @@ const generateClassicTemplate = (pdf, invoice, profileData, template, currency, 
       logoWidth = (logoImage.width / logoImage.height) * logoSize;
       
       pdf.addImage(logoImage.data, 'PNG', logoX, logoY, logoWidth, logoSize);
-      console.log('📜 Logo added to classic template');
     } catch (error) {
-      console.warn('📜 Failed to add logo to classic template:', error);
     }
   }
   
@@ -659,7 +626,6 @@ const generateClassicTemplate = (pdf, invoice, profileData, template, currency, 
   pdf.setFont('times', 'bold');
   pdf.text(docTypeLabel, pageWidth - 75, 38);
   
-  console.log('📜 Classic template header complete');
   
   // Start content after the header box
   let currentY = 90;
@@ -883,21 +849,17 @@ export const testTemplateGeneration = async () => {
     name: 'Test User'
   };
   
-  console.log('🧪 Testing template generation...');
   
   const templates = ['professional', 'minimal', 'modern', 'classic'];
   
   for (const templateId of templates) {
-    console.log(`🎨 Testing template: ${templateId}`);
     try {
       const pdf = await generateTemplatedPDF(testInvoice, testProfile, templateId);
-      console.log(`✅ ${templateId} template generated successfully`);
     } catch (error) {
       console.error(`❌ ${templateId} template failed:`, error);
     }
   }
   
-  console.log('🧪 Template testing complete!');
 };
 
 export default {

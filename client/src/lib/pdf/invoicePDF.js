@@ -63,7 +63,6 @@ export const generateDatabaseTemplatedPDF = async (invoice, profileData = {}, te
     try {
       logoImage = await loadImageFromUrl(templateConfig.branding.logoUrl);
     } catch (error) {
-      console.warn('Failed to load logo image:', error);
     }
   }
   
@@ -97,7 +96,6 @@ export const generateDatabaseTemplatedPDF = async (invoice, profileData = {}, te
       pdf.setFont('helvetica', templateConfig.fonts.body.weight);
       pdf.text(businessName, textStartX, 35);
     } catch (error) {
-      console.warn('Error adding logo to PDF:', error);
       // Fallback to text-only header
       addTextOnlyHeader();
     }
@@ -387,32 +385,18 @@ export const previewInvoicePDF = async (invoice, profileData = {}, templateId = 
  */
 export const generateInvoicePDFBuffer = async (invoice, profileData = {}, templateId = null) => {
   try {
-    console.log('📧 Starting PDF buffer generation for email attachment:', {
-      invoiceId: invoice?.id,
-      hasInvoice: !!invoice,
-      hasProfileData: !!profileData,
-      templateId
-    });
     
     // Use existing PDF generation logic
-    console.log('🔄 Calling generateInvoicePDF...');
     const pdf = await generateInvoicePDF(invoice, profileData, templateId);
-    console.log('📄 generateInvoicePDF result:', { hasPdf: !!pdf, pdfType: typeof pdf });
     
     if (!pdf) {
       throw new Error('PDF generation returned null/undefined');
     }
     
     // Convert PDF to base64 buffer for server transmission
-    console.log('🔄 Converting PDF to base64 buffer...');
     const pdfBuffer = pdf.output('datauristring');
     const base64Data = pdfBuffer.split(',')[1]; // Remove data:application/pdf;base64, prefix
     
-    console.log('📊 PDF buffer conversion result:', {
-      originalLength: pdfBuffer?.length,
-      base64Length: base64Data?.length,
-      hasBase64: !!base64Data
-    });
     
     // Generate filename using same logic as downloadInvoicePDF
     const invoiceNumber = invoice.custom_invoice_number || 
@@ -422,12 +406,6 @@ export const generateInvoicePDFBuffer = async (invoice, profileData = {}, templa
     const finalTemplateId = templateId || invoice.template_id || 'professional';
     const filename = `invoice-${invoiceNumber}.pdf`;
     
-    console.log('✅ PDF buffer generated successfully for email:', {
-      filename,
-      invoiceNumber,
-      finalTemplateId,
-      bufferSize: base64Data?.length
-    });
     
     return {
       success: true,

@@ -5,6 +5,48 @@ Format: [version] — date — description
 
 ---
 
+## [3.13.0] — 2026-06-09 — Phase 7: Security Audit + PDF Debug Cleanup
+
+### Security — infrastructure (out-of-band changes, no code)
+- Rotated `DATABASE_URL` password, `BETTER_AUTH_SECRET`, and
+  `RESEND_API_KEY` after all three were exposed in plaintext inside
+  Next.js production error digests captured in server logs
+- Added `?search_path=payrush` to production `DATABASE_URL` in
+  Coolify — this was the root cause of the failed signup (Better
+  Auth queried the `user` table without a schema prefix and Postgres
+  defaulted to `public` where no PayRush tables exist)
+
+### `client/src/lib/pdf/invoicePDF.js`
+- Removed 8 `console.log`/`console.warn` debug statements
+  (leftover emoji-prefixed instrumentation from PDF buffer
+  generation development); `console.error` calls left in place
+
+### `client/src/lib/pdf/templates.js`
+- Removed 38 `console.log`/`console.warn` debug statements
+  across all four template renderers (professional, minimal,
+  modern, classic) and the template test harness;
+  `console.error` calls left in place
+- Note: several `catch` blocks whose sole body was a
+  `console.warn` now have empty bodies — flagged for post-launch
+  restoration with proper error handling
+
+### Security audit findings (no code changes required)
+- `NEXT_PUBLIC_*` usage: only `NEXT_PUBLIC_APP_URL` — clean
+- API route error responses: all routes return generic
+  `{ error: 'Internal server error' }` only; no `err.message`,
+  `err.stack`, or raw objects ever returned to clients
+- Hardcoded secrets: none found in `client/src/`
+- Middleware: `/dashboard/:path*` guarded; public invoice route
+  (`/invoice/[token]`) intentionally unauthenticated — confirmed correct
+- Public invoice API: strips `userId` from invoice and branding
+  before response; `customerEmail` exposure on public route noted
+  as PII-adjacent, confirmed intentional
+
+### Verified
+- `pnpm build` passes clean — all 17 routes, no errors ✅
+
+---
+
 ## [3.12.0] — 2026-06-08 — Phase 7 Step 7.1: Dockerfile & Standalone Build Config
 
 ### `client/next.config.mjs`

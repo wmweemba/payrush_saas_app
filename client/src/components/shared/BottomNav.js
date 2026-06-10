@@ -30,12 +30,11 @@ export function BottomNav() {
         borderTop: '1px solid var(--color-border)',
         height: '64px',
         padding: '8px 0 12px',
-        display: 'flex',
         justifyContent: 'space-around',
         alignItems: 'center',
         zIndex: 50,
       }}
-      className="lg:hidden"
+      className="flex lg:hidden"
     >
       {navItems.map(({ href, label, icon: Icon }) => {
         const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))

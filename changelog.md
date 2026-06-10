@@ -5,6 +5,46 @@ Format: [version] — date — description
 
 ---
 
+## [3.17.0] — 2026-06-10 — Phase 7: R2 Logo Upload + Desktop Nav Fix
+
+### `client/src/lib/r2.js` (new)
+- Created R2 upload utility: `S3Client` pointed at the Cloudflare R2 endpoint,
+  `uploadToR2(buffer, filename, contentType)` writes to the `logos/` key prefix
+  and returns the public URL via `R2_PUBLIC_URL`
+
+### `client/src/app/api/branding/upload/route.js` (new)
+- New `POST /api/branding/upload` route for logo file uploads
+- Session-guarded (401 if unauthenticated)
+- Validates MIME type (JPEG, PNG, WebP only) and size (≤ 2 MB); returns 400
+  on violation
+- Converts `File` to `Buffer` via `arrayBuffer()`, calls `uploadToR2`, returns
+  `{ data: { url } }`
+
+### `client/src/components/settings/SettingsPage.js`
+- Wired logo upload to R2: `handleLogoChange` is now async — after client-side
+  validation it POSTs the file as `FormData` to `/api/branding/upload`, receives
+  the public R2 URL, sets `logoUrl` state, then immediately PUTs the URL to
+  `/api/branding` to persist it — no separate "Save" click required
+- Removed `logoPreview` state (local `createObjectURL` approach); replaced with
+  `logoUrl` state initialised from `branding.logoUrl` on load
+- Added `uploading` boolean state: disables the file input and replaces the
+  dashed upload prompt with "Uploading…" while the request is in flight
+- `handleRemoveLogo` now clears `logoUrl` instead of `logoPreview`
+- File input `accept` extended to include `image/webp`; client validation
+  updated to match
+
+### `client/src/components/shared/BottomNav.js`
+- Fixed bottom nav visible on desktop (lg+): removed `display: 'flex'` from
+  inline style (which overrode Tailwind's `lg:hidden` via specificity), moved
+  it to a Tailwind class — `className="flex lg:hidden"` — so `display: none`
+  wins correctly at the lg breakpoint
+
+### Verified
+- `pnpm build` passes clean — all 18 routes (new `/api/branding/upload`
+  visible in output), no errors ✅
+
+---
+
 ## [3.15.0] — 2026-06-09 — Phase 7: PDF Redesign + Logo Fix
 
 ### `client/src/lib/pdf/templates.js`

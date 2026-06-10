@@ -85,6 +85,8 @@ export default function SettingsPage() {
 
   const [branding, setBranding] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [uploading, setUploading] = useState(false)
+  const [logoUrl, setLogoUrl] = useState(null)
 
   const [profile, setProfile] = useState({ businessName: '', phone: '', website: '' })
   const [payment, setPayment] = useState({
@@ -92,8 +94,6 @@ export default function SettingsPage() {
   })
   const [saving, setSaving] = useState({ profile: false, payment: false })
   const [toast, setToast] = useState(null)
-
-  const [logoPreview, setLogoPreview] = useState(null)
 
   useEffect(() => {
     fetch('/api/branding')
@@ -107,6 +107,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (branding) {
+      setLogoUrl(branding.logoUrl || null)
       setProfile({
         businessName: branding.businessName || session?.user?.name || '',
         phone: branding.phone || '',
@@ -155,28 +156,54 @@ export default function SettingsPage() {
     fileInputRef.current?.click()
   }
 
-  function handleLogoChange(e) {
+  async function handleLogoChange(e) {
     const file = e.target.files?.[0]
     if (!file) return
 
-    if (!['image/png', 'image/jpeg'].includes(file.type)) {
-      fireToast('Logo must be a PNG or JPG image.')
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+      fireToast('Logo must be PNG, JPG, or WebP.')
       e.target.value = ''
       return
     }
     if (file.size > 2 * 1024 * 1024) {
-      fireToast('Logo must be 2MB or smaller.')
+      fireToast('Logo must be 2 MB or smaller.')
       e.target.value = ''
       return
     }
 
-    // TODO: upload to Cloudflare R2 once file storage is wired up (post-launch
-    // per claude.md). For now we just preview the selected file locally.
-    setLogoPreview(URL.createObjectURL(file))
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('logo', file)
+      const res = await fetch('/api/branding/upload', { method: 'POST', body: fd })
+      const json = await res.json()
+      if (!res.ok) {
+        fireToast(json.error || 'Upload failed. Please try again.')
+        return
+      }
+      const url = json.data.url
+      setLogoUrl(url)
+      // Persist the new URL to branding immediately — no separate save needed
+      const saveRes = await fetch('/api/branding', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ logoUrl: url }),
+      })
+      const saveJson = await saveRes.json()
+      if (saveRes.ok && saveJson.data) {
+        setBranding(saveJson.data)
+        fireToast('Logo saved')
+      }
+    } catch {
+      fireToast('Upload failed. Please try again.')
+    } finally {
+      setUploading(false)
+      if (e.target) e.target.value = ''
+    }
   }
 
   function handleRemoveLogo() {
-    setLogoPreview(null)
+    setLogoUrl(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -186,7 +213,7 @@ export default function SettingsPage() {
   }
 
   const px = { paddingLeft: 20, paddingRight: 20 }
-  const currentLogoUrl = logoPreview || branding?.logoUrl
+  const currentLogoUrl = logoUrl
 
   return (
     <div style={{ background: 'var(--color-page-bg)', minHeight: '100vh' }}>
@@ -289,6 +316,15 @@ export default function SettingsPage() {
                       Remove
                     </button>
                   </div>
+                ) : uploading ? (
+                  <div style={{
+                    border: '1.5px dashed var(--color-border)', borderRadius: 12,
+                    padding: 24, textAlign: 'center', background: 'var(--color-page-bg)',
+                  }}>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: 'var(--color-text-secondary)' }}>
+                      Uploading…
+                    </p>
+                  </div>
                 ) : (
                   <div
                     onClick={handleLogoClick}
@@ -303,15 +339,16 @@ export default function SettingsPage() {
                       Upload logo
                     </p>
                     <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--color-text-secondary)' }}>
-                      PNG or JPG, max 2MB
+                      PNG, JPG, or WebP — max 2 MB
                     </p>
                   </div>
                 )}
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/png,image/jpeg"
+                  accept="image/png,image/jpeg,image/webp"
                   onChange={handleLogoChange}
+                  disabled={uploading}
                   style={{ display: 'none' }}
                 />
               </div>

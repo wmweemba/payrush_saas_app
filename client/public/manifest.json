@@ -1,7 +1,7 @@
 {
-  "name": "PayRush",
-  "short_name": "PayRush",
-  "description": "Invoice faster. Get paid sooner.",
+  "name": "BazaBooks",
+  "short_name": "BazaBooks",
+  "description": "Work. Invoice. Get paid.",
   "start_url": "/dashboard",
   "display": "standalone",
   "orientation": "portrait",

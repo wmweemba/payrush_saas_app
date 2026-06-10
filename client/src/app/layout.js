@@ -16,7 +16,7 @@ export const viewport = {
 }
 
 export const metadata = {
-  title: 'PayRush — Invoice faster. Get paid sooner.',
+  title: 'BazaBooks — Work. Invoice. Get paid.',
   description: 'Create a professional invoice in under 2 minutes and share it on WhatsApp. Free for freelancers and small businesses.',
   manifest: '/manifest.json',
   icons: {
@@ -29,7 +29,7 @@ export const metadata = {
     ],
   },
   openGraph: {
-    title: 'PayRush — Invoice faster. Get paid sooner.',
+    title: 'BazaBooks — Work. Invoice. Get paid.',
     description: 'Create a professional invoice in under 2 minutes and share it on WhatsApp.',
     type: 'website',
     locale: 'en_US',

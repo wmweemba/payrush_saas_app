@@ -79,10 +79,10 @@ export function Sidebar() {
         }}
       >
         <div style={{ color: '#FFFFFF', fontSize: '18px', fontWeight: 500, lineHeight: 1.2 }}>
-          PayRush
+          BazaBooks
         </div>
         <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', marginTop: '3px' }}>
-          Invoice faster.
+          Work. Invoice. Get paid.
         </div>
       </div>
 

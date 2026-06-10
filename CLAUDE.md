@@ -1,12 +1,12 @@
-# claude.md — PayRush AI Development Context
+# claude.md — BazaBooks AI Development Context
 
 > Load this file at the start of every development session. It is the single source of truth for project context, conventions, and build instructions.
 
 ---
 
-## What PayRush Is
+## What BazaBooks Is
 
-PayRush is a professional invoicing SaaS for solopreneurs, freelancers, and small service businesses — primarily in markets where WhatsApp is the primary business communication channel (Africa, Southeast Asia, Latin America).
+BazaBooks is a professional invoicing SaaS for solopreneurs, freelancers, and small service businesses — primarily in markets where WhatsApp is the primary business communication channel (Africa, Southeast Asia, Latin America).
 
 **Core USP:** Speed and simplicity. Create a professional invoice in under 2 minutes, share via WhatsApp, email, or Telegram, track what's paid.
 
@@ -57,7 +57,7 @@ Do not suggest or build features outside this order until the current phase is c
 - **ORM:** Drizzle ORM (`drizzle-orm` + `drizzle-kit`)
 - **Driver:** `postgres` (node-postgres)
 - **Host:** Self-hosted PostgreSQL on Coolify VPS
-- **Schema strategy:** One Postgres instance, one schema per app. PayRush uses the `payrush` schema.
+- **Schema strategy:** One Postgres instance, one schema per app. BazaBooks uses the `payrush` schema.
 - **Migrations:** Drizzle Kit (`pnpm drizzle-kit migrate`)
 
 ### Auth
@@ -231,7 +231,7 @@ sent_at (timestamptz)
 
 ## Quotes Feature (Phase 6.5)
 
-PayRush supports quotes alongside invoices. Quotes and invoices share the
+BazaBooks supports quotes alongside invoices. Quotes and invoices share the
 `invoices` table, the list page, and most surrounding UI — they are
 distinguished by `document_type`.
 

@@ -1,5 +1,5 @@
 /**
- * Multi-Currency Configuration for PayRush
+ * Multi-Currency Configuration for BazaBooks
  * Supports ZMW (Zambian Kwacha) and other major currencies
  */
 

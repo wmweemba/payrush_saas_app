@@ -147,7 +147,7 @@ export function PublicInvoiceView({ invoice, branding }) {
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <span style={{ fontSize: 16, fontWeight: 500, color: 'var(--color-action)' }}>PayRush</span>
+          <span style={{ fontSize: 16, fontWeight: 500, color: 'var(--color-action)' }}>BazaBooks</span>
           <span className={`badge badge-${invoice.status || 'draft'}`}>{invoice.status || 'draft'}</span>
         </div>
 
@@ -337,7 +337,7 @@ export function PublicInvoiceView({ invoice, branding }) {
 
         {/* Footer */}
         <p style={{ textAlign: 'center', marginTop: 32, fontSize: 11, color: 'var(--color-text-tertiary)' }}>
-          Powered by PayRush
+          Powered by BazaBooks
         </p>
       </div>
     </div>

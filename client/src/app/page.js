@@ -156,7 +156,7 @@ export default function LandingPage() {
       {/* NAV */}
       <nav className="sticky top-0 z-10 bg-white" style={{ borderBottom: '1px solid rgba(0,0,0,0.08)', height: '56px' }}>
         <div className="max-w-[1100px] mx-auto h-full flex items-center justify-between px-6">
-          <span className="text-[20px] font-medium text-[#185FA5]">PayRush</span>
+          <span className="text-[20px] font-medium text-[#185FA5]">BazaBooks</span>
           <div className="flex items-center gap-3">
             <Link href="/login" className="text-[14px] text-[#185FA5] hover:underline">
               Sign in
@@ -191,7 +191,7 @@ export default function LandingPage() {
               className="text-[16px] text-[#6B7280]"
               style={{ lineHeight: '1.6', marginTop: '20px', maxWidth: '480px' }}
             >
-              PayRush lets you create a professional invoice in under 2 minutes and share it on
+              BazaBooks lets you create a professional invoice in under 2 minutes and share it on
               WhatsApp before you leave the client.
             </p>
             <div className="flex flex-wrap items-center gap-3" style={{ marginTop: '32px' }}>
@@ -219,7 +219,7 @@ export default function LandingPage() {
           </p>
           <p className="text-[16px] md:text-[18px] text-[#6B7280]" style={{ lineHeight: '1.7', marginTop: '12px' }}>
             You&apos;re not an accountant. You&apos;re trying to run a business and get paid without
-            the friction. PayRush is built for the moment right after the work is done.
+            the friction. BazaBooks is built for the moment right after the work is done.
           </p>
         </div>
       </section>
@@ -383,7 +383,7 @@ export default function LandingPage() {
       {/* FOOTER */}
       <footer className="bg-white px-6 py-6" style={{ borderTop: '0.5px solid rgba(0,0,0,0.08)' }}>
         <div className="max-w-[1100px] mx-auto flex flex-wrap items-center justify-between gap-3">
-          <span className="text-[13px] text-[#9CA3AF]">© 2026 PayRush. All rights reserved.</span>
+          <span className="text-[13px] text-[#9CA3AF]">© 2026 BazaBooks. All rights reserved.</span>
           <Link href="/privacy" className="text-[13px] text-[#6B7280] hover:underline">
             Privacy Policy
           </Link>

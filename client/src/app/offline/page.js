@@ -48,7 +48,7 @@ export default function OfflinePage() {
           margin: '0 0 24px',
         }}>
           Check your connection and try again.
-          PayRush needs internet access to load your invoices.
+          BazaBooks needs internet access to load your invoices.
         </p>
         <button
           onClick={() => window.location.reload()}

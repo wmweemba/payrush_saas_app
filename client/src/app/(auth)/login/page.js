@@ -48,8 +48,8 @@ export default function LoginPage() {
       <div style={{ width: '100%', maxWidth: '400px', background: '#fff', border: '0.5px solid var(--color-border)', borderRadius: '20px', padding: '32px 28px' }}>
 
         <div style={{ marginBottom: '28px' }}>
-          <div style={{ fontSize: '22px', fontWeight: 500, color: 'var(--color-action)' }}>PayRush</div>
-          <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginTop: '4px' }}>Invoice faster. Get paid sooner.</div>
+          <div style={{ fontSize: '22px', fontWeight: 500, color: 'var(--color-action)' }}>BazaBooks</div>
+          <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginTop: '4px' }}>Work. Invoice. Get paid.</div>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

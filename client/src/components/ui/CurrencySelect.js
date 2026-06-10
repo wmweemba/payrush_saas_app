@@ -1,5 +1,5 @@
 /**
- * Currency Selection Component for PayRush
+ * Currency Selection Component for BazaBooks
  * Provides dropdown selection for supported currencies
  */
 

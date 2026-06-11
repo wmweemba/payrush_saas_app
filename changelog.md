@@ -5,6 +5,19 @@ Format: [version] — date — description
 
 ---
 
+## [3.19.0] — 2026-06-11 — Phase 7: R2 client lazy instantiation
+
+### `client/src/lib/r2.js`
+- Moved `S3Client` instantiation from module level into the `uploadToR2`
+  function body so environment variables are read at call time, not at
+  import time — fixes silent misconfiguration when env vars are not yet
+  resolved during module initialisation
+
+### Verified
+- `pnpm build` passes clean — all 18 routes, no errors ✅
+
+---
+
 ## [3.18.0] — 2026-06-10 — Phase 7: Rebrand PayRush → BazaBooks
 
 Text and metadata rename across all user-facing surfaces.
